@@ -107,41 +107,45 @@
             const emailInput = document.querySelector('input[type="email"]').value;
             const passwordInput = document.querySelector('input[type="password"]').value;
 
-            // 2. Define the SIMULATED successful user (as requested)
-            const SIMULATED_EMAIL = 'test@teslsaai.com';
+            // 2. Define the SIMULATED successful user (for first-time/test login)
+            const SIMULATED_EMAIL = 'test@telsa-ai.org'; // Updated email in test login
             const SIMULATED_PASSWORD = 'password123';
             const SIMULATED_NAME = 'Telsa Investor';
             
-            // 3. Check for successful login
-            if (emailInput === SIMULATED_EMAIL && passwordInput === SIMULATED_PASSWORD) {
-                
-                // Calculate Initials
-                const initials = SIMULATED_NAME.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+            // 3. Get Registered User Data (from register.html)
+            const registeredEmail = localStorage.getItem('registeredEmail');
+            const registeredPassword = localStorage.getItem('registeredPassword');
+            const registeredName = localStorage.getItem('telsa_userName');
 
-                // SIMULATION: Save the user's name to the browser's storage upon successful login
-                localStorage.setItem('telsa_userName', SIMULATED_NAME);
+            // 4. Check for successful login (Registered User OR Simulated Test User)
+            let loginSuccessful = false;
+            let userName = SIMULATED_NAME;
+            let userEmail = SIMULATED_EMAIL;
+
+            if (emailInput === SIMULATED_EMAIL && passwordInput === SIMULATED_PASSWORD) {
+                loginSuccessful = true;
+                // Use default test credentials
+            } else if (emailInput === registeredEmail && passwordInput === registeredPassword) {
+                loginSuccessful = true;
+                userName = registeredName;
+                userEmail = registeredEmail;
+            }
+            
+            if (loginSuccessful) {
+                // Calculate Initials
+                const initials = userName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+
+                // SIMULATION: Save the user's name/initials/email to the browser's storage upon successful login
+                localStorage.setItem('telsa_userName', userName);
                 localStorage.setItem('telsa_userInitials', initials);
+                // Also update the registered email to ensure dashboard knows the correct email
+                localStorage.setItem('registeredEmail', userEmail);
                 
                 alert('Login Successful! Redirecting to Dashboard.');
                 window.location.href = 'dashboard.html'; // Redirect on success
             } else {
-                // 4. Check for previous sign-up (If user used register.html before)
-                const registeredEmail = localStorage.getItem('registeredEmail');
-                const registeredPassword = localStorage.getItem('registeredPassword');
-                const registeredName = localStorage.getItem('telsa_userName');
-                
-                if (emailInput === registeredEmail && passwordInput === registeredPassword) {
-                     // If the user logs in with the credentials they used to register
-                     const initials = registeredName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
-                     localStorage.setItem('telsa_userName', registeredName);
-                     localStorage.setItem('telsa_userInitials', initials);
-
-                     alert('Login Successful! Redirecting to Dashboard.');
-                     window.location.href = 'dashboard.html'; // Redirect on success
-                } else {
-                    // Show error notification on failed login
-                    alert('Login Failed: Incorrect Email or Password Please Try Again');
-                }
+                // Show error notification on failed login
+                alert('Login Failed: Incorrect Email or Password. Please try again.');
             }
         });
     </script>

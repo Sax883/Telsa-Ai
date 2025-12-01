@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Default Fallback Data
     const defaultName = "Client Investor";
     const defaultInitials = "CI";
-    const defaultEmail = "client@telsaai.com";
+    const defaultEmail = "support@telsa-ai.org"; // Updated Default Email
 
     // --- Helper Function to calculate initials ---
     function getInitials(fullName) {
@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- 1. INITIAL DATA LOAD AND BINDING ---
+    // IMPORTANT: The 'registeredEmail' is the key set by register.html and login.html
     const storedName = localStorage.getItem('telsa_userName') || defaultName;
     const storedEmail = localStorage.getItem('registeredEmail') || defaultEmail;
     const storedInitials = localStorage.getItem('telsa_userInitials') || getInitials(storedName);
@@ -107,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 1. SAVE the new data to Local Storage (Makes it persistent)
             localStorage.setItem('telsa_userName', newName); 
-            localStorage.setItem('registeredEmail', newEmail); 
+            localStorage.setItem('registeredEmail', newEmail); // Update the primary key for email
             localStorage.setItem('telsa_userInitials', newInitials);
             
             // 2. Apply the changes immediately to the entire dashboard (Top bar and Profile)

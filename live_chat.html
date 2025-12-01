@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelsaAi | Live Chat Support</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            /* Variables reused from your style.css */
+            --color-primary: #0ea5e9; /* Sky Blue 500 */
+            --color-secondary: #10b981; /* Emerald 500 */
+            --color-accent: #f59e0b; /* Amber 500 */
+            --color-background-dark: #1f2937; /* Dark Grey Blue */
+            --color-background-light: #374151;
+            --color-text-dark: #f9fafb;
+            --color-text-light: #9ca3af;
+        }
+
+        .chat-body {
+            background-color: var(--color-background-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            height: 700px;
+            background-color: var(--color-background-light);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            line-height: 1.4;
+            color: var(--color-text-dark);
+            font-size: 0.95rem;
+        }
+
+        .client-message {
+            align-self: flex-end;
+            background-color: var(--color-secondary);
+            border-bottom-right-radius: 3px;
+        }
+
+        .support-message {
+            align-self: flex-start;
+            background-color: var(--color-background-dark);
+            border: 1px solid var(--color-text-light);
+            border-bottom-left-radius: 3px;
+        }
+
+        .message-timestamp {
+            display: block;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .chat-input {
+            padding: 15px 20px;
+            background-color: var(--color-background-dark);
+            border-top: 1px solid #475569;
+            display: flex;
+        }
+
+        .chat-input input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            margin-right: 10px;
+            background-color: #475569;
+            color: var(--color-text-dark);
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .chat-input button {
+            background-color: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .chat-input button:hover {
+            background-color: #0c85d0;
+        }
+    </style>
+</head>
+<body class="chat-body">
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <span>TelsaAi Support Live Chat</span>
+            <button onclick="window.close()" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message support-message">
+                Welcome to TelsaAi Live Support! How can we assist you with your investment or vehicle purchase today?
+                <span class="message-timestamp">TelsaAi Support · <span id="initial-time"></span></span>
+            </div>
+            
+        </div>
+        <div class="chat-input">
+            <input type="text" id="message-input" placeholder="Type your message...">
+            <button id="send-button"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatMessages = document.getElementById('chat-messages');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+
+            // Set initial support message time
+            document.getElementById('initial-time').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            function createMessageElement(text, isClient) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isClient ? 'client-message' : 'support-message');
+                messageDiv.innerHTML = ${text}<span class="message-timestamp">${isClient ? 'You' : 'TelsaAi Support'} · ${timeString}</span>;
+                
+                return messageDiv;
+            }
+
+            function appendMessage(element) {
+                chatMessages.appendChild(element);
+                // Scroll to the bottom of the chat window
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            function handleClientMessage() {
+                const text = messageInput.value.trim();
+                if (text === '') return;
+
+                // 1. Append client's message
+                appendMessage(createMessageElement(text, true));
+                messageInput.value = ''; // Clear input
+
+                // 2. Simulate AI/Support reply after a short delay
+                setTimeout(() => {
+                    let replyText = "Thank you for contacting us. Our support team will review your query and respond shortly. If this is urgent, please email us at support@telsa-ai.org.";
+                    
+                    if (text.toLowerCase().includes('withdraw') || text.toLowerCase().includes('withdrawal')) {
+                        replyText = "For withdrawal requests, please ensure you have an active investment plan. All requests are processed within 24 hours. Have you checked your 'History' tab on the dashboard?";
+                    } else if (text.toLowerCase().includes('login') || text.toLowerCase().includes('signup')) {
+                         replyText = "If you have a login issue, please clear your browser cache or try resetting your password using the 'Forgot Password' link on the login page.";
+                    }
+
+                    appendMessage(createMessageElement(replyText, false));
+                }, 1500); // 1.5 second delay for a realistic feel
+            }
+
+            // Event Listeners
+            sendButton.addEventListener('click', handleClientMessage);
+            messageInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleClientMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

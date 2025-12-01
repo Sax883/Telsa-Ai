@@ -128,14 +128,14 @@
             return;
         }
 
-        // --- 3. SAVE TO LOCAL STORAGE (CRITICAL STEP) ---
+        // --- 3. SAVE TO LOCAL STORAGE (CRITICAL STEP FOR CROSS-DEVICE SIMULATION) ---
         // Calculate Initials (e.g., John Doe -> JD)
         const initials = fullName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
 
         // Store the name, initials, and credentials for the dashboard/login to read
+        // These items allow login to work on other pages/devices
         localStorage.setItem('telsa_userName', fullName);
         localStorage.setItem('telsa_userInitials', initials);
-        // Store for simulated login
         localStorage.setItem('registeredEmail', email); 
         localStorage.setItem('registeredPassword', password); 
         
