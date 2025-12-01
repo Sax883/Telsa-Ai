@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelsaAi - Register Account</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Reusing login/auth layout styles */
+        .login-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--color-background-dark);
+            padding: 20px;
+        }
+
+        .auth-container {
+            background-color: var(--color-background-light);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px; 
+            text-align: center;
+        }
+
+        .auth-container h2 {
+            font-size: 2rem;
+            color: var(--color-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-container p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .auth-form input[type="text"],
+        .auth-form input[type="email"],
+        .auth-form input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            background-color: var(--color-background-dark);
+            color: var(--color-text-light);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--color-secondary);
+            outline: none;
+        }
+
+        .auth-form button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--color-primary); 
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .auth-form button:hover {
+            background-color: #38bdf8; 
+        }
+
+        .back-to-login {
+            margin-top: 20px;
+            display: block;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="login-body">
+
+    <div class="auth-container">
+        <a href="index.html" class="logo">TelsaAi</a>
+        <h2>Create Account</h2>
+        <p>Join TelsaAi and begin your intelligent investment journey.</p>
+        
+        <form class="auth-form" id="register-form">
+            <input type="text" placeholder="Full Name" id="reg-full-name" required>
+            <input type="email" placeholder="Email Address" id="reg-email" required>
+            <input type="password" placeholder="Password (Min 8 Characters)" id="reg-password" required>
+            <input type="password" placeholder="Confirm Password" id="reg-confirm-password" required>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; font-size: 0.9rem; color: var(--color-text-light);">
+                    <input type="checkbox" required style="width: 20px; margin-right: 10px;">
+                    I agree to the <a href="#" style="color: var(--color-secondary); margin-left: 5px;">Terms and Conditions</a>
+                </label>
+            </div>
+            
+            <button type="submit">Register and Proceed</button>
+        </form>
+
+        <a href="login.html" class="back-to-login">Already have an account? Sign In</a>
+    </div>
+<script>
+    document.getElementById('register-form').addEventListener('submit', function(e) {
+        e.preventDefault(); 
+        
+        // --- 1. Get input values ---
+        const fullName = document.getElementById('reg-full-name').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const confirmPassword = document.getElementById('reg-confirm-password').value;
+
+        // --- 2. Basic Validation ---
+        if (password !== confirmPassword) {
+            alert('Registration Failed: Passwords do not match.');
+            return;
+        }
+        if (password.length < 8) {
+            alert('Registration Failed: Password must be at least 8 characters.');
+            return;
+        }
+
+        // --- 3. SAVE TO LOCAL STORAGE (CRITICAL STEP) ---
+        // Calculate Initials (e.g., John Doe -> JD)
+        const initials = fullName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+
+        // Store the name, initials, and credentials for the dashboard/login to read
+        localStorage.setItem('telsa_userName', fullName);
+        localStorage.setItem('telsa_userInitials', initials);
+        // Store for simulated login
+        localStorage.setItem('registeredEmail', email); 
+        localStorage.setItem('registeredPassword', password); 
+        
+        alert('Registration Successful! Redirecting to dashboard.');
+
+        // Redirect to the dashboard
+        window.location.href = 'dashboard.html'; 
+    });
+</script>
+</body>
+</html>

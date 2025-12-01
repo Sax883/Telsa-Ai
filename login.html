@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelsaAi - Sign In</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Reusing styles for the login/auth layout */
+        .login-body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--color-background-dark);
+            padding: 20px;
+        }
+
+        .auth-container {
+            background-color: var(--color-background-light);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .auth-container h2 {
+            font-size: 2rem;
+            color: var(--color-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-container p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .auth-form input[type="email"],
+        .auth-form input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius);
+            background-color: var(--color-background-dark);
+            color: var(--color-text-light);
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .auth-form input:focus {
+            border-color: var(--color-secondary);
+            outline: none;
+        }
+
+        .auth-form button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--color-secondary);
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        .auth-form button:hover {
+            background-color: #0b68e0;
+        }
+
+        .forgot-password {
+            margin-top: 15px;
+            display: block;
+            color: var(--color-text-light);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body class="login-body">
+
+    <div class="auth-container">
+        <a href="index.html" class="logo">TelsaAi</a>
+        <h2>Sign In</h2>
+        <p>Welcome back! Sign in to access your investment dashboard.</p>
+        
+        <form class="auth-form" id="login-form">
+            <input type="email" placeholder="Email Address" required>
+            <input type="password" placeholder="Password" required>
+            
+            <button type="submit">Sign In</button>
+        </form>
+
+        <a href="forgot_password.html" class="forgot-password">Forgot Password?</a>
+        <p style="margin-top: 20px; font-size: 0.9rem; color: #94a3b8;">Don't have an account? <a href="register.html" style="color: var(--color-secondary);">Sign Up</a></p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // 1. Get user input
+            const emailInput = document.querySelector('input[type="email"]').value;
+            const passwordInput = document.querySelector('input[type="password"]').value;
+
+            // 2. Define the SIMULATED successful user (as requested)
+            const SIMULATED_EMAIL = 'test@teslsaai.com';
+            const SIMULATED_PASSWORD = 'password123';
+            const SIMULATED_NAME = 'Telsa Investor';
+            
+            // 3. Check for successful login
+            if (emailInput === SIMULATED_EMAIL && passwordInput === SIMULATED_PASSWORD) {
+                
+                // Calculate Initials
+                const initials = SIMULATED_NAME.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+
+                // SIMULATION: Save the user's name to the browser's storage upon successful login
+                localStorage.setItem('telsa_userName', SIMULATED_NAME);
+                localStorage.setItem('telsa_userInitials', initials);
+                
+                alert('Login Successful! Redirecting to Dashboard.');
+                window.location.href = 'dashboard.html'; // Redirect on success
+            } else {
+                // 4. Check for previous sign-up (If user used register.html before)
+                const registeredEmail = localStorage.getItem('registeredEmail');
+                const registeredPassword = localStorage.getItem('registeredPassword');
+                const registeredName = localStorage.getItem('telsa_userName');
+                
+                if (emailInput === registeredEmail && passwordInput === registeredPassword) {
+                     // If the user logs in with the credentials they used to register
+                     const initials = registeredName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+                     localStorage.setItem('telsa_userName', registeredName);
+                     localStorage.setItem('telsa_userInitials', initials);
+
+                     alert('Login Successful! Redirecting to Dashboard.');
+                     window.location.href = 'dashboard.html'; // Redirect on success
+                } else {
+                    // Show error notification on failed login
+                    alert('Login Failed: Incorrect Email or Password Please Try Again');
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
