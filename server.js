@@ -73,7 +73,7 @@ io.use((socket, next) => {
             socket.userData = decoded;
             return next();
         } catch (err) {
-            console.error([${getTimestamp()}] Socket Auth Error: Invalid token.);
+            console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token.`);
             return next(new Error('Authentication error: Invalid token'));
         }
     }
@@ -174,7 +174,7 @@ io.on('connection', (socket) => {
     socket.userId = userId;
     socket.isAdmin = isAdmin;
 
-    console.log([${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}));
+    console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin})`);
     activeConnections[userId] = socket.id;
 
     // Initialize history for new clients if needed
@@ -263,7 +263,7 @@ io.on('connection', (socket) => {
             if (clientSocketId) {
                 io.to(clientSocketId).emit('message', messageData);
             } else {
-                console.log([${getTimestamp()}] Client ${clientId} is offline, message stored.);
+                console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
             
             // 2. Send back to all admins (including self) to keep views updated
@@ -273,7 +273,7 @@ io.on('connection', (socket) => {
 
     // --- Disconnect Handler ---
     socket.on('disconnect', () => {
-        console.log([${getTimestamp()}] User disconnected: ${socket.userId});
+        console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
         delete activeConnections[socket.userId];
     });
 });
@@ -281,6 +281,6 @@ io.on('connection', (socket) => {
 
 // --- Start Server ---
 server.listen(PORT, () => {
-    console.log(Chat server listening on port ${PORT});
-    console.log(Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.);
+    console.log(`Chat server listening on port ${PORT}`);
+    console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
 });
