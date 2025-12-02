@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeslaAi - Register Account</title>
+    <title>TelsaAi - Register Account</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -86,9 +86,9 @@
 <body class="login-body">
 
     <div class="auth-container">
-        <a href="index.html" class="logo">TeslaAi</a>
+        <a href="index.html" class="logo">TelsaAi</a>
         <h2>Create Account</h2>
-        <p>Join TeslaAi and begin your intelligent investment journey.</p>
+        <p>Join TelsaAi and begin your intelligent investment journey.</p>
         
         <form class="auth-form" id="register-form">
             <input type="text" placeholder="Full Name" id="reg-full-name" required>
@@ -133,12 +133,10 @@
         const initials = fullName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
 
         // Store the name, initials, and credentials for the dashboard/login to read
-        // The key 'registeredUserName' is used for the logic in login.html to work correctly.
         localStorage.setItem('telsa_userName', fullName);
-        localStorage.setItem('registeredUserName', fullName); 
         localStorage.setItem('telsa_userInitials', initials);
         // Store for simulated login
-        localStorage.setItem('registeredEmail', email.toLowerCase()); // Use lowercase for consistency
+        localStorage.setItem('registeredEmail', email); 
         localStorage.setItem('registeredPassword', password); 
         
         alert('Registration Successful! Redirecting to dashboard.');

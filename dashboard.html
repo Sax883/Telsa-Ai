@@ -7,141 +7,22 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* LIVE CHAT Button Styles */
-        .live-chat-button {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 60px;
-            height: 60px;
-            background-color: var(--color-primary); /* Use a primary/accent color */
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-            cursor: pointer;
-            z-index: 1000;
-            transition: transform 0.3s ease;
-        }
-
-        .live-chat-button:hover {
-            transform: scale(1.05);
-            background-color: var(--color-secondary);
-        }
-
-        /* LIVE CHAT Popup (Hidden by default) */
-        .chat-popup {
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            width: 320px;
-            height: 400px;
-            background-color: var(--color-background-light);
-            border-radius: 12px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-            z-index: 1001;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .chat-header {
-            background-color: var(--color-primary);
-            color: white;
-            padding: 15px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
-        }
-
-        .chat-messages {
-            flex-grow: 1;
-            padding: 15px;
-            overflow-y: auto;
-            background-color: var(--color-background-dark);
-            border-bottom: 1px solid var(--color-border);
-        }
-
-        .chat-input-area {
-            padding: 15px;
-            display: flex;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .chat-input-area input {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            background-color: var(--color-background-light);
-            color: var(--color-text-dark);
-        }
-
-        .chat-input-area button {
-            background-color: var(--color-secondary);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            margin-left: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .chat-message {
-            margin-bottom: 10px;
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 10px;
-            clear: both; /* Important for alignment */
-        }
-
-        .client-message {
-            background-color: var(--color-primary);
-            color: white;
-            float: right;
-            border-bottom-right-radius: 0;
-        }
-
-        .admin-message {
-            background-color: var(--color-background-light);
-            color: var(--color-text-dark);
-            float: left;
-            border-bottom-left-radius: 0;
-        }
-    </style>
 </head>
 <body class="dashboard-body">
 
     <div class="dashboard-layout">
         
         <div class="sidebar" id="sidebar">
-            <div class="logo">TeslaAi</div>
+            <div class="logo">TESLAAI</div>
             <nav>
                 <a href="#home" class="active" data-page="home"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="#wallet" data-page="wallet"><i class="fas fa-wallet"></i> Wallet Balance</a>
                 <a href="#new-investment" data-page="new-investment"><i class="fas fa-chart-line"></i> New Investment</a>
                 <a href="#history" data-page="history"><i class="fas fa-clock-rotate-left"></i> History</a>
                 <a href="#profile" data-page="profile"><i class="fas fa-user-circle"></i> Profile</a>
-                <a href="#" id="open-chat-sidebar"><i class="fas fa-comments"></i> Live Chat</a>
             </nav>
             <div class="sidebar-footer" style="margin-top: 50px;">
                 <p style="font-size: 0.8rem; color: var(--color-text-light);">Client ID: <span class="client-id-sidebar" style="font-weight: 600; color: var(--color-primary);">TAI-001934</span></p>
-                <p style="font-size: 0.8rem; color: var(--color-text-light); margin-top: 5px;">Server Security: <span style="font-weight: 600; color: var(--color-success);">HIGH</span></p>
                 <a href="login.html" style="color: var(--color-primary); font-size: 0.9rem; margin-top: 10px; display: block;"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
@@ -246,7 +127,7 @@
             <div id="new-investment" class="page-content hidden">
                 <div class="content-panel">
                     <h2>✨ Start a New Investment</h2>
-                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using *TeslaAi's* predictive models. You can use funds from your Wallet balance or deposit new capital.</p>
+                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using TelsaAi's predictive models. You can use funds from your Wallet balance or deposit new capital.</p>
                     
                     <div class="plans-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
                         <div class="plan-card" data-plan="Bronze" data-min="2000">
@@ -281,7 +162,7 @@
                         </div>
                     </div>
                     
-                    <h2 style="margin-top: 50px;">🚗 Buy a Luxury Tesla Vehicle</h2>
+                    <h2 style="margin-top: 50px;">🚗 Buy a Luxury Telsa Vehicle</h2>
                     <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select a vehicle below to view the full purchase details and proceed to crypto checkout.</p>
                     
                     <div class="car-grid">
@@ -393,7 +274,7 @@
 
                             <div class="form-group" style="margin-bottom: 15px;">
                                 <label for="email">Email Address</label>
-                                <input type="email" id="email" value="client@teslaai.com" required>
+                                <input type="email" id="email" value="client@telsaai.com" required>
                             </div>
 
                             <div class="form-group" style="margin-bottom: 15px;">
@@ -415,84 +296,129 @@
         </div>
     </div>
 
-    <div class="live-chat-button" id="live-chat-button">
-        <i class="fas fa-comment-dots"></i>
-    </div>
-
-    <div class="chat-popup hidden" id="chat-popup">
-        <div class="chat-header">
-            Live Support <button class="close-btn" id="close-chat-btn"><i class="fas fa-times"></i></button>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-            <div class="chat-message admin-message">Welcome to *TeslaAi* Live Chat! How can I assist you today?</div>
-            <div class="chat-message admin-message">An agent will respond to you shortly.</div>
-        </div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" placeholder="Type your message...">
-            <button id="send-chat-btn"><i class="fas fa-paper-plane"></i></button>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
     <script>
-        // --- Live Chat Logic (Simulated) ---
-        const chatButton = document.getElementById('live-chat-button');
-        const chatPopup = document.getElementById('chat-popup');
-        const closeChatBtn = document.getElementById('close-chat-btn');
-        const openChatSidebar = document.getElementById('open-chat-sidebar');
-
-        function toggleChat() {
-            chatPopup.classList.toggle('hidden');
+        // Function to get initials from a full name
+        function getInitials(fullName) {
+            const parts = fullName.split(' ');
+            if (parts.length > 1) {
+                return parts[0].charAt(0) + parts[parts.length - 1].charAt(0);
+            } else if (parts.length === 1 && parts[0].length > 0) {
+                return parts[0].charAt(0);
+            }
+            return 'CI';
         }
 
-        chatButton.addEventListener('click', toggleChat);
-        closeChatBtn.addEventListener('click', toggleChat);
-        // Link in sidebar also opens the chat
-        openChatSidebar.addEventListener('click', (e) => {
-            e.preventDefault();
-            chatPopup.classList.remove('hidden');
-            // Close sidebar on mobile after clicking chat link
-            document.getElementById('sidebar').classList.remove('active');
-        });
-        
-        // Chat Message Sending Logic (Simulated)
-        const chatInput = document.getElementById('chat-input');
-        const sendChatBtn = document.getElementById('send-chat-btn');
-        const chatMessages = document.getElementById('chat-messages');
+        // Function to apply name and initials to all relevant elements
+        function applyProfileData(name, initials) {
+            const userNameElement = document.getElementById('user-name');
+            const userAvatarElement = document.getElementById('user-avatar');
+            const profileAvatarElement = document.getElementById('profile-avatar');
+            const nameInputField = document.getElementById('name');
 
-        function sendClientMessage() {
-            const messageText = chatInput.value.trim();
-            if (messageText) {
-                // Create new client message element
-                const messageDiv = document.createElement('div');
-                messageDiv.classList.add('chat-message', 'client-message');
-                messageDiv.textContent = messageText;
-                chatMessages.appendChild(messageDiv);
-
-                // Clear input
-                chatInput.value = '';
-
-                // Scroll to the bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-
-                // Simple simulated Admin response after a delay
-                setTimeout(() => {
-                    const adminResponseDiv = document.createElement('div');
-                    adminResponseDiv.classList.add('chat-message', 'admin-message');
-                    adminResponseDiv.textContent = Thank you for your message: "${messageText}". An agent will reply shortly.;
-                    chatMessages.appendChild(adminResponseDiv);
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                }, 1500);
-            }
+            if (nameInputField) nameInputField.value = name;
+            if (userNameElement) userNameElement.textContent = name;
+            if (userAvatarElement) userAvatarElement.textContent = initials;
+            if (profileAvatarElement) profileAvatarElement.textContent = initials;
         }
 
-        sendChatBtn.addEventListener('click', sendClientMessage);
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendClientMessage();
-            }
-        });
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const menuToggle = document.getElementById('menuToggle');
+            const navLinks = sidebar.querySelectorAll('nav a');
+            const pages = document.querySelectorAll('.page-content');
+            
+            const profileForm = document.querySelector('.profile-form');
+            const defaultName = "Client Investor";
 
+            // --- 1. LOAD PROFILE DATA ON PAGE LOAD (from Local Storage) ---
+            const savedName = localStorage.getItem('clientName');
+
+            if (savedName) {
+                // If data is found in Local Storage, use it
+                const initials = getInitials(savedName).toUpperCase();
+                applyProfileData(savedName, initials);
+            } else {
+                // Otherwise, use the default name and initialize Local Storage
+                const defaultInitials = getInitials(defaultName).toUpperCase();
+                applyProfileData(defaultName, defaultInitials);
+                localStorage.setItem('clientName', defaultName); 
+            }
+            
+            // --- 2. MOBILE MENU TOGGLE LOGIC (DASHBOARD) ---
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            // --- 3. NAVIGATION/PAGE SWITCHING LOGIC ---
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    const targetPageId = link.getAttribute('data-page');
+
+                    // Link Activation
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    link.classList.add('active');
+
+                    // Page Switching: Hide all, then show the target
+                    pages.forEach(page => page.classList.add('hidden'));
+                    const targetPage = document.getElementById(targetPageId);
+                    if (targetPage) {
+                        targetPage.classList.remove('hidden');
+                    }
+
+                    // Mobile Closing Logic
+                    if (window.innerWidth <= 992 && sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            });
+
+            // --- 4. Set initial page state on load (after checking Local Storage) ---
+            const activeLink = document.querySelector('.sidebar nav a.active');
+            if (activeLink) {
+                const initialPageId = activeLink.getAttribute('data-page');
+                const initialPage = document.getElementById(initialPageId);
+                
+                pages.forEach(page => {
+                    if (page.id !== initialPageId) {
+                        page.classList.add('hidden');
+                    }
+                });
+                
+                if (initialPage) {
+                    initialPage.classList.remove('hidden');
+                }
+            }
+
+            // --- 5. PROFILE FORM SUBMISSION HANDLER (Saves name permanently using Local Storage) ---
+            if (profileForm) {
+                profileForm.addEventListener('submit', (e) => {
+                    e.preventDefault(); // Stop the page from refreshing
+                    
+                    const newNameInput = document.getElementById('name');
+                    const newName = newNameInput.value.trim();
+                    
+                    if (newName) {
+                        const newInitials = getInitials(newName).toUpperCase();
+                        
+                        // 1. SAVE the new name to Local Storage (Makes it persistent)
+                        localStorage.setItem('clientName', newName); 
+                        
+                        // 2. Apply the changes immediately to the entire dashboard
+                        applyProfileData(newName, newInitials);
+                        
+                        // Show confirmation
+                        alert("Profile changes saved successfully! They will remain visible even after refreshing the page.");
+                    } else {
+                         alert("Name field cannot be empty.");
+                    }
+                });
+            }
+
+        });
     </script>
 </body>
-</html>
+</html
