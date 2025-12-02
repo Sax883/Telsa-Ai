@@ -4,240 +4,147 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESLAAI | Client Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Specific Styles for Login Page (Red Theme) */
         :root {
-            /* --- RED THEME --- */
-            --color-primary: #ef4444; /* Bright Red (Main CTA) */
-            --color-secondary: #dc2626; /* Darker Red (Hover) */
+            --color-primary: #ef4444; /* Bright Red */
+            --color-secondary: #dc2626; /* Darker Red */
             --color-background-dark: #1f2937; /* Dark Gray */
             --color-background-light: #374151; /* Slightly lighter Dark Gray */
             --color-border: #4b5563; /* Gray Border */
             --color-text-light: #f3f4f6; /* Off-white */
             --color-text-dark: #d1d5db; /* Light gray text */
-            --color-success: #10b981; /* Green for success */
-            --color-error: #f87171; /* Light red for error */
-            --border-radius: 8px;
         }
-        
         body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
             background-color: var(--color-background-dark);
-            padding: 20px;
         }
-
-        .auth-card {
-            background-color: var(--color-background-light);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-        }
-
-        .auth-card .logo {
-            margin-bottom: 20px;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-primary);
-        }
-
-        .auth-card h2 {
-            margin-bottom: 25px;
-            font-weight: 600;
-            color: var(--color-text-dark);
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--color-text-light);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            font-size: 1rem;
-            background-color: var(--color-background-dark);
-            color: var(--color-text-light);
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus {
-            border-color: var(--color-primary);
-            outline: none;
-        }
-
-        .toggle-link {
-            display: block;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: var(--color-text-dark);
-        }
-
-        .toggle-link a {
-            font-weight: 600;
-            color: var(--color-primary); 
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        
-        .toggle-link a:hover {
-            color: var(--color-text-light);
-        }
-
-        #message {
-            margin-bottom: 20px;
-            padding: 12px;
-            border-radius: 8px;
-            display: none;
-            font-weight: 500;
-        }
-        .message-success {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: var(--color-success);
-        }
-        .message-error {
-            background-color: rgba(239, 68, 68, 0.1);
-            color: var(--color-error); 
-        }
-
-        .cta-button.large {
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            border-radius: var(--border-radius);
-            background-color: var(--color-primary); 
-            color: white;
-            transition: background-color 0.3s;
-        }
-        .cta-button.large:hover {
-            background-color: var(--color-secondary);
-        }
+        .text-primary { color: var(--color-primary); }
+        .bg-primary { background-color: var(--color-primary); }
+        .bg-primary:hover { background-color: var(--color-secondary); }
     </style>
 </head>
-<body>
+<body class="flex items-center justify-center min-h-screen p-4">
 
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="logo">TESLAAI</div>
-            <h2 id="auth-title">Client Login</h2>
+    <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-primary mb-2">TESLAAI</h1>
+            <h2 class="text-xl font-semibold text-white">Client Login</h2>
+        </div>
 
-            <div id="message"></div>
-
-            <form id="auth-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="client@telsaai.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="cta-button large" id="auth-button" style="width: 100%;">Login</button>
-            </form>
-
-            <div class="toggle-link">
-                <span id="toggle-text">Don't have an account?</span> 
-                <a href="register.html" id="toggle-auth">Sign Up</a>
+        <form id="login-form">
+            <div class="mb-5">
+                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address (or Admin: tesla_ai)</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required 
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Enter your email"
+                    autocomplete="off" 
+                >
             </div>
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    required 
+                    class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Enter your password"
+                    autocomplete="current-password"
+                >
+            </div>
+
+            <div id="message-box" class="mb-4 p-3 rounded-lg text-sm text-center hidden" role="alert"></div>
+
+            <button type="submit" id="login-btn" class="w-full py-3 bg-primary text-white font-semibold rounded-lg transition duration-200">
+                Log In
+            </button>
+        </form>
+
+        <div class="mt-6 text-center text-sm">
+            <p class="text-gray-400">Don't have an account? 
+                <a href="register.html" class="text-primary hover:text-red-400 font-medium">Sign Up</a>
+            </p>
+            <p class="text-gray-400 mt-2">Access Admin Panel 
+                <a href="admin.html" class="text-primary hover:text-red-400 font-medium">Here</a>
+            </p>
         </div>
     </div>
 
     <script>
-        // Update this URL to your deployed backend API URL when going live.
-        const API_BASE_URL = 'http://localhost:10000/api/v1/auth'; 
-        const API_LOGIN_URL = ${API_BASE_URL}/login; 
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const authForm = document.getElementById('auth-form');
-            const authButton = document.getElementById('auth-button');
-            const messageElement = document.getElementById('message');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
+        // CRITICAL: Update this URL to your deployed Render service URL
+        const API_BASE_URL = window.location.origin; 
+        const form = document.getElementById('login-form');
+        const messageBox = document.getElementById('message-box');
+        const loginBtn = document.getElementById('login-btn');
 
-            // --- Function to Display Messages ---
-            function displayMessage(text, type) {
-                messageElement.textContent = text;
-                messageElement.className = '';
-                messageElement.classList.add('message', message-${type});
-                messageElement.style.display = 'block';
-            }
+        // Check if user is already logged in (has token) and redirect
+        if (localStorage.getItem('userToken')) {
+            window.location.href = 'dashboard.html';
+        }
+
+        function showMessage(text, type = 'error') {
+            messageBox.textContent = text;
+            messageBox.classList.remove('hidden', 'bg-red-900', 'bg-green-900', 'text-red-300', 'text-green-300');
             
-            // --- Form Submission Handler (Login) ---
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-900', 'text-green-300');
+            } else {
+                messageBox.classList.add('bg-red-900', 'text-red-300');
+            }
+        }
 
-                // Show loading state and disable button
-                authButton.disabled = true;
-                authButton.textContent = 'Logging in...';
-                messageElement.style.display = 'none'; 
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            loginBtn.textContent = 'Logging In...';
+            loginBtn.disabled = true;
+            messageBox.classList.add('hidden');
 
-                const email = emailInput.value;
-                const password = passwordInput.value;
-                
-                const payload = { email, password };
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
-                try {
-                    const response = await fetch(API_LOGIN_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload),
-                    });
+            try {
+                const response = await fetch(${API_BASE_URL}/api/v1/auth/login, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
 
-                    const data = await response.json();
+                const data = await response.json();
 
-                    if (response.ok && data.token) {
-                        // 1. SUCCESSFUL LOGIN
-                        displayMessage('Login Successful! Redirecting to dashboard...', 'success');
-                        
-                        // 2. CRITICAL: Save the token and user data
-                        localStorage.setItem('userToken', data.token);
-                        localStorage.setItem('userData', JSON.stringify(data.user)); 
-                        
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 1000); 
-
+                if (response.ok && data.success) {
+                    // Store the token and user data
+                    localStorage.setItem('userToken', data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect based on admin status
+                    if (data.user.isAdmin) {
+                         // Admin doesn't use the client dashboard, they use admin.html
+                         window.location.href = 'admin.html';
                     } else {
-                        // 3. SERVER ERROR (e.g., Invalid credentials)
-                        const errorMessage = data.message || An error occurred during login.;
-                        displayMessage(errorMessage, 'error');
+                         window.location.href = 'dashboard.html';
                     }
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    displayMessage('Network error or server unavailable. Try again later.', 'error');
-                } finally {
-                    // CRITICAL FIX: Ensure button state is reset on any failure
-                    authButton.disabled = false;
-                    authButton.textContent = 'Login';
+
+                } else {
+                    showMessage(data.message || 'Login failed. Please check your credentials.');
                 }
-            });
+            } catch (error) {
+                console.error('Network or Server Error:', error);
+                showMessage('Connection error. Please try again later.');
+            } finally {
+                loginBtn.textContent = 'Log In';
+                loginBtn.disabled = false;
+            }
         });
     </script>
 </body>

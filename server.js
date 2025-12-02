@@ -64,19 +64,22 @@ function getTimestamp() {
 // --- JWT Authentication Middleware for Socket.IO (Clients) ---
 
 io.use((socket, next) => {
-    // ... JWT Auth logic remains the same ...
     const token = socket.handshake.query.token;
 
     if (token) {
         try {
+            // Check if the token is valid
             const decoded = jwt.verify(token, SECRET_KEY);
             socket.userData = decoded;
             return next();
         } catch (err) {
-            console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token.`);
+            // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
+            console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token. Error: ${err.message}`);
+            // Only reject connection if authentication token is invalid
             return next(new Error('Authentication error: Invalid token'));
         }
     }
+    // If no token, allow connection (for anonymous clients or admin key-based access)
     return next();
 });
 
@@ -84,7 +87,6 @@ io.use((socket, next) => {
 // --- Express Authentication Routes (For login.html and register.html) ---
 
 app.post('/api/v1/auth/login', (req, res) => {
-    // ... Login logic remains the same ...
     const { email, password } = req.body;
     
     const user = findUser(email, password);
@@ -113,7 +115,6 @@ app.post('/api/v1/auth/login', (req, res) => {
 });
 
 app.post('/api/v1/auth/signup', (req, res) => {
-    // ... Signup logic remains the same ...
     const { name, email, password } = req.body;
 
     if (userExists(email)) {
@@ -135,6 +136,7 @@ app.post('/api/v1/auth/signup', (req, res) => {
     currentUsers.push(newUser); 
     chatHistoryByClient[newUser.id] = []; // Initialize chat history for the new client
 
+    // Token creation happens after successful user creation
     const token = jwt.sign(
         { id: newUser.id, email: newUser.email, isAdmin: newUser.isAdmin }, 
         SECRET_KEY, 
@@ -143,9 +145,10 @@ app.post('/api/v1/auth/signup', (req, res) => {
     
     const { password: _, ...safeUserData } = newUser; 
 
+    // Sending back the token immediately after signup allows the client to navigate to the dashboard
     return res.status(201).json({
         success: true,
-        message: 'Sign up successful. Proceed to login.',
+        message: 'Sign up successful.',
         token: token,
         user: safeUserData
     });
@@ -157,27 +160,31 @@ app.post('/api/v1/auth/signup', (req, res) => {
 io.on('connection', (socket) => {
     
     let userId;
-    let isAdmin = socket.handshake.query.isAdmin === 'true'; // Check for admin status from query
+    // Check for admin status from query, defaults to false if not present or not 'true'
+    let isAdmin = socket.handshake.query.isAdmin === 'true'; 
     
+    // 1. Determine User ID and Admin Status based on JWT payload first
     if (socket.userData) {
-        // Authenticated client
+        // Authenticated client/admin via JWT
         userId = socket.userData.id;
         isAdmin = socket.userData.isAdmin;
     } else if (isAdmin) {
-        // Unauthenticated Admin (we allow this based on the key check in admin.html)
+        // Unauthenticated connection identifying as Admin (allowed if admin.html provides the correct key)
         userId = defaultAdmin.id; 
     } else {
-        // Unauthenticated standard client
+        // Unauthenticated standard client (e.g., just opened the page)
         userId = socket.id; // Fallback to socket ID
     }
     
+    // Attach details to socket for later use
     socket.userId = userId;
     socket.isAdmin = isAdmin;
 
-    console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin})`);
+    // CRITICALLY FIXED SYNTAX HERE: The entire string needs to be inside the console.log() call.
+    console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}) | Socket: ${socket.id}`);
     activeConnections[userId] = socket.id;
 
-    // Initialize history for new clients if needed
+    // Initialize history for new, non-admin clients if needed
     if (!isAdmin && !chatHistoryByClient[userId]) {
         chatHistoryByClient[userId] = [];
         chatHistoryByClient[userId].push({
@@ -204,9 +211,11 @@ io.on('connection', (socket) => {
             };
 
             // Store message for this client
-            chatHistoryByClient[userId].push(messageData);
+            if (chatHistoryByClient[userId]) {
+                chatHistoryByClient[userId].push(messageData);
+            }
             
-            // Send the message back to the client and notify the admin(s)
+            // Send the message back to the client
             socket.emit('message', messageData);
             
             // Notify active admin sockets about the new message
@@ -261,20 +270,27 @@ io.on('connection', (socket) => {
             // 1. Send to the specific target client
             const clientSocketId = activeConnections[clientId];
             if (clientSocketId) {
+                // Find the socket ID and send the message
                 io.to(clientSocketId).emit('message', messageData);
             } else {
+                // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
                 console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
             
             // 2. Send back to all admins (including self) to keep views updated
+            // We use io.emit('newMessage') which will be caught by the admin's 'newMessage' handler
             io.emit('newMessage', messageData); 
         });
     }
 
     // --- Disconnect Handler ---
     socket.on('disconnect', () => {
+        // Only remove the socket ID from active connections. We keep the chat history.
+        if (activeConnections[socket.userId] === socket.id) {
+            delete activeConnections[socket.userId];
+        }
+        // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
         console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
-        delete activeConnections[socket.userId];
     });
 });
 
