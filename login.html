@@ -100,7 +100,8 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch(${API_BASE_URL}/api/v1/auth/login, {
+                // *** CRITICAL FIX: Added backtick (`) to open the template literal ***
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -113,7 +114,12 @@
                 if (response.ok && data.success) {
                     // Store the token and user data
                     localStorage.setItem('userToken', data.token);
-                    localStorage.setItem('userData', JSON.stringify(data.user));
+                    // We only store the initial user name/initials here to display immediately on dashboard load
+                    const user = data.user;
+                    const initials = user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+                    localStorage.setItem('clientName', user.name);
+                    localStorage.setItem('clientInitials', initials);
+                    localStorage.setItem('clientId', user.id);
                     
                     showMessage('Login successful! Redirecting to dashboard...', 'success');
                     

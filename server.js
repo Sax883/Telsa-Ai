@@ -73,7 +73,7 @@ io.use((socket, next) => {
             socket.userData = decoded;
             return next();
         } catch (err) {
-            // SYNTAX FIXED
+            // *** FIXED: Added backtick (`) to open the template literal ***
             console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token. Error: ${err.message}`);
             // Only reject connection if authentication token is invalid
             return next(new Error('Authentication error: Invalid token'));
@@ -85,6 +85,72 @@ io.use((socket, next) => {
 
 
 // --- Express Authentication Routes (For login.html and register.html) ---
+
+// Placeholder for /api/v1/profile/me
+app.get('/api/v1/profile/me', (req, res) => {
+    // A simple JWT verification middleware would be needed here in a real app.
+    // For this simulation, we'll just extract the token from the header manually.
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ success: false, message: 'Authorization header required.' });
+    }
+    const token = authHeader.split(' ')[1];
+    
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        const user = currentUsers.find(u => u.id === decoded.id);
+        
+        if (user) {
+            const { password, ...safeUserData } = user;
+            return res.json(safeUserData);
+        }
+        
+        return res.status(404).json({ success: false, message: 'User not found.' });
+        
+    } catch (err) {
+        return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+    }
+});
+
+// Placeholder for /api/v1/profile/update
+app.post('/api/v1/profile/update', (req, res) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ success: false, message: 'Authorization header required.' });
+    }
+    const token = authHeader.split(' ')[1];
+    
+    try {
+        const decoded = jwt.verify(token, SECRET_KEY);
+        const userIndex = currentUsers.findIndex(u => u.id === decoded.id);
+        
+        if (userIndex !== -1) {
+            const user = currentUsers[userIndex];
+            const { name, address, newPassword } = req.body;
+
+            if (name) user.name = name;
+            if (address) user.address = address;
+            if (newPassword) {
+                if (newPassword.length < 8) {
+                    return res.status(400).json({ success: false, message: 'Password must be at least 8 characters.' });
+                }
+                user.password = newPassword; // In a real app, hash this!
+            }
+            
+            // Overwrite the user object in the array
+            currentUsers[userIndex] = user; 
+            
+            const { password, ...safeUserData } = user;
+            return res.json({ success: true, message: 'Profile updated.', ...safeUserData });
+        }
+        
+        return res.status(404).json({ success: false, message: 'User not found.' });
+        
+    } catch (err) {
+        return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
+    }
+});
+
 
 app.post('/api/v1/auth/login', (req, res) => {
     const { email, password } = req.body;
@@ -130,26 +196,22 @@ app.post('/api/v1/auth/signup', (req, res) => {
         email,
         password,
         isAdmin: false,
-        balance: 0 
+        balance: 200, // Giving the initial $200 bonus on signup
+        address: ''
     };
 
     currentUsers.push(newUser); 
     chatHistoryByClient[newUser.id] = []; // Initialize chat history for the new client
 
-    // Token creation happens after successful user creation
-    const token = jwt.sign(
-        { id: newUser.id, email: newUser.email, isAdmin: newUser.isAdmin }, 
-        SECRET_KEY, 
-        { expiresIn: '24h' }
-    );
+    // Token creation happens after successful user creation, but for this client logic we want a separate login
     
     const { password: _, ...safeUserData } = newUser; 
 
-    // Sending back the token immediately after signup allows the client to navigate to the dashboard
+    // Return success without the token, forcing them to the login screen
     return res.status(201).json({
         success: true,
         message: 'Sign up successful.',
-        token: token,
+        // Token: token, // COMMENTED OUT: Force client to login.html
         user: safeUserData
     });
 });
@@ -180,7 +242,7 @@ io.on('connection', (socket) => {
     socket.userId = userId;
     socket.isAdmin = isAdmin;
 
-    // SYNTAX FIXED
+    // *** FIXED: Added backtick (`) to open the template literal ***
     console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}) | Socket: ${socket.id}`);
     activeConnections[userId] = socket.id;
 
@@ -273,7 +335,7 @@ io.on('connection', (socket) => {
                 // Find the socket ID and send the message
                 io.to(clientSocketId).emit('message', messageData);
             } else {
-                // SYNTAX FIXED
+                // *** FIXED: Added backtick (`) to open the template literal ***
                 console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
             
@@ -289,7 +351,7 @@ io.on('connection', (socket) => {
         if (activeConnections[socket.userId] === socket.id) {
             delete activeConnections[socket.userId];
         }
-        // SYNTAX FIXED
+        // *** FIXED: Added backtick (`) to open the template literal ***
         console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
     });
 });
@@ -298,5 +360,6 @@ io.on('connection', (socket) => {
 // --- Start Server ---
 server.listen(PORT, () => {
     console.log(`Chat server listening on port ${PORT}`);
+    // *** FIXED: Added backtick (`) to open the template literal ***
     console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
 });

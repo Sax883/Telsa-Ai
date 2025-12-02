@@ -4,9 +4,499 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESLAAI | Client Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #ef4444; 
+            --color-accent: #3b82f6; /* Blue for featured plans */
+            --color-secondary: #fcd34d; 
+            --color-text-dark: #1f2937;
+            --color-text-light: #9ca3af;
+            --color-background-dark: #1f2937; 
+            --color-background-light: #2c3541; 
+            --color-success: #10b981; 
+            --color-error: #ef4444;
+            --color-border: #4b5563;
+            --border-radius: 0.75rem; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background-dark);
+            color: white;
+            margin: 0;
+        }
+        
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-background-light);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--color-border);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .sidebar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: var(--border-radius);
+            color: #d1d5db;
+            transition: background-color 0.2s, color 0.2s;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar nav a i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            background-color: #374151;
+            color: white;
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            padding: 0; 
+            overflow-y: auto;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #2c3541;
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .welcome-message h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .welcome-message span {
+            color: var(--color-primary);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 9999px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-left: 1rem;
+        }
+        
+        /* General Page Styling */
+        .page-content {
+            padding: 2rem;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .page-content h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+            border-left: 4px solid var(--color-primary);
+            padding-left: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--color-background-light);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid var(--color-border);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-card p {
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .stat-card .change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .stat-card .growth {
+            color: var(--color-success);
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        
+        .stat-card .deposit {
+            color: var(--color-accent);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Recent Activity */
+        .recent-activity {
+            margin-top: 2rem;
+        }
+
+        .content-panel {
+            background-color: var(--color-background-light);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .activity-list .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .activity-list .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item .type {
+            font-weight: 600;
+        }
+
+        .transaction-item .deposit {
+            color: var(--color-success);
+        }
+        
+        /* Buttons */
+        .cta-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+
+        .cta-button:hover {
+            background-color: #dc2626;
+        }
+
+        /* Investment Plans */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .plan-card {
+            background-color: #374151;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 2px solid var(--color-border);
+            transition: all 0.3s;
+        }
+        
+        .plan-card:hover {
+            border-color: var(--color-primary);
+            transform: scale(1.02);
+        }
+
+        .plan-card.featured {
+            background-color: #1f2937;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .plan-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Profile Form */
+        .profile-container label {
+            color: white;
+            font-weight: 600;
+        }
+
+        .profile-container input[type="text"], 
+        .profile-container input[type="email"], 
+        .profile-container input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-border);
+            background-color: #111827;
+            color: white;
+            transition: border-color 0.2s;
+        }
+        
+        .profile-container input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        /* Chat Styling */
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--color-background-light);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 70vh; /* Set a fixed height for the chat window */
+            border: 1px solid var(--color-border);
+        }
+
+        .chat-header {
+            padding: 1rem;
+            background-color: #374151;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+
+        .message.admin {
+            align-self: flex-start;
+        }
+
+        .message.client {
+            align-self: flex-end;
+        }
+
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            max-width: 100%;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message.admin .message-bubble {
+            background-color: #3b82f6; /* Blue for admin */
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .message.client .message-bubble {
+            background-color: var(--color-primary); /* Red for client */
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .message-info {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            color: var(--color-text-light);
+            align-self: flex-end;
+            padding-right: 5px;
+        }
+        
+        .message.admin .message-info {
+             align-self: flex-start;
+             padding-left: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--color-border);
+            background-color: #374151;
+        }
+
+        #chatInput {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem 0 0 0.5rem;
+            background-color: #111827;
+            color: white;
+            margin-right: -1px;
+        }
+
+        #sendMessageButton {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #sendMessageButton:hover {
+            background-color: #dc2626;
+        }
+
+        /* Custom Modal (Message Box) */
+        .message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .message-box-content {
+            background-color: var(--color-background-light);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .message-box-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: var(--color-text-light);
+        }
+        
+        .message-box-error h3 { color: var(--color-error); }
+        .message-box-success h3 { color: var(--color-success); }
+
+
+        /* Mobile Responsiveness */
+        .menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .user-info-mobile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .client-id-mobile {
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+            margin-right: 1rem;
+            display: block; /* Show always for mobile */
+        }
+        
+        @media (max-width: 900px) {
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+            
+            .welcome-message {
+                display: none;
+            }
+            
+            .menu-toggle {
+                display: block;
+                margin-left: 1rem;
+            }
+
+            .user-profile .avatar {
+                margin-left: 0.5rem;
+            }
+        }
+
+    </style>
 </head>
 <body class="dashboard-body">
 
@@ -43,7 +533,6 @@
                 </div>
             </div>
             
-            <!-- Dashboard Home Page -->
             <div id="home" class="page-content">
                 <h2>📈 Investment Overview</h2>
                 <div class="stats-grid">
@@ -83,7 +572,7 @@
                             "symbol": "NASDAQ:TSLA", 
                             "interval": "D",
                             "timezone": "Etc/UTC",
-                            "theme": "light", 
+                            "theme": "dark", // Using dark theme for better integration
                             "style": "1",
                             "locale": "en",
                             "toolbar_bg": "#f1f3f6",
@@ -116,7 +605,6 @@
                 </div>
             </div>
 
-            <!-- Wallet Page -->
             <div id="wallet" class="page-content hidden">
                 <div class="content-panel">
                     <h2>💰 Wallet Balance & Funds</h2>
@@ -125,14 +613,13 @@
                         <h1 style="font-size: 3rem; color: var(--color-primary);" id="wallet-balance">$200.00</h1>
                         <p style="margin-top: 20px;">Your balance includes a $200 Registration Bonus. Choose an investment plan to unlock withdrawals.</p>
                         <div class="wallet-action-buttons" style="margin-top: 30px;">
-                            <a href="deposit.html" class="cta-button">Deposit Funds</a>
-                            <a href="withdraw.html" class="cta-button" style="background-color: var(--color-text-light);">Withdraw Funds</a>
+                            <a href="#" class="cta-button" onclick="showMessageBox('Info', 'Deposit functionality is simulated.', 'info');">Deposit Funds</a>
+                            <a href="#" class="cta-button" style="background-color: var(--color-text-light);" onclick="showMessageBox('Info', 'Withdrawal functionality is simulated.', 'info');">Withdraw Funds</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Investment Page (Placeholder content) -->
             <div id="new-investment" class="page-content hidden">
                 <div class="content-panel">
                     <h2>✨ Start a New Investment</h2>
@@ -142,23 +629,22 @@
                         <div class="plan-card" data-plan="Bronze" data-min="2000">
                             <h3 style="color: var(--color-primary);">Bronze Tier</h3>
                             <p>$2,000 Minimum</p>
-                            <a href="deposit.html?plan=Bronze" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Invest Now</a>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
                         </div>
                         <div class="plan-card featured" data-plan="Gold" data-min="10000">
                             <h3 style="color: var(--color-accent);">Gold Tier</h3>
                             <p>$10,000 Minimum</p>
-                            <a href="deposit.html?plan=Gold" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: var(--color-accent);">Invest Now</a>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: var(--color-accent);" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
                         </div>
                         <div class="plan-card" data-plan="Centurion" data-min="100000">
                             <h3 style="color: #0c0a09;">Centurion Tier</h3>
                             <p>$100,000+ Minimum</p>
-                            <a href="deposit.html?plan=Centurion" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #0c0a09;">Invest Now</a>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #0c0a09;" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- History Page (Placeholder content) -->
             <div id="history" class="page-content hidden">
                 <div class="content-panel">
                     <h2>⏳ Transaction & Investment History</h2>
@@ -180,7 +666,6 @@
                 </div>
             </div>
             
-            <!-- Live Chat Page (NEWLY ADDED) -->
             <div id="chat" class="page-content hidden">
                 <h2>💬 Live Support Chat</h2>
                 <div class="chat-container">
@@ -188,14 +673,7 @@
                         <i class="fas fa-headset"></i> TelsaAI Professional Support
                     </div>
                     <div class="chat-messages" id="chatMessages">
-                        <!-- Messages will be injected here by JavaScript -->
-                        <div class="message admin">
-                            <div class="message-bubble">
-                                Welcome to TelsaAI Live Support. How may we assist you today?
-                            </div>
-                            <div class="message-info">TelsaAI Support • Just now</div>
                         </div>
-                    </div>
                     <div class="chat-input">
                         <input type="text" id="chatInput" placeholder="Type your message here..." />
                         <button id="sendMessageButton"><i class="fas fa-paper-plane"></i> Send</button>
@@ -203,26 +681,25 @@
                 </div>
             </div>
 
-            <!-- Profile Page -->
             <div id="profile" class="page-content hidden">
                 <div class="content-panel">
                     <h2>👤 Account Profile & Settings</h2>
-                    <div class="profile-container" style="max-width: 600px; margin: 30px auto; background-color: var(--color-background-light); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div class="profile-container" style="max-width: 600px; margin: 30px auto; background-color: #1f2937; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--color-border);">
                         
                         <h3 style="color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 10px; margin-bottom: 20px;">Personal Information</h3>
 
                         <form class="profile-form" id="profileForm">
                             <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <div class="avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin-right: 20px;">?</div>
-                                <div>
-                                    <label for="name" style="display: block; color: var(--color-text-dark); margin-bottom: 5px; font-weight: 600;">Full Name</label>
-                                    <input type="text" id="name" required style="width: 100%;">
+                                <div style="flex-grow: 1;">
+                                    <label for="name" style="display: block; color: white; margin-bottom: 5px; font-weight: 600;">Full Name</label>
+                                    <input type="text" id="name" required>
                                 </div>
                             </div>
                             
                             <div class="form-group" style="margin-bottom: 15px;">
                                 <label for="email">Email Address (Read-Only)</label>
-                                <input type="email" id="email" readonly style="background-color: #eee;">
+                                <input type="email" id="email" readonly style="background-color: #111827;">
                             </div>
                             
                             <div class="form-group" style="margin-bottom: 15px;">
@@ -244,7 +721,6 @@
         </div>
     </div>
     
-    <!-- Custom Message Box Structure -->
     <div class="message-box" id="messageBox">
         <div class="message-box-content" id="messageBoxContent">
             <h3 id="msgTitle">Success!</h3>
@@ -253,9 +729,11 @@
         </div>
     </div>
 
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
     <script>
-        // NOTE: The API_BASE_URL must match the port of the running Node server (server.js)
-        const API_BASE_URL = 'http://localhost:3000/api/v1'; 
+        // FIXED: Use window.location.origin for correct deployment API base URL and APPEND the base path
+        const API_BASE_URL = `${window.location.origin}/api/v1`; 
         
         // --- DOM Elements ---
         const sidebar = document.getElementById('sidebar');
@@ -284,6 +762,10 @@
         const msgTitle = document.getElementById('msgTitle');
         const msgText = document.getElementById('msgText');
         const msgConfirm = document.getElementById('msgConfirm');
+        
+        // Socket connection variable
+        let chatSocket = null;
+
 
         // --- Auth & Profile Functions ---
 
@@ -306,6 +788,7 @@
         function getAuthHeaders(token) {
             return {
                 'Content-Type': 'application/json',
+                // FIXED: Template literal backticks added here
                 'Authorization': `Bearer ${token}`
             };
         }
@@ -317,6 +800,7 @@
             msgTitle.textContent = title;
             msgText.textContent = text;
             messageBoxContent.className = 'message-box-content'; 
+            // FIXED: Template literal backticks added here
             messageBoxContent.classList.add(`message-box-${type}`);
             messageBox.style.display = 'flex';
             
@@ -335,6 +819,9 @@
             const clientIdMobile = document.getElementById('client-id-mobile');
             
             userNameElements.forEach(el => el.textContent = name);
+            // Hide the name in the mobile view if space is tight, though usually welcome-name handles it.
+            document.getElementById('welcome-name').textContent = name;
+            
             userAvatarElements.forEach(el => el.textContent = initials);
             
             if (clientIdSidebar) clientIdSidebar.textContent = clientId;
@@ -349,17 +836,27 @@
          */
         async function loadProfile() {
             const token = checkAuth();
-            if (!token) return;
+            if (!token) return; // checkAuth will redirect if no token
+
+            // Fallback load from local storage immediately for faster UI rendering
+            const storedName = localStorage.getItem('clientName');
+            const storedInitials = localStorage.getItem('clientInitials');
+            const storedId = localStorage.getItem('clientId');
+            if (storedName && storedId) {
+                updateUI(storedName, storedInitials, storedId);
+            }
+
 
             try {
+                // FIXED: Template literal backticks added here
                 const response = await fetch(`${API_BASE_URL}/profile/me`, {
                     method: 'GET',
                     headers: getAuthHeaders(token),
                 });
                 
-                if (response.status === 403) {
+                if (response.status === 403 || response.status === 401) {
                      // JWT expired or invalid
-                    localStorage.removeItem('userToken');
+                    localStorage.clear(); // Clear all auth data
                     showMessageBox('Session Expired', 'Your session has expired. Please log in again.', 'error');
                     setTimeout(() => window.location.href = 'login.html', 2000);
                     return;
@@ -368,109 +865,117 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Update all stored and displayed data
-                    localStorage.setItem('clientName', data.name);
-                    localStorage.setItem('clientInitials', data.initials);
-                    localStorage.setItem('clientId', data.clientId); 
+                    // Update all stored and displayed data with fresh server data
+                    const newInitials = data.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
 
-                    updateUI(data.name, data.initials, data.clientId);
+                    localStorage.setItem('clientName', data.name);
+                    localStorage.setItem('clientInitials', newInitials);
+                    localStorage.setItem('clientId', data.id); 
+
+                    updateUI(data.name, newInitials, data.id);
                     
                     // Fill profile inputs
                     if (emailInput) emailInput.value = data.email;
-                    if (addressInput) addressInput.value = data.address;
+                    if (addressInput) addressInput.value = data.address || '';
                 } else {
                     showMessageBox('Error', data.message || 'Failed to load profile data.', 'error');
                 }
 
             } catch (error) {
                 console.error('Error loading profile:', error);
-                showMessageBox('Network Error', 'Could not connect to the TelsaAI server.', 'error');
+                // Only show network error if the initial fallback failed
+                if (!storedName) {
+                    showMessageBox('Network Error', 'Could not connect to the TelsaAI server.', 'error');
+                }
             }
         }
         
         // --- Chat Functions ---
+        
+        function connectChatSocket() {
+            const token = checkAuth();
+            if (!token) return;
+            
+            // Disconnect any existing socket before connecting
+            if (chatSocket) {
+                chatSocket.disconnect();
+            }
+
+            chatSocket = io(window.location.origin, {
+                query: { token: token }
+            });
+
+            chatSocket.on('connect', () => {
+                console.log('Socket.IO connected as client.');
+                // Request initial history upon connection
+                fetchMessages(); 
+            });
+
+            chatSocket.on('history', (messages) => {
+                chatMessages.innerHTML = '';
+                messages.forEach(renderMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+            
+            chatSocket.on('message', (message) => {
+                renderMessage(message);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+
+            chatSocket.on('error', (err) => {
+                console.error('Socket Error:', err);
+                showMessageBox('Chat Error', 'Connection lost or unauthorized chat access.', 'error');
+            });
+
+            chatSocket.on('disconnect', () => {
+                console.log('Socket.IO disconnected.');
+            });
+        }
+
 
         /**
          * Renders a single message bubble into the chat window.
          */
         function renderMessage(message) {
             const messageElement = document.createElement('div');
-            // Determine class based on sender role/ID
-            const messageClass = message.senderRole === 'admin' || message.senderId === 'admin@telsaai.com' ? 'admin' : 'client';
+            // Determine class: message.isAdmin is true if it comes from the admin user ID or the system
+            const messageClass = message.isAdmin ? 'admin' : 'client';
             
             // Format timestamp
-            const date = new Date(message.timestamp);
-            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const date = new Date(); // Use current time for simplicity, or message.timestamp if server sends full date
+            const timeString = message.timestamp || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             
             messageElement.classList.add('message', messageClass);
             messageElement.innerHTML = `
-                <div class="message-bubble">${message.text}</div>
-                <div class="message-info">${message.senderName} • ${timeString}</div>
+                <div class="message-bubble">${message.message}</div>
+                <div class="message-info">${message.isAdmin ? 'Support' : 'You'} • ${timeString}</div>
             `;
             chatMessages.appendChild(messageElement);
         }
 
         /**
-         * Fetches all current messages from the server and updates the chat.
+         * Sends a new message to the server via socket.
          */
-        async function fetchMessages() {
-            const token = checkAuth();
-            if (!token) return;
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/chat/messages`, {
-                    method: 'GET',
-                    headers: getAuthHeaders(token),
-                });
-                
-                if (!response.ok) throw new Error('Failed to fetch messages.');
-
-                const messages = await response.json();
-                
-                // Clear and re-render all messages (simple refresh model)
-                chatMessages.innerHTML = '';
-                messages.forEach(renderMessage);
-                
-                // Scroll to bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-
-            } catch (error) {
-                console.error('Error fetching messages:', error);
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !chatSocket || !chatSocket.connected) {
+                showMessageBox('Chat Status', 'Cannot send: Chat is disconnected.', 'error');
+                return;
             }
+
+            chatSocket.emit('clientMessage', { message: text });
+            chatInput.value = ''; 
+            sendMessageButton.disabled = true; 
+            
+            // Re-enable button after a short delay to simulate network latency
+            setTimeout(() => {
+                 sendMessageButton.disabled = false;
+            }, 500);
         }
 
-        /**
-         * Sends a new message to the server.
-         */
-        async function sendMessage() {
-            const token = checkAuth();
-            const text = chatInput.value.trim();
-
-            if (!text) return; // Don't send empty messages
-
-            chatInput.value = ''; // Clear input immediately
-            sendMessageButton.disabled = true; // Disable button
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/chat/send`, {
-                    method: 'POST',
-                    headers: getAuthHeaders(token),
-                    body: JSON.stringify({ text })
-                });
-
-                if (response.ok) {
-                    // Message sent successfully, force refresh the list to show all new messages (including admin auto-reply)
-                    fetchMessages(); 
-                } else {
-                    showMessageBox('Chat Error', 'Could not send message. Please try again.', 'error');
-                }
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showMessageBox('Network Error', 'Chat server connection failed.', 'error');
-            } finally {
-                sendMessageButton.disabled = false; // Re-enable button
-            }
+        // Fetch messages is now just for initial load/manual refresh, history is managed by socket 'history' event
+        function fetchMessages() {
+             // If connected, the socket handles history automatically.
         }
 
 
@@ -502,18 +1007,14 @@
                     if (targetPage) {
                         targetPage.classList.remove('hidden');
                         
-                        // Special: If navigating to Chat, fetch messages
+                        // Special: If navigating to Chat, connect the socket
                         if (targetPageId === 'chat') {
-                            fetchMessages();
-                            // Set up a refresh interval only when on the chat page
-                            if (!window.chatInterval) {
-                                window.chatInterval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
-                            }
+                            connectChatSocket();
                         } else {
-                            // Clear interval when navigating away from chat
-                            if (window.chatInterval) {
-                                clearInterval(window.chatInterval);
-                                window.chatInterval = null;
+                            // Disconnect when navigating away from chat
+                            if (chatSocket) {
+                                chatSocket.disconnect();
+                                chatSocket = null;
                             }
                         }
                     }
@@ -528,11 +1029,11 @@
             // 4. Logout Handler
             logoutButton.addEventListener('click', (e) => {
                 e.preventDefault();
-                localStorage.removeItem('userToken');
-                // Clear all other profile data too
-                localStorage.removeItem('clientName');
-                localStorage.removeItem('clientInitials');
-                localStorage.removeItem('clientId');
+                // Clear all auth data
+                localStorage.clear();
+                if (chatSocket) {
+                    chatSocket.disconnect();
+                }
                 window.location.href = 'login.html';
             });
 
@@ -558,6 +1059,7 @@
                     }
 
                     try {
+                        // FIXED: Template literal backticks added here
                         const response = await fetch(`${API_BASE_URL}/profile/update`, {
                             method: 'POST',
                             headers: getAuthHeaders(token),
@@ -595,15 +1097,18 @@
                 sendMessageButton.addEventListener('click', sendMessage);
                 chatInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent form submission if input is wrapped in form
                         sendMessage();
                     }
                 });
             }
             
-            // Ensure the initial page is displayed correctly
-            const initialPageId = document.querySelector('.sidebar nav a.active').getAttribute('data-page');
-            document.getElementById(initialPageId).classList.remove('hidden');
-
+            // Ensure the initial page is displayed correctly (Home)
+            const initialPageLink = document.querySelector('.sidebar nav a.active');
+            if (initialPageLink) {
+                 const initialPageId = initialPageLink.getAttribute('data-page');
+                 document.getElementById(initialPageId).classList.remove('hidden');
+            }
         });
     </script>
 </body>

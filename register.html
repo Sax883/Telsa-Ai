@@ -108,7 +108,8 @@
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch(${API_BASE_URL}/api/v1/auth/signup, {
+                // *** CRITICAL FIX: Added backtick (`) to open the template literal ***
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -121,7 +122,8 @@
                 if (response.ok && data.success) {
                     showMessage('Registration successful! Redirecting to login...', 'success');
                     
-                    // CRITICAL: Force redirect to login.html after successful registration
+                    // We don't need to store the token here, as we require a separate login step
+                    
                     setTimeout(() => {
                         window.location.href = 'login.html';
                     }, 500); 
