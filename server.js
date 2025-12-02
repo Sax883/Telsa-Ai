@@ -1,9 +1,13 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken'); // Added JWT
 
 const app = express();
 const server = http.createServer(app);
+
+// CRUCIAL: Read the secret key from the environment variable set on Render.
+const JWT_SECRET = process.env.JWT_SECRET || 'YOUR_FALLBACK_DEV_KEY_CHANGE_ME'; 
 
 // Initialize Socket.IO with CORS enabled
 const io = new Server(server, {
@@ -18,29 +22,67 @@ const chatHistory = [];
 
 // --- Utility Functions ---
 
-// Function to format the timestamp
 function getTimestamp() {
     return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-// Function to generate a unique Client ID
-function generateClientId() {
-    // Generate a unique ID like TAI-123456
-    return 'TAI-' + Math.floor(100000 + Math.random() * 900000);
-}
+// --- NEW LOGIN/AUTH ROUTE ---
+app.use(express.json()); // Middleware to parse JSON body requests
+
+app.post('/api/login', (req, res) => {
+    const { email, password } = req.body;
+
+    // --- DUMMY AUTH CHECK: Replace this with your actual database/user verification! ---
+    // The username (email) will serve as the unique Client ID.
+    const SIMULATED_EMAIL = 'test@teslaai.com'; 
+    const SIMULATED_PASSWORD = 'password123';
+    
+    // Check for SIMULATED successful login OR the user registered via the simple localStorage method
+    const registeredEmail = process.env.REG_EMAIL || SIMULATED_EMAIL;
+    const registeredPassword = process.env.REG_PASS || SIMULATED_PASSWORD;
+
+    let isAuthenticated = false;
+    let clientId = null;
+
+    if ((email.toLowerCase() === SIMULATED_EMAIL && password === SIMULATED_PASSWORD) || 
+        (email.toLowerCase() === registeredEmail && password === registeredPassword)) {
+        isAuthenticated = true;
+        clientId = email.toLowerCase(); // Use email as unique identifier
+    }
+    // -----------------------------------------------------------------------------------
+
+    if (isAuthenticated) { 
+        // AUTH SUCCESS: Generate a JWT with the unique Client ID
+        const token = jwt.sign({ clientId: clientId }, JWT_SECRET, { expiresIn: '7d' });
+
+        return res.json({ 
+            success: true, 
+            message: 'Login successful.',
+            token: token,
+            clientId: clientId,
+            userName: "TelsaAi Client" // Or fetch actual name from database
+        });
+    }
+
+    // AUTH FAILURE
+    res.status(401).json({ success: false, message: 'Invalid credentials.' });
+});
+// ------------------------------------
 
 // --- Socket.IO Connection Logic ---
 
 io.on('connection', (socket) => {
     
     // 1. Initial Connection & ID Assignment
-    // Check if the connection is from the admin or a client
+    // The server doesn't assign ID; the client script passes the authenticated ID
     const isClient = socket.handshake.query.isAdmin !== 'true';
-    const userId = isClient ? generateClientId() : 'Admin'; 
+    const userId = socket.handshake.query.clientId || (isClient ? 'ANON-' + socket.id.substring(0, 4) : 'Admin'); 
 
-    // **THIS IS THE CORRECTED LOGGING LINE**
     console.log(`[${getTimestamp()}] A user connected: ${userId} (${socket.id})`);
 
+    // ... (rest of the socket logic remains the same)
+    // ... (rest of the socket logic remains the same)
+    
     // 2. Send History
     socket.emit('history', chatHistory);
 
@@ -52,7 +94,6 @@ io.on('connection', (socket) => {
             timestamp: getTimestamp()
         };
 
-        // Store and broadcast to everyone (Admin and other clients)
         chatHistory.push(messageData);
         io.emit('newMessage', messageData);
         
@@ -62,12 +103,11 @@ io.on('connection', (socket) => {
     // 4. Handle incoming admin replies (from admin.html)
     socket.on('adminReply', (msg) => {
         const messageData = {
-            userId: 'Admin', // Always set sender as Admin
+            userId: 'Admin', 
             message: msg.message,
             timestamp: getTimestamp()
         };
         
-        // Store and broadcast the admin reply to all connected users
         chatHistory.push(messageData);
         io.emit('newMessage', messageData);
 
@@ -82,11 +122,10 @@ io.on('connection', (socket) => {
 
 // --- Server Startup ---
 
-// Use the PORT environment variable provided by Render, or default to 3000
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
     console.log(`Chat server listening on port ${PORT}`);
     console.log(`--------------------------------------------------`);
-    console.log(`Deployment successful. Waiting for client connections.`);
+    console.log(`Deployment successful. JWT Auth Route Ready.`);
 });
