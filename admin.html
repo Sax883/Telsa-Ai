@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESLAAI | Admin Live Chat Panel</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        /* Admin-specific styles for a centralized, full-screen chat experience */
+        body {
+            background-color: #e2e8f0; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .admin-chat-panel {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background-color: var(--color-background-light);
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: var(--color-text-dark); /* Dark header for Admin */
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--color-primary);
+        }
+
+        .panel-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        /* Message area and input inherit styles from style.css but are adapted here */
+        .chat-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+
+        /* Override client styles for clear distinction */
+        .client-message {
+            justify-content: flex-start; /* Client messages appear on the left for the Admin */
+        }
+        
+        .client-message .message-bubble {
+            background-color: #dbeafe; /* Light blue/gray for client messages */
+            color: var(--color-text-dark);
+            border-bottom-left-radius: 4px;
+        }
+        .client-message .message-sender {
+            color: var(--color-primary);
+        }
+
+        .admin-message {
+            justify-content: flex-end; /* Admin messages appear on the right */
+        }
+
+        .admin-message .message-bubble {
+            background-color: var(--color-primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .admin-message .message-sender {
+            color: #fcebeb;
+        }
+        .admin-message .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chat-input {
+            padding: 15px 20px;
+            border-top: 1px solid var(--color-border);
+            display: flex;
+            background-color: var(--color-background-light);
+        }
+
+        #admin-input-text {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-right: 10px;
+            font-size: 1rem;
+        }
+        
+        #admin-send-btn {
+            padding: 0 25px;
+            border-radius: 6px;
+            font-size: 1rem;
+            height: auto;
+        }
+
+        @media (max-width: 600px) {
+            .admin-chat-panel {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-chat-panel">
+        <div class="panel-header">
+            <h1><i class="fas fa-headset"></i> TelsaAi Admin Support Console</h1>
+            <p style="font-size: 0.9rem; margin-top: 5px; color: #ccc;">Currently monitoring all active client sessions.</p>
+        </div>
+        
+        <div class="chat-messages" id="admin-chat-messages">
+            </div>
+        
+        <div class="chat-input">
+            <input type="text" id="admin-input-text" placeholder="Type your reply to all active clients..." required>
+            <button id="admin-send-btn" class="cta-button">Send Reply</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // *** IMPORTANT: REPLACE WITH YOUR LIVE CHAT SERVER URL/PORT ***
+            // Use the same URL you put in dashboard.html
+           const CHAT_SERVER_URL = "https://telsa-ai-chat-server.onrender.com"; 
+
+            const chatMessages = document.getElementById('admin-chat-messages');
+            const chatInputText = document.getElementById('admin-input-text');
+            const chatSendBtn = document.getElementById('admin-send-btn');
+            
+            // The Admin's unique ID for message differentiation
+            const ADMIN_ID = 'Admin'; 
+
+            // Connect to the Socket.IO server
+            const socket = io(CHAT_SERVER_URL);
+
+            socket.on('connect', () => {
+                console.log('Connected to chat server as Admin');
+                // You could emit an 'adminConnect' event here if you wanted server-side logic 
+                // to track the admin's presence.
+            });
+
+            // Function to add a message to the chat window
+            function addMessageToChat(msg) {
+                const messageElement = document.createElement('div');
+                // Determine if the message is from the Admin (your reply) or a Client
+                const isAdmin = msg.userId === ADMIN_ID; 
+                
+                messageElement.classList.add('message');
+                messageElement.classList.add(isAdmin ? 'admin-message' : 'client-message');
+                
+                // Show the sender's ID (which is the Client ID)
+                let sender = isAdmin ? 'You (Admin)' : msg.userId; 
+                
+                messageElement.innerHTML = `
+                    <div class="message-bubble">
+                        <span class="message-sender">${sender}</span>
+                        <p class="message-text">${msg.message}</p>
+                        <span class="message-time">${msg.timestamp}</span>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageElement);
+                // Scroll to the bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            // Handle message history from the server on connection
+            socket.on('history', (history) => {
+                chatMessages.innerHTML = ''; // Clear existing messages
+                history.forEach(addMessageToChat);
+            });
+
+            // Handle new incoming messages
+            socket.on('newMessage', (msg) => {
+                addMessageToChat(msg);
+            });
+
+            // Send reply logic (This uses the 'adminReply' event handler on the server)
+            function sendReply() {
+                const messageText = chatInputText.value.trim();
+                if (messageText) {
+                    const messageData = {
+                        userId: ADMIN_ID,
+                        message: messageText
+                    };
+                    
+                    // Emit the adminReply event to the server
+                    // The server will then broadcast this message to ALL clients and the admin panel
+                    socket.emit('adminReply', messageData);
+                    
+                    // Clear the input
+                    chatInputText.value = '';
+                }
+            }
+
+            // Attach event listeners for sending
+            chatSendBtn.addEventListener('click', sendReply);
+            chatInputText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    sendReply();
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
