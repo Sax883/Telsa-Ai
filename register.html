@@ -1,249 +1,286 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TESLAAI | Client Sign Up</title>
-    <!-- Assuming style.css contains shared styles -->
-    <link rel="stylesheet" href="style.css"> 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Specific Styles for Sign Up Page (Dark Mode Theme) */
-        :root {
-            --color-primary: #0ea5e9; /* Sky blue */
-            --color-secondary: #06b6d4; /* Cyan */
-            --color-background-dark: #1e293b; /* Dark Slate */
-            --color-background-light: #334155; /* Slightly lighter Slate */
-            --color-border: #475569; /* Slate Gray */
-            --color-text-light: #e2e8f0;
-            --color-text-dark: #cbd5e1;
-            --color-success: #22c55e;
-            --border-radius: 8px;
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
+
+// --- Configuration ---
+const PORT = process.env.PORT || 10000;
+// Note: This key is used for JWT token signing for client logins (login.html/register.html)
+const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-long-and-secure'; 
+const app = express();
+const server = http.createServer(app);
+
+const io = socketIo(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST"]
+    }
+});
+
+// --- Middleware ---
+app.use(bodyParser.json());
+app.use(express.static(__dirname));
+
+// --- Simulated Database (In-Memory) ---
+// UPDATED ADMIN CREDENTIALS: username: tesla_ai / password: @David081
+const defaultAdmin = { 
+    id: 'tesla_ai', 
+    name: 'TESLAAI Support', 
+    email: 'tesla_ai', // Using username as identifier here
+    password: '@David081', 
+    isAdmin: true, 
+    balance: 999999 
+};
+
+// Registered clients are stored here (in-memory, lost on server restart)
+let currentUsers = []; 
+
+// Message history stored by client ID
+// { "client1@example.com": [ {message}, {message} ], "client2@example.com": [...] }
+let chatHistoryByClient = {}; 
+let activeConnections = {}; // Track currently connected sockets by userId
+
+// --- Helper Functions ---
+
+function findUser(email, password = null) {
+    // 1. Check Admin
+    if (defaultAdmin.email === email && (!password || defaultAdmin.password === password)) {
+        return defaultAdmin;
+    }
+    // 2. Check current clients
+    return currentUsers.find(u => u.email === email && (!password || u.password === password));
+}
+
+function userExists(email) {
+    return defaultAdmin.email === email || currentUsers.some(u => u.email === email);
+}
+
+function getTimestamp() {
+    return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+
+// --- JWT Authentication Middleware for Socket.IO (Clients) ---
+
+io.use((socket, next) => {
+    // ... JWT Auth logic remains the same ...
+    const token = socket.handshake.query.token;
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            socket.userData = decoded;
+            return next();
+        } catch (err) {
+            console.error([${getTimestamp()}] Socket Auth Error: Invalid token.);
+            return next(new Error('Authentication error: Invalid token'));
         }
+    }
+    return next();
+});
+
+
+// --- Express Authentication Routes (For login.html and register.html) ---
+
+app.post('/api/v1/auth/login', (req, res) => {
+    // ... Login logic remains the same ...
+    const { email, password } = req.body;
+    
+    const user = findUser(email, password);
+
+    if (user) {
+        const token = jwt.sign(
+            { id: user.id, email: user.email, isAdmin: user.isAdmin }, 
+            SECRET_KEY, 
+            { expiresIn: '24h' }
+        );
+
+        const { password, ...safeUserData } = user;
+
+        return res.json({
+            success: true,
+            message: 'Login successful.',
+            token: token,
+            user: safeUserData
+        });
+    }
+
+    return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password.' 
+    });
+});
+
+app.post('/api/v1/auth/signup', (req, res) => {
+    // ... Signup logic remains the same ...
+    const { name, email, password } = req.body;
+
+    if (userExists(email)) {
+        return res.status(400).json({ 
+            success: false,
+            message: 'User already exists with this email address.' 
+        });
+    }
+
+    const newUser = {
+        id: email, 
+        name,
+        email,
+        password,
+        isAdmin: false,
+        balance: 0 
+    };
+
+    currentUsers.push(newUser); 
+    chatHistoryByClient[newUser.id] = []; // Initialize chat history for the new client
+
+    const token = jwt.sign(
+        { id: newUser.id, email: newUser.email, isAdmin: newUser.isAdmin }, 
+        SECRET_KEY, 
+        { expiresIn: '24h' }
+    );
+    
+    const { password: _, ...safeUserData } = newUser; 
+
+    return res.status(201).json({
+        success: true,
+        message: 'Sign up successful. Proceed to login.',
+        token: token,
+        user: safeUserData
+    });
+});
+
+
+// --- Socket.IO Connection Logic (Chat Server) ---
+
+io.on('connection', (socket) => {
+    
+    let userId;
+    let isAdmin = socket.handshake.query.isAdmin === 'true'; // Check for admin status from query
+    
+    if (socket.userData) {
+        // Authenticated client
+        userId = socket.userData.id;
+        isAdmin = socket.userData.isAdmin;
+    } else if (isAdmin) {
+        // Unauthenticated Admin (we allow this based on the key check in admin.html)
+        userId = defaultAdmin.id; 
+    } else {
+        // Unauthenticated standard client
+        userId = socket.id; // Fallback to socket ID
+    }
+    
+    socket.userId = userId;
+    socket.isAdmin = isAdmin;
+
+    console.log([${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}));
+    activeConnections[userId] = socket.id;
+
+    // Initialize history for new clients if needed
+    if (!isAdmin && !chatHistoryByClient[userId]) {
+        chatHistoryByClient[userId] = [];
+        chatHistoryByClient[userId].push({
+            userId: 'System',
+            message: 'Welcome to TESLAAI Live Support. How can we help you?',
+            timestamp: getTimestamp(),
+            isAdmin: true,
+            clientDisplay: true // Only show for the client's view
+        });
+    }
+
+    // --- CLIENT (dashboard.html) Events ---
+    if (!isAdmin) {
+        // 1. Send Client History
+        socket.emit('history', chatHistoryByClient[userId] || []);
+
+        // 2. Handle incoming client messages
+        socket.on('clientMessage', (msg) => {
+            const messageData = {
+                userId: userId, 
+                message: msg.message,
+                timestamp: getTimestamp(),
+                isAdmin: false
+            };
+
+            // Store message for this client
+            chatHistoryByClient[userId].push(messageData);
+            
+            // Send the message back to the client and notify the admin(s)
+            socket.emit('message', messageData);
+            
+            // Notify active admin sockets about the new message
+            io.emit('newMessage', messageData); 
+        });
+    }
+
+    // --- ADMIN (admin.html) Events ---
+    if (isAdmin) {
+        // 1. Request List of Clients
+        socket.on('requestClientList', () => {
+            const clientList = Object.keys(chatHistoryByClient).map(clientId => {
+                const history = chatHistoryByClient[clientId];
+                const lastMessage = history.length > 0 ? history[history.length - 1] : { message: 'No messages yet.', timestamp: 0 };
+                return {
+                    clientId: clientId,
+                    lastMessageTime: lastMessage.timestamp,
+                    lastMessageSummary: lastMessage.message.substring(0, 30) + (lastMessage.message.length > 30 ? '...' : ''),
+                    // Simple logic for active status: check if socket ID is in active connections
+                    isActive: !!activeConnections[clientId] 
+                };
+            });
+            socket.emit('clientList', clientList);
+        });
         
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-
-        .auth-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: var(--color-background-dark);
-            padding: 20px;
-        }
-
-        .auth-card {
-            background-color: var(--color-background-light);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-        }
-
-        .auth-card .logo {
-            margin-bottom: 20px;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-primary);
-        }
-
-        .auth-card h2 {
-            margin-bottom: 25px;
-            font-weight: 600;
-            color: var(--color-text-dark);
-        }
-
-        .form-group {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--color-text-light);
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            font-size: 1rem;
-            background-color: var(--color-background-dark);
-            color: var(--color-text-light);
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        .form-group input:focus {
-            border-color: var(--color-primary);
-            outline: none;
-        }
-
-        .toggle-link {
-            display: block;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: var(--color-text-light);
-        }
-
-        .toggle-link a {
-            font-weight: 600;
-            color: var(--color-secondary); /* Match your theme colors */
-            text-decoration: none;
-            transition: color 0.3s;
-        }
+        // 2. Request Specific Client History
+        socket.on('requestChatHistory', (clientId) => {
+            if (chatHistoryByClient[clientId]) {
+                socket.emit('chatHistory', {
+                    clientId: clientId,
+                    history: chatHistoryByClient[clientId]
+                });
+            }
+        });
         
-        .toggle-link a:hover {
-            color: var(--color-primary);
-        }
-
-        #message {
-            margin-bottom: 20px;
-            padding: 12px;
-            border-radius: 8px;
-            display: none;
-            font-weight: 500;
-        }
-        .message-success {
-            background-color: rgba(34, 197, 94, 0.1);
-            color: var(--color-success);
-        }
-        .message-error {
-            background-color: rgba(220, 38, 38, 0.1);
-            color: #ef4444; 
-        }
-
-        .cta-button.large {
-            padding: 15px 20px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            border-radius: var(--border-radius);
-            background-color: var(--color-primary); 
-            color: white;
-            transition: background-color 0.3s;
-        }
-        .cta-button.large:hover {
-            background-color: #38bdf8;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="logo">TESLAAI</div>
-            <h2 id="auth-title">Client Sign Up</h2>
-
-            <div id="message"></div>
-
-            <form id="auth-form">
-                <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" placeholder="client@telsaai.com" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="••••••••" required>
-                </div>
-                <button type="submit" class="cta-button large" id="auth-button" style="width: 100%;">Sign Up</button>
-            </form>
-
-            <div class="toggle-link">
-                <span id="toggle-text">Already have an account?</span> 
-                <a href="login.html" id="toggle-auth">Login</a>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // CRITICAL: Update this URL to your deployed backend API URL when going live.
-        const API_BASE_URL = 'http://localhost:3000/api/v1/auth'; 
-        const API_SIGNUP_URL = ${API_BASE_URL}/signup; 
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const authForm = document.getElementById('auth-form');
-            const authButton = document.getElementById('auth-button');
-            const messageElement = document.getElementById('message');
-            const nameInput = document.getElementById('name');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-
-            // --- Function to Display Messages ---
-            function displayMessage(text, type) {
-                messageElement.textContent = text;
-                messageElement.className = '';
-                messageElement.classList.add('message', message-${type});
-                messageElement.style.display = 'block';
+        // 3. Handle Admin Reply to Client
+        socket.on('adminReply', (data) => {
+            const { clientId, message } = data;
+            
+            const messageData = {
+                userId: defaultAdmin.id, 
+                message: message,
+                timestamp: getTimestamp(),
+                isAdmin: true
+            };
+            
+            // Store message for this client
+            if (chatHistoryByClient[clientId]) {
+                chatHistoryByClient[clientId].push(messageData);
             }
             
-            // --- Form Submission Handler (Sign Up) ---
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                authButton.disabled = true;
-                authButton.textContent = 'Signing up...';
-
-                const name = nameInput.value;
-                const email = emailInput.value;
-                const password = passwordInput.value;
-                
-                const payload = { name, email, password };
-
-                messageElement.style.display = 'none'; 
-
-                try {
-                    const response = await fetch(API_SIGNUP_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(payload),
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok && data.token) {
-                        // 1. SUCCESSFUL SIGN UP
-                        displayMessage('Sign Up Successful! Redirecting to dashboard...', 'success');
-                        
-                        // 2. CRITICAL: Save the token and user data
-                        localStorage.setItem('userToken', data.token);
-                        localStorage.setItem('userData', JSON.stringify(data.user)); 
-                        
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 1000); 
-
-                    } else {
-                        // 3. SERVER ERROR
-                        const errorMessage = data.message || An error occurred during sign up.;
-                        displayMessage(errorMessage, 'error');
-                    }
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                    displayMessage('Network error or server unavailable. Try again later.', 'error');
-                } finally {
-                    authButton.disabled = false;
-                    authButton.textContent = 'Sign Up';
-                }
-            });
+            // 1. Send to the specific target client
+            const clientSocketId = activeConnections[clientId];
+            if (clientSocketId) {
+                io.to(clientSocketId).emit('message', messageData);
+            } else {
+                console.log([${getTimestamp()}] Client ${clientId} is offline, message stored.);
+            }
+            
+            // 2. Send back to all admins (including self) to keep views updated
+            io.emit('newMessage', messageData); 
         });
-    </script>
-</body>
-</html>
+    }
+
+    // --- Disconnect Handler ---
+    socket.on('disconnect', () => {
+        console.log([${getTimestamp()}] User disconnected: ${socket.userId});
+        delete activeConnections[socket.userId];
+    });
+});
+
+
+// --- Start Server ---
+server.listen(PORT, () => {
+    console.log(Chat server listening on port ${PORT});
+    console.log(Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.);
+});

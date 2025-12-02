@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESLAAI | Client Login</title>
-    <!-- Assuming style.css contains shared styles -->
-    <link rel="stylesheet" href="style.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Specific Styles for Login Page (Dark Mode Theme) */
+        /* Specific Styles for Login Page (Red Theme) */
         :root {
-            --color-primary: #0ea5e9; /* Sky blue */
-            --color-secondary: #06b6d4; /* Cyan */
-            --color-background-dark: #1e293b; /* Dark Slate */
-            --color-background-light: #334155; /* Slightly lighter Slate */
-            --color-border: #475569; /* Slate Gray */
-            --color-text-light: #e2e8f0;
-            --color-text-dark: #cbd5e1;
-            --color-success: #22c55e;
+            /* --- RED THEME --- */
+            --color-primary: #ef4444; /* Bright Red (Main CTA) */
+            --color-secondary: #dc2626; /* Darker Red (Hover) */
+            --color-background-dark: #1f2937; /* Dark Gray */
+            --color-background-light: #374151; /* Slightly lighter Dark Gray */
+            --color-border: #4b5563; /* Gray Border */
+            --color-text-light: #f3f4f6; /* Off-white */
+            --color-text-dark: #d1d5db; /* Light gray text */
+            --color-success: #10b981; /* Green for success */
+            --color-error: #f87171; /* Light red for error */
             --border-radius: 8px;
         }
         
@@ -41,7 +41,7 @@
             background-color: var(--color-background-light);
             padding: 40px;
             border-radius: var(--border-radius);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
             width: 100%;
             max-width: 450px;
             text-align: center;
@@ -93,18 +93,18 @@
             display: block;
             margin-top: 20px;
             font-size: 0.9rem;
-            color: var(--color-text-light);
+            color: var(--color-text-dark);
         }
 
         .toggle-link a {
             font-weight: 600;
-            color: var(--color-secondary); /* Match your theme colors */
+            color: var(--color-primary); 
             text-decoration: none;
             transition: color 0.3s;
         }
         
         .toggle-link a:hover {
-            color: var(--color-primary);
+            color: var(--color-text-light);
         }
 
         #message {
@@ -115,12 +115,12 @@
             font-weight: 500;
         }
         .message-success {
-            background-color: rgba(34, 197, 94, 0.1);
+            background-color: rgba(16, 185, 129, 0.1);
             color: var(--color-success);
         }
         .message-error {
-            background-color: rgba(220, 38, 38, 0.1);
-            color: #ef4444; 
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--color-error); 
         }
 
         .cta-button.large {
@@ -135,7 +135,7 @@
             transition: background-color 0.3s;
         }
         .cta-button.large:hover {
-            background-color: #38bdf8;
+            background-color: var(--color-secondary);
         }
     </style>
 </head>
@@ -168,8 +168,8 @@
     </div>
 
     <script>
-        // CRITICAL: Update this URL to your deployed backend API URL when going live.
-        const API_BASE_URL = 'http://localhost:3000/api/v1/auth'; 
+        // Update this URL to your deployed backend API URL when going live.
+        const API_BASE_URL = 'http://localhost:10000/api/v1/auth'; 
         const API_LOGIN_URL = ${API_BASE_URL}/login; 
         
         document.addEventListener('DOMContentLoaded', () => {
@@ -191,15 +191,15 @@
             authForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
+                // Show loading state and disable button
                 authButton.disabled = true;
                 authButton.textContent = 'Logging in...';
+                messageElement.style.display = 'none'; 
 
                 const email = emailInput.value;
                 const password = passwordInput.value;
                 
                 const payload = { email, password };
-
-                messageElement.style.display = 'none'; 
 
                 try {
                     const response = await fetch(API_LOGIN_URL, {
@@ -233,6 +233,7 @@
                     console.error('Fetch error:', error);
                     displayMessage('Network error or server unavailable. Try again later.', 'error');
                 } finally {
+                    // CRITICAL FIX: Ensure button state is reset on any failure
                     authButton.disabled = false;
                     authButton.textContent = 'Login';
                 }

@@ -6,102 +6,96 @@ const bodyParser = require('body-parser');
 
 // --- Configuration ---
 const PORT = process.env.PORT || 10000;
-const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-long-and-secure';
+// Note: This key is used for JWT token signing for client logins (login.html/register.html)
+const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-long-and-secure'; 
 const app = express();
 const server = http.createServer(app);
-// Configure CORS for Socket.IO connections (Crucial for client access)
+
 const io = socketIo(server, {
     cors: {
-        origin: "*", // Allow all origins for now, restrict this to your frontend URL in production
+        origin: "*", 
         methods: ["GET", "POST"]
     }
 });
 
 // --- Middleware ---
 app.use(bodyParser.json());
-// Serve static files from the root directory (for login.html, register.html, dashboard.html)
 app.use(express.static(__dirname));
 
 // --- Simulated Database (In-Memory) ---
-// In a real app, this would be MongoDB or PostgreSQL
-const users = [
-    { id: 'admin@telsaai.com', name: 'Admin', email: 'admin@telsaai.com', password: 'password123', isAdmin: true, balance: 999999 },
-    // Example client for testing
-    { id: 'test@client.com', name: 'Test Client', email: 'test@client.com', password: 'password123', isAdmin: false, balance: 1500 }
-];
+// UPDATED ADMIN CREDENTIALS: username: tesla_ai / password: @David081
+const defaultAdmin = { 
+    id: 'tesla_ai', 
+    name: 'TESLAAI Support', 
+    email: 'tesla_ai', // Using username as identifier here
+    password: '@David081', 
+    isAdmin: true, 
+    balance: 999999 
+};
 
-// In-memory chat history storage
-let chatHistory = [];
+// Registered clients are stored here (in-memory, lost on server restart)
+let currentUsers = []; 
+
+// Message history stored by client ID
+// { "client1@example.com": [ {message}, {message} ], "client2@example.com": [...] }
+let chatHistoryByClient = {}; 
+let activeConnections = {}; // Track currently connected sockets by userId
 
 // --- Helper Functions ---
 
-/**
- * Generates a unique client ID.
- * In a real app, this should generate a secure UUID or use a database ID.
- */
-function generateClientId() {
-    // Generates a simple 6-digit number string
-    const uniqueNum = Math.floor(100000 + Math.random() * 900000);
-    return `TAI-${uniqueNum}`;
+function findUser(email, password = null) {
+    // 1. Check Admin
+    if (defaultAdmin.email === email && (!password || defaultAdmin.password === password)) {
+        return defaultAdmin;
+    }
+    // 2. Check current clients
+    return currentUsers.find(u => u.email === email && (!password || u.password === password));
 }
 
-/**
- * Gets a formatted timestamp for logging.
- */
+function userExists(email) {
+    return defaultAdmin.email === email || currentUsers.some(u => u.email === email);
+}
+
 function getTimestamp() {
     return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
 }
 
 
-// --- JWT Authentication Middleware for Socket.IO ---
+// --- JWT Authentication Middleware for Socket.IO (Clients) ---
 
-/**
- * Middleware to authenticate the Socket.IO connection based on the JWT token 
- * passed in the handshake query.
- */
 io.use((socket, next) => {
-    // Check for a token in the handshake query
+    // ... JWT Auth logic remains the same ...
     const token = socket.handshake.query.token;
 
     if (token) {
         try {
-            // Verify the token
             const decoded = jwt.verify(token, SECRET_KEY);
-            // Attach the user information to the socket for later use
             socket.userData = decoded;
             return next();
         } catch (err) {
-            // Token is invalid or expired
-            console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token from ${socket.handshake.address}`);
+            console.error([${getTimestamp()}] Socket Auth Error: Invalid token.);
             return next(new Error('Authentication error: Invalid token'));
         }
     }
-    // For simplicity, allow unauthenticated connections, but we must assign an ID
-    // In a production chat app, you should usually require a token here.
     return next();
 });
 
 
 // --- Express Authentication Routes (For login.html and register.html) ---
 
-/**
- * Route for user login.
- * Expected body: { email, password }
- */
 app.post('/api/v1/auth/login', (req, res) => {
+    // ... Login logic remains the same ...
     const { email, password } = req.body;
     
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = findUser(email, password);
 
     if (user) {
-        // Successful login: create JWT token
         const token = jwt.sign(
             { id: user.id, email: user.email, isAdmin: user.isAdmin }, 
             SECRET_KEY, 
-            { expiresIn: '24h' } // Token expires in 24 hours
+            { expiresIn: '24h' }
         );
 
-        // Return token and safe user data (without password)
         const { password, ...safeUserData } = user;
 
         return res.json({
@@ -112,51 +106,46 @@ app.post('/api/v1/auth/login', (req, res) => {
         });
     }
 
-    // Invalid credentials
     return res.status(401).json({ 
         success: false,
         message: 'Invalid email or password.' 
     });
 });
 
-/**
- * Route for user sign up/registration.
- * Expected body: { name, email, password }
- */
 app.post('/api/v1/auth/signup', (req, res) => {
+    // ... Signup logic remains the same ...
     const { name, email, password } = req.body;
 
-    if (users.some(u => u.email === email)) {
+    if (userExists(email)) {
         return res.status(400).json({ 
             success: false,
             message: 'User already exists with this email address.' 
         });
     }
 
-    // Create new user (assuming initial balance is 0 and they are not admin)
     const newUser = {
-        id: email, // Using email as a unique ID for simplicity
+        id: email, 
         name,
         email,
         password,
         isAdmin: false,
-        balance: 0 // Initial balance for new clients
+        balance: 0 
     };
 
-    users.push(newUser);
+    currentUsers.push(newUser); 
+    chatHistoryByClient[newUser.id] = []; // Initialize chat history for the new client
 
-    // Auto-login and generate token
     const token = jwt.sign(
         { id: newUser.id, email: newUser.email, isAdmin: newUser.isAdmin }, 
         SECRET_KEY, 
         { expiresIn: '24h' }
     );
     
-    const { password: _, ...safeUserData } = newUser; // Exclude password from response
+    const { password: _, ...safeUserData } = newUser; 
 
     return res.status(201).json({
         success: true,
-        message: 'Sign up successful.',
+        message: 'Sign up successful. Proceed to login.',
         token: token,
         user: safeUserData
     });
@@ -167,76 +156,131 @@ app.post('/api/v1/auth/signup', (req, res) => {
 
 io.on('connection', (socket) => {
     
-    // 1. Initial Connection & ID Assignment
     let userId;
-    let isClient = true; // Assume client unless socket data says otherwise
+    let isAdmin = socket.handshake.query.isAdmin === 'true'; // Check for admin status from query
     
     if (socket.userData) {
-        // User authenticated via JWT
+        // Authenticated client
         userId = socket.userData.id;
-        isClient = !socket.userData.isAdmin;
+        isAdmin = socket.userData.isAdmin;
+    } else if (isAdmin) {
+        // Unauthenticated Admin (we allow this based on the key check in admin.html)
+        userId = defaultAdmin.id; 
     } else {
-        // User is unauthenticated - assign an ID based on handshake
-        const isAdmin = socket.handshake.query.isAdmin === 'true';
-        isClient = !isAdmin;
-        
-        // This line used to be the source of the syntax error
-        userId = isClient ? generateClientId() : 'Admin';
+        // Unauthenticated standard client
+        userId = socket.id; // Fallback to socket ID
     }
     
-    // Store userId on the socket for future use
     socket.userId = userId;
+    socket.isAdmin = isAdmin;
 
-    console.log(`[${getTimestamp()}] A user connected: ${userId} (${socket.id})`);
+    console.log([${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}));
+    activeConnections[userId] = socket.id;
 
-    // 2. Send History
-    socket.emit('history', chatHistory);
-
-    // 3. Handle incoming client messages (from dashboard.html)
-    socket.on('clientMessage', (msg) => {
-        const messageData = {
-            userId: socket.userId, // Use the ID assigned above
-            message: msg.message,
+    // Initialize history for new clients if needed
+    if (!isAdmin && !chatHistoryByClient[userId]) {
+        chatHistoryByClient[userId] = [];
+        chatHistoryByClient[userId].push({
+            userId: 'System',
+            message: 'Welcome to TESLAAI Live Support. How can we help you?',
             timestamp: getTimestamp(),
-            isAdmin: !isClient // Clients send messages, so this is false
-        };
+            isAdmin: true,
+            clientDisplay: true // Only show for the client's view
+        });
+    }
 
-        // Add to history
-        chatHistory.push(messageData);
-        // Broadcast to all connected clients (including the sender)
-        io.emit('message', messageData);
-    });
+    // --- CLIENT (dashboard.html) Events ---
+    if (!isAdmin) {
+        // 1. Send Client History
+        socket.emit('history', chatHistoryByClient[userId] || []);
 
-    // 4. Handle incoming admin messages (from admin.html)
-    // NOTE: We should check if the user is actually an admin before accepting
-    socket.on('adminMessage', (msg) => {
-        if (isClient) {
-            console.warn(`[${getTimestamp()}] Non-admin user ${socket.userId} attempted to send admin message.`);
-            return; // Block non-admin users
-        }
+        // 2. Handle incoming client messages
+        socket.on('clientMessage', (msg) => {
+            const messageData = {
+                userId: userId, 
+                message: msg.message,
+                timestamp: getTimestamp(),
+                isAdmin: false
+            };
+
+            // Store message for this client
+            chatHistoryByClient[userId].push(messageData);
+            
+            // Send the message back to the client and notify the admin(s)
+            socket.emit('message', messageData);
+            
+            // Notify active admin sockets about the new message
+            io.emit('newMessage', messageData); 
+        });
+    }
+
+    // --- ADMIN (admin.html) Events ---
+    if (isAdmin) {
+        // 1. Request List of Clients
+        socket.on('requestClientList', () => {
+            const clientList = Object.keys(chatHistoryByClient).map(clientId => {
+                const history = chatHistoryByClient[clientId];
+                const lastMessage = history.length > 0 ? history[history.length - 1] : { message: 'No messages yet.', timestamp: 0 };
+                return {
+                    clientId: clientId,
+                    lastMessageTime: lastMessage.timestamp,
+                    lastMessageSummary: lastMessage.message.substring(0, 30) + (lastMessage.message.length > 30 ? '...' : ''),
+                    // Simple logic for active status: check if socket ID is in active connections
+                    isActive: !!activeConnections[clientId] 
+                };
+            });
+            socket.emit('clientList', clientList);
+        });
         
-        const messageData = {
-            userId: socket.userId, // 'Admin'
-            message: msg.message,
-            timestamp: getTimestamp(),
-            isAdmin: true
-        };
+        // 2. Request Specific Client History
+        socket.on('requestChatHistory', (clientId) => {
+            if (chatHistoryByClient[clientId]) {
+                socket.emit('chatHistory', {
+                    clientId: clientId,
+                    history: chatHistoryByClient[clientId]
+                });
+            }
+        });
+        
+        // 3. Handle Admin Reply to Client
+        socket.on('adminReply', (data) => {
+            const { clientId, message } = data;
+            
+            const messageData = {
+                userId: defaultAdmin.id, 
+                message: message,
+                timestamp: getTimestamp(),
+                isAdmin: true
+            };
+            
+            // Store message for this client
+            if (chatHistoryByClient[clientId]) {
+                chatHistoryByClient[clientId].push(messageData);
+            }
+            
+            // 1. Send to the specific target client
+            const clientSocketId = activeConnections[clientId];
+            if (clientSocketId) {
+                io.to(clientSocketId).emit('message', messageData);
+            } else {
+                console.log([${getTimestamp()}] Client ${clientId} is offline, message stored.);
+            }
+            
+            // 2. Send back to all admins (including self) to keep views updated
+            io.emit('newMessage', messageData); 
+        });
+    }
 
-        // Add to history
-        chatHistory.push(messageData);
-        // Broadcast to all connected clients
-        io.emit('message', messageData);
-    });
-
-    // 5. Handle Disconnect
+    // --- Disconnect Handler ---
     socket.on('disconnect', () => {
-        console.log(`[${getTimestamp()}] User disconnected: ${socket.userId} (${socket.id})`);
+        console.log([${getTimestamp()}] User disconnected: ${socket.userId});
+        delete activeConnections[socket.userId];
     });
 });
 
 
 // --- Start Server ---
 server.listen(PORT, () => {
-    console.log(`Chat server listening on port ${PORT}`);
-    console.log(`Deployment successful. JWT Auth Routes Ready.`);
+    console.log(Chat server listening on port ${PORT});
+    console.log(Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.);
 });
