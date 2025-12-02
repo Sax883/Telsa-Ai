@@ -1,87 +1,91 @@
-// server.js (For the Node.js Backend)
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
 const app = express();
-// The port is crucial for Render's environment
-const port = process.env.PORT || 3000; 
-
-// Create a standard HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO server
+// Initialize Socket.IO with CORS enabled to accept connections from your custom domain (telsa-ai.org)
 const io = new Server(server, {
-    // Crucial: Configure CORS to allow your live website's domain to connect.
-    // Replace 'YOUR_RENDER_FRONTEND_URL' with the actual URL of your live dashboard (e.g., https://telsaai.onrender.com)
-    // For local testing, you can use: 'http://127.0.0.1:5500' or 'http://localhost:8080' etc.
-    // Using '*' is a quick way to allow all origins, but less secure for production.
     cors: {
-        origin: "*", 
+        origin: "*", // Allows connections from any origin (your telsa-ai.org static site)
         methods: ["GET", "POST"]
     }
 });
 
-// Simple in-memory storage for messages. Not persistent across server restarts!
-// In a production app, you would use a database (like MongoDB or Postgres).
-let messageHistory = [];
+// Simple in-memory storage for chat history
+const chatHistory = [];
+
+// --- Utility Functions ---
+
+// Function to format the timestamp
+function getTimestamp() {
+    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Function to generate a unique Client ID (similar to what the frontend generates)
+function generateClientId() {
+    return 'TAI-' + Math.floor(100000 + Math.random() * 900000);
+}
+
+// --- Socket.IO Connection Logic ---
 
 io.on('connection', (socket) => {
-    console.log(A user connected: ${socket.id});
-    
-    // 1. Send the existing message history to the newly connected user
-    socket.emit('history', messageHistory);
+    // 1. Initial Connection & ID Assignment
+    // Check if the connection is from the admin (which we defined as the Admin ID) or a client
+    // For simplicity, we'll assign a client ID if one isn't provided, though the frontend usually handles this.
+    const isClient = socket.handshake.query.isAdmin !== 'true';
+    const userId = isClient ? generateClientId() : 'Admin'; 
 
-    // 2. Handle incoming client messages
-    socket.on('clientMessage', (data) => {
-        // Assume 'data' structure is { userId: 'TAI-001934', message: 'Hello Admin' }
-        const fullMessage = {
-            id: Date.now(),
-            userId: data.userId,
-            message: data.message,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            isClient: true // Flag to distinguish client messages
+    // The line that previously caused the SyntaxError is fixed here with backticks:
+    console.log('[${getTimestamp()}] A user connected: ${userId} (${socket.id})');
+
+    // 2. Send History
+    socket.emit('history', chatHistory);
+
+    // 3. Handle incoming client messages (from dashboard.html)
+    socket.on('clientMessage', (msg) => {
+        const messageData = {
+            userId: msg.userId || userId, // Use the ID passed from the client or the assigned ID
+            message: msg.message,
+            timestamp: getTimestamp()
+        };
+
+        // Store and broadcast to everyone (Admin and other clients)
+        chatHistory.push(messageData);
+        io.emit('newMessage', messageData);
+        
+        console.log('[${getTimestamp()}] Client Message [${messageData.userId}]: ${messageData.message}');
+    });
+
+    // 4. Handle incoming admin replies (from admin.html)
+    socket.on('adminReply', (msg) => {
+        const messageData = {
+            userId: 'Admin', // Always set sender as Admin
+            message: msg.message,
+            timestamp: getTimestamp()
         };
         
-        // Save to history
-        messageHistory.push(fullMessage);
+        // Store and broadcast the admin reply to all connected users
+        chatHistory.push(messageData);
+        io.emit('newMessage', messageData);
 
-        // Broadcast the message to all connected clients and the admin
-        io.emit('newMessage', fullMessage);
-    });
-    
-    // 3. Handle incoming admin/server replies
-    // NOTE: In a proper app, this event should be secured and only accessible by an authenticated admin dashboard.
-    socket.on('adminReply', (data) => {
-        // Assume 'data' structure is { userId: 'Admin', message: 'I can help you.' }
-        const fullMessage = {
-            id: Date.now(),
-            userId: 'Admin',
-            message: data.message,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-            isClient: false // Flag to distinguish admin messages
-        };
-
-        // Save to history
-        messageHistory.push(fullMessage);
-
-        // Broadcast the admin reply to all connected users
-        io.emit('newMessage', fullMessage);
+        console.log('[${getTimestamp()}] Admin Reply: ${messageData.message})';
     });
 
-    // 4. Handle disconnection
+    // 5. Handle disconnection
     socket.on('disconnect', () => {
-        console.log(User disconnected: ${socket.id});
+        console.log('[${getTimestamp()}] User disconnected: ${userId} (${socket.id})');
     });
 });
 
-// Simple root route for health check (Render needs this)
-app.get('/', (req, res) => {
-    res.send('TelsaAI Chat Server is running!');
-});
+// --- Server Startup ---
 
-// Start the server
-server.listen(port, () => {
-    console.log(Chat Server listening on *:${port});
+// Use the PORT environment variable provided by Render, or default to 3000
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log(Chat server listening on port ${PORT});
+    console.log(--------------------------------------------------);
+    console.log(Deployment successful. Waiting for client connections.);
 });
