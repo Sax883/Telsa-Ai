@@ -35,7 +35,7 @@ io.on('connection', (socket) => {
     // Check if the connection is from the admin (which we defined as the Admin ID) or a client
     // For simplicity, we'll assign a client ID if one isn't provided, though the frontend usually handles this.
     const isClient = socket.handshake.query.isAdmin !== 'true';
-    const userId = isClient ? generateClientId() : 'Admin';)
+    const userId = isClient ? generateClientId() : 'Admin';
 
     // The line that previously caused the SyntaxError is fixed here with backticks:
     console.log('[${getTimestamp()}] A user connected: ${userId} (${socket.id})');
