@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body class="dashboard-body">
 
@@ -295,7 +296,26 @@
 
         </div>
     </div>
-
+    
+    <div class="chat-container">
+        <div class="chat-toggle" id="chat-toggle">
+            <i class="fas fa-comment-dots"></i>
+            <span class="chat-label">Live Chat</span>
+            <span class="new-message-badge hidden">1</span>
+        </div>
+        <div class="chat-window hidden" id="chat-window">
+            <div class="chat-header">
+                <h3>TelsaAi Support</h3>
+                <i class="fas fa-times" id="chat-close"></i>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input-text" placeholder="Type your message..." required>
+                <button id="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
     <script>
         // Function to get initials from a full name
         function getInitials(fullName) {
@@ -329,6 +349,9 @@
             
             const profileForm = document.querySelector('.profile-form');
             const defaultName = "Client Investor";
+            // Client ID is needed for the chat messages
+            const clientId = document.querySelector('.client-id-sidebar').textContent.trim();
+
 
             // --- 1. LOAD PROFILE DATA ON PAGE LOAD (from Local Storage) ---
             const savedName = localStorage.getItem('clientName');
@@ -417,8 +440,109 @@
                     }
                 });
             }
+            
+            // =======================================================
+            // 6. LIVE CHAT LOGIC (Socket.IO)
+            // =======================================================
+
+            // *** IMPORTANT: REPLACE WITH YOUR LIVE CHAT SERVER URL/PORT ***
+            // If you run the Node.js server on Render, the URL will be: https://[your-chat-service-name].onrender.com
+            // For local testing, use: http://localhost:3000
+            const CHAT_SERVER_URL = "http://localhost:3000"; 
+            
+            const chatToggle = document.getElementById('chat-toggle');
+            const chatWindow = document.getElementById('chat-window');
+            const chatClose = document.getElementById('chat-close');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInputText = document.getElementById('chat-input-text');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            const badge = document.querySelector('.new-message-badge');
+
+            // Toggle chat window visibility
+            chatToggle.addEventListener('click', () => {
+                chatWindow.classList.toggle('hidden');
+                // Hide badge when chat is opened
+                badge.classList.add('hidden');
+            });
+            chatClose.addEventListener('click', () => {
+                chatWindow.classList.add('hidden');
+            });
+
+            // Connect to the Socket.IO server
+            const socket = io(CHAT_SERVER_URL);
+
+            socket.on('connect', () => {
+                console.log('Connected to chat server');
+            });
+
+            // Function to add a message to the chat window
+            function addMessageToChat(msg) {
+                const messageElement = document.createElement('div');
+                const isClient = msg.userId === clientId; // Check if the message is from this client
+                
+                messageElement.classList.add('message');
+                messageElement.classList.add(isClient ? 'client-message' : 'admin-message');
+                
+                let sender = isClient ? 'You' : 'Admin';
+                if (msg.userId !== 'Admin' && msg.userId !== clientId) {
+                    sender = msg.userId; // For other clients if it were a group chat
+                }
+                
+                messageElement.innerHTML = `
+                    <div class="message-bubble">
+                        <span class="message-sender">${sender}</span>
+                        <p class="message-text">${msg.message}</p>
+                        <span class="message-time">${msg.timestamp}</span>
+                    </div>
+                `;
+                
+                chatMessages.appendChild(messageElement);
+                // Scroll to the bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Show badge if message is NOT from this client and chat is closed
+                if (!isClient && chatWindow.classList.contains('hidden')) {
+                    badge.classList.remove('hidden');
+                }
+            }
+
+            // Handle message history from the server on connection
+            socket.on('history', (history) => {
+                chatMessages.innerHTML = ''; // Clear existing messages
+                history.forEach(addMessageToChat);
+            });
+
+            // Handle new incoming messages
+            socket.on('newMessage', (msg) => {
+                addMessageToChat(msg);
+            });
+
+            // Send message logic
+            function sendMessage() {
+                const messageText = chatInputText.value.trim();
+                if (messageText) {
+                    const messageData = {
+                        userId: clientId,
+                        message: messageText
+                    };
+                    
+                    // Emit the message to the server
+                    socket.emit('clientMessage', messageData);
+                    
+                    // Clear the input
+                    chatInputText.value = '';
+                }
+            }
+
+            // Attach event listeners for sending
+            chatSendBtn.addEventListener('click', sendMessage);
+            chatInputText.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
 
         });
     </script>
 </body>
-</html
+</html>
