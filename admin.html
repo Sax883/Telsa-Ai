@@ -1,409 +1,286 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TESLAAI | Admin Support Panel</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <style>
-        /* Admin Specific Layout */
-        body {
-            background-color: #f0f4f8; /* Lighter background for admin */
-        }
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
-        .admin-sidebar {
-            width: 280px;
-            background-color: var(--color-background-light);
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-            padding: 20px;
-            flex-shrink: 0;
-            overflow-y: auto;
-        }
-        .admin-main {
-            flex-grow: 1;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            background-color: var(--color-background-dark);
-        }
-        .admin-logo {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            margin-bottom: 30px;
-        }
-        
-        /* Client List */
-        .client-list-header {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--color-text-dark);
-            border-bottom: 1px solid var(--color-border);
-            padding-bottom: 10px;
-        }
-        #client-list button {
-            width: 100%;
-            text-align: left;
-            padding: 12px;
-            margin-bottom: 5px;
-            border: none;
-            background-color: transparent;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            transition: background-color 0.2s;
-            color: var(--color-text-dark);
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #client-list button:hover {
-            background-color: var(--color-border);
-        }
-        #client-list button.active {
-            background-color: var(--color-primary);
-            color: white;
-        }
-        
-        /* Chat Area */
-        .chat-area {
-            background-color: var(--color-background-light);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .chat-header-admin {
-            padding: 15px 20px;
-            background-color: var(--color-primary);
-            color: white;
-            font-weight: 600;
-            font-size: 1.2rem;
-        }
-        .chat-messages-admin {
-            flex-grow: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background-color: var(--color-background-dark);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .chat-input-admin {
-            display: flex;
-            padding: 15px;
-            border-top: 1px solid var(--color-border);
-            background-color: var(--color-background-light);
-        }
-        #admin-input-text {
-            flex-grow: 1;
-            padding: 12px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            margin-right: 10px;
-        }
-        #admin-send-btn {
-            padding: 10px 20px;
-        }
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 
-        /* Message Styles (Admin View) */
-        .admin-message-bubble {
-            padding: 10px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            position: relative;
-        }
-        .client-msg .admin-message-bubble {
-            background-color: var(--color-primary);
-            color: white;
-            align-self: flex-start;
-            border-top-left-radius: 0;
-            max-width: 80%;
-        }
-        .admin-msg .admin-message-bubble {
-            background-color: #e2e8f0;
-            color: var(--color-text-dark);
-            align-self: flex-end;
-            border-top-right-radius: 0;
-            max-width: 80%;
-        }
-        .message-time-admin {
-            display: block;
-            font-size: 0.7rem;
-            margin-top: 5px;
-            opacity: 0.6;
-            color: inherit;
-        }
-        
-        /* Security Key Prompt */
-        .security-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .key-prompt-box {
-            background-color: white;
-            padding: 40px;
-            border-radius: var(--border-radius);
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 90%;
-            max-width: 400px;
-        }
-        .key-prompt-box h2 {
-            color: var(--color-primary);
-            margin-bottom: 20px;
-        }
-        .key-prompt-box input {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .key-prompt-box .cta-button {
-            width: 100%;
-        }
-    </style>
-</head>
-<body>
+// --- Configuration ---
+const PORT = process.env.PORT || 10000;
+// Note: This key is used for JWT token signing for client logins (login.html/register.html)
+const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-long-and-secure'; 
+const app = express();
+const server = http.createServer(app);
 
-    <div class="security-overlay" id="security-overlay">
-        <div class="key-prompt-box">
-            <div class="admin-logo">TESLAAI</div>
-            <h2>Admin Key Required</h2>
-            <p style="color: var(--color-text-light); margin-bottom: 20px;">Enter the Admin Security Key to proceed.</p>
-            <input type="password" id="admin-key-input" placeholder="Enter Secure Key">
-            <button class="cta-button" id="key-submit-btn">Unlock Panel</button>
-            <p style="margin-top: 25px; font-size: 0.8rem; color: var(--color-text-light);"><a href="login.html">Return to Client Login</a></p>
-        </div>
-    </div>
+const io = socketIo(server, {
+    cors: {
+        origin: "*", 
+        methods: ["GET", "POST"]
+    }
+});
+
+// --- Middleware ---
+app.use(bodyParser.json());
+app.use(express.static(__dirname));
+
+// --- Simulated Database (In-Memory) ---
+// UPDATED ADMIN CREDENTIALS: username: tesla_ai / password: @David081
+const defaultAdmin = { 
+    id: 'tesla_ai', 
+    name: 'TESLAAI Support', 
+    email: 'tesla_ai', // Using username as identifier here
+    password: '@David081', 
+    isAdmin: true, 
+    balance: 999999 
+};
+
+// Registered clients are stored here (in-memory, lost on server restart)
+let currentUsers = []; 
+
+// Message history stored by client ID
+// { "client1@example.com": [ {message}, {message} ], "client2@example.com": [...] }
+let chatHistoryByClient = {}; 
+let activeConnections = {}; // Track currently connected sockets by userId
+
+// --- Helper Functions ---
+
+function findUser(email, password = null) {
+    // 1. Check Admin
+    if (defaultAdmin.email === email && (!password || defaultAdmin.password === password)) {
+        return defaultAdmin;
+    }
+    // 2. Check current clients
+    return currentUsers.find(u => u.email === email && (!password || u.password === password));
+}
+
+function userExists(email) {
+    return defaultAdmin.email === email || currentUsers.some(u => u.email === email);
+}
+
+function getTimestamp() {
+    return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+
+// --- JWT Authentication Middleware for Socket.IO (Clients) ---
+
+io.use((socket, next) => {
+    // ... JWT Auth logic remains the same ...
+    const token = socket.handshake.query.token;
+
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            socket.userData = decoded;
+            return next();
+        } catch (err) {
+            console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token.`);
+            return next(new Error('Authentication error: Invalid token'));
+        }
+    }
+    return next();
+});
+
+
+// --- Express Authentication Routes (For login.html and register.html) ---
+
+app.post('/api/v1/auth/login', (req, res) => {
+    // ... Login logic remains the same ...
+    const { email, password } = req.body;
     
-    <div class="admin-layout hidden" id="admin-panel">
-        
-        <div class="admin-sidebar">
-            <div class="admin-logo">TESLAAI</div>
-            <p class="client-list-header">Active Client Chats</p>
-            <div id="client-list">
-                </div>
-        </div>
+    const user = findUser(email, password);
 
-        <div class="admin-main">
-            <div class="chat-area">
-                <div class="chat-header-admin" id="chat-title-bar">
-                    Select a Client to Chat
-                </div>
-                <div class="chat-messages-admin" id="chat-messages-admin">
-                    <p style="text-align: center; color: var(--color-text-light); margin-top: 50px;">Messages will load here after client selection.</p>
-                </div>
-                <div class="chat-input-admin">
-                    <input type="text" id="admin-input-text" placeholder="Reply to selected client..." disabled>
-                    <button class="cta-button" id="admin-send-btn" disabled><i class="fas fa-paper-plane"></i> Send</button>
-                </div>
-            </div>
-        </div>
+    if (user) {
+        const token = jwt.sign(
+            { id: user.id, email: user.email, isAdmin: user.isAdmin }, 
+            SECRET_KEY, 
+            { expiresIn: '24h' }
+        );
 
-    </div>
+        const { password, ...safeUserData } = user;
 
-    <script>
-        const CHAT_SERVER_URL = "https://telsa-ai-chat-server.onrender.com"; // <-- REMINDER: USE YOUR RENDER URL
-        const ADMIN_SECRET_KEY = "telsaadmin2025"; // <-- Your hardcoded secure key
-
-        let socket = null;
-        let activeClientId = null;
-        const clientMessageHistory = {}; // Store history for quick switching
-
-        // --- Security and Initialization ---
-        document.getElementById('key-submit-btn').addEventListener('click', () => {
-            const inputKey = document.getElementById('admin-key-input').value.trim();
-            if (inputKey === ADMIN_SECRET_KEY) {
-                document.getElementById('security-overlay').style.display = 'none';
-                document.getElementById('admin-panel').classList.remove('hidden');
-                connectAdminSocket();
-            } else {
-                alert('Invalid Admin Key. Access Denied.');
-            }
+        return res.json({
+            success: true,
+            message: 'Login successful.',
+            token: token,
+            user: safeUserData
         });
+    }
 
-        // --- Socket Connection & Handlers ---
-        function connectAdminSocket() {
-            socket = io(CHAT_SERVER_URL, {
-                query: { isAdmin: true } // Identify as Admin
-            });
+    return res.status(401).json({ 
+        success: false,
+        message: 'Invalid email or password.' 
+    });
+});
 
-            socket.on('connect', () => {
-                console.log('Connected to chat server as Admin');
-                // Request the list of active clients and their last message
-                socket.emit('requestClientList');
-            });
+app.post('/api/v1/auth/signup', (req, res) => {
+    // ... Signup logic remains the same ...
+    const { name, email, password } = req.body;
+
+    if (userExists(email)) {
+        return res.status(400).json({ 
+            success: false,
+            message: 'User already exists with this email address.' 
+        });
+    }
+
+    const newUser = {
+        id: email, 
+        name,
+        email,
+        password,
+        isAdmin: false,
+        balance: 0 
+    };
+
+    currentUsers.push(newUser); 
+    chatHistoryByClient[newUser.id] = []; // Initialize chat history for the new client
+
+    const token = jwt.sign(
+        { id: newUser.id, email: newUser.email, isAdmin: newUser.isAdmin }, 
+        SECRET_KEY, 
+        { expiresIn: '24h' }
+    );
+    
+    const { password: _, ...safeUserData } = newUser; 
+
+    return res.status(201).json({
+        success: true,
+        message: 'Sign up successful. Proceed to login.',
+        token: token,
+        user: safeUserData
+    });
+});
+
+
+// --- Socket.IO Connection Logic (Chat Server) ---
+
+io.on('connection', (socket) => {
+    
+    let userId;
+    let isAdmin = socket.handshake.query.isAdmin === 'true'; // Check for admin status from query
+    
+    if (socket.userData) {
+        // Authenticated client
+        userId = socket.userData.id;
+        isAdmin = socket.userData.isAdmin;
+    } else if (isAdmin) {
+        // Unauthenticated Admin (we allow this based on the key check in admin.html)
+        userId = defaultAdmin.id; 
+    } else {
+        // Unauthenticated standard client
+        userId = socket.id; // Fallback to socket ID
+    }
+    
+    socket.userId = userId;
+    socket.isAdmin = isAdmin;
+
+    console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin})`);
+    activeConnections[userId] = socket.id;
+
+    // Initialize history for new clients if needed
+    if (!isAdmin && !chatHistoryByClient[userId]) {
+        chatHistoryByClient[userId] = [];
+        chatHistoryByClient[userId].push({
+            userId: 'System',
+            message: 'Welcome to TESLAAI Live Support. How can we help you?',
+            timestamp: getTimestamp(),
+            isAdmin: true,
+            clientDisplay: true // Only show for the client's view
+        });
+    }
+
+    // --- CLIENT (dashboard.html) Events ---
+    if (!isAdmin) {
+        // 1. Send Client History
+        socket.emit('history', chatHistoryByClient[userId] || []);
+
+        // 2. Handle incoming client messages
+        socket.on('clientMessage', (msg) => {
+            const messageData = {
+                userId: userId, 
+                message: msg.message,
+                timestamp: getTimestamp(),
+                isAdmin: false
+            };
+
+            // Store message for this client
+            chatHistoryByClient[userId].push(messageData);
             
-            socket.on('clientList', (clients) => {
-                updateClientList(clients);
-            });
-
-            socket.on('chatHistory', (data) => {
-                // data = { clientId: '...', history: [...] }
-                clientMessageHistory[data.clientId] = data.history;
-                if (data.clientId === activeClientId) {
-                    renderMessages(data.history);
-                }
-            });
-
-            socket.on('newMessage', (msg) => {
-                // msg = { userId: '...', message: '...', timestamp: '...' }
-                
-                // 1. Update history cache
-                if (!clientMessageHistory[msg.userId]) {
-                    clientMessageHistory[msg.userId] = [];
-                }
-                clientMessageHistory[msg.userId].push(msg);
-
-                // 2. If it's the active chat, render the new message
-                if (msg.userId === activeClientId) {
-                    addMessageToChat(msg);
-                }
-                
-                // 3. Update the client list (to show latest message or notification)
-                socket.emit('requestClientList');
-            });
-        }
-        
-        // --- UI Rendering ---
-        
-        function updateClientList(clients) {
-            const clientListDiv = document.getElementById('client-list');
-            clientListDiv.innerHTML = '';
-
-            // Sort clients so the one with the latest message is at the top
-            clients.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
+            // Send the message back to the client and notify the admin(s)
+            socket.emit('message', messageData);
             
-            clients.forEach(client => {
-                const clientBtn = document.createElement('button');
-                clientBtn.textContent = `Client: ${client.clientId}`;
-                clientBtn.setAttribute('data-client-id', client.clientId);
-                
-                // Add an indicator for unread messages (if needed)
-                if (client.hasUnread) {
-                    const badge = document.createElement('span');
-                    badge.textContent = '• NEW';
-                    badge.style.color = 'var(--color-primary)';
-                    badge.style.fontWeight = '700';
-                    clientBtn.appendChild(badge);
-                }
+            // Notify active admin sockets about the new message
+            io.emit('newMessage', messageData); 
+        });
+    }
 
-                clientBtn.addEventListener('click', () => selectClient(client.clientId));
-                clientListDiv.appendChild(clientBtn);
-            });
-
-            // Re-select the active client to maintain state and styling
-            if (activeClientId) {
-                document.querySelector(`#client-list button[data-client-id="${activeClientId}"]`).classList.add('active');
-            }
-        }
-
-        function selectClient(clientId) {
-            activeClientId = clientId;
-            
-            // 1. Update active button style
-            document.querySelectorAll('#client-list button').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`#client-list button[data-client-id="${clientId}"]`).classList.add('active');
-            
-            // 2. Update chat header
-            document.getElementById('chat-title-bar').textContent = `Chatting with: ${clientId}`;
-            
-            // 3. Enable input
-            document.getElementById('admin-input-text').disabled = false;
-            document.getElementById('admin-send-btn').disabled = false;
-            document.getElementById('admin-input-text').focus();
-
-            // 4. Load/Request history
-            if (clientMessageHistory[clientId]) {
-                renderMessages(clientMessageHistory[clientId]);
-            } else {
-                // Request history from server if not cached
-                socket.emit('requestChatHistory', clientId);
-                document.getElementById('chat-messages-admin').innerHTML = `<p style="text-align: center; color: var(--color-text-light); margin-top: 50px;">Loading history for ${clientId}...</p>`;
-            }
-        }
-
-        function renderMessages(history) {
-            const chatMessagesDiv = document.getElementById('chat-messages-admin');
-            chatMessagesDiv.innerHTML = '';
-            history.forEach(addMessageToChat);
-            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
-        }
-
-        function addMessageToChat(msg) {
-            const chatMessagesDiv = document.getElementById('chat-messages-admin');
-            const messageElement = document.createElement('div');
-            const isAdmin = msg.userId === 'Admin';
-            
-            messageElement.classList.add(isAdmin ? 'admin-msg' : 'client-msg');
-            
-            messageElement.innerHTML = `
-                <div class="admin-message-bubble">
-                    <p>${msg.message}</p>
-                    <span class="message-time-admin">${isAdmin ? 'Admin' : activeClientId} - ${msg.timestamp}</span>
-                </div>
-            `;
-            
-            chatMessagesDiv.appendChild(messageElement);
-        }
-
-        // --- Send Reply Logic ---
-        const adminInputText = document.getElementById('admin-input-text');
-        const adminSendBtn = document.getElementById('admin-send-btn');
-
-        function sendAdminReply() {
-            const messageText = adminInputText.value.trim();
-            if (messageText && socket && activeClientId) {
-                const messageData = {
-                    clientId: activeClientId,
-                    message: messageText
+    // --- ADMIN (admin.html) Events ---
+    if (isAdmin) {
+        // 1. Request List of Clients
+        socket.on('requestClientList', () => {
+            const clientList = Object.keys(chatHistoryByClient).map(clientId => {
+                const history = chatHistoryByClient[clientId];
+                const lastMessage = history.length > 0 ? history[history.length - 1] : { message: 'No messages yet.', timestamp: 0 };
+                return {
+                    clientId: clientId,
+                    lastMessageTime: lastMessage.timestamp,
+                    lastMessageSummary: lastMessage.message.substring(0, 30) + (lastMessage.message.length > 30 ? '...' : ''),
+                    // Simple logic for active status: check if socket ID is in active connections
+                    isActive: !!activeConnections[clientId] 
                 };
-                
-                // Emit to the server to send to the client
-                socket.emit('adminReply', messageData);
-                
-                // Add the message locally to the admin's chat history view
-                const timestamp = new Date().toLocaleTimeString();
-                const localMsg = { userId: 'Admin', message: messageText, timestamp: timestamp };
-                
-                // Update local history cache
-                if (!clientMessageHistory[activeClientId]) clientMessageHistory[activeClientId] = [];
-                clientMessageHistory[activeClientId].push(localMsg);
-
-                addMessageToChat(localMsg);
-                adminInputText.value = '';
-                adminInputText.focus();
-            }
-        }
-
-        adminSendBtn.addEventListener('click', sendAdminReply);
-        adminInputText.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                sendAdminReply();
+            });
+            socket.emit('clientList', clientList);
+        });
+        
+        // 2. Request Specific Client History
+        socket.on('requestChatHistory', (clientId) => {
+            if (chatHistoryByClient[clientId]) {
+                socket.emit('chatHistory', {
+                    clientId: clientId,
+                    history: chatHistoryByClient[clientId]
+                });
             }
         });
+        
+        // 3. Handle Admin Reply to Client
+        socket.on('adminReply', (data) => {
+            const { clientId, message } = data;
+            
+            const messageData = {
+                userId: defaultAdmin.id, 
+                message: message,
+                timestamp: getTimestamp(),
+                isAdmin: true
+            };
+            
+            // Store message for this client
+            if (chatHistoryByClient[clientId]) {
+                chatHistoryByClient[clientId].push(messageData);
+            }
+            
+            // 1. Send to the specific target client
+            const clientSocketId = activeConnections[clientId];
+            if (clientSocketId) {
+                io.to(clientSocketId).emit('message', messageData);
+            } else {
+                console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
+            }
+            
+            // 2. Send back to all admins (including self) to keep views updated
+            io.emit('newMessage', messageData); 
+        });
+    }
 
-    </script>
-</body>
-</html>
+    // --- Disconnect Handler ---
+    socket.on('disconnect', () => {
+        console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
+        delete activeConnections[socket.userId];
+    });
+});
+
+
+// --- Start Server ---
+server.listen(PORT, () => {
+    console.log(`Chat server listening on port ${PORT}`);
+    console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
+});
