@@ -1,0 +1,19 @@
+# =======================================================
+# SERVER / ADMIN TERMINAL CREDENTIALS (Secure Access)
+# =======================================================
+# These details are for your secure SSH/CLI/Admin Panel access
+# on your hosting provider (Render).
+# DO NOT include this file in your website's public directory 
+# or commit it to a public Git repository.
+
+# Admin Terminal Username: 
+admin_username = telsa-ai.org
+
+# Admin Terminal Password: 
+admin_password = @David081
+
+# =======================================================
+# SUPPORT EMAIL (For Front-End Display)
+# =======================================================
+# This email has been updated across all your HTML files.
+support_email = support@telsa-ai.org
