@@ -7,211 +7,11 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <style>
-        /* CSS Specific to Dashboard Layout (Ensure this is adapted from your main style.css if needed) */
-        .dashboard-body {
-            display: flex;
-            min-height: 100vh;
-            background-color: var(--color-background-dark);
-        }
-        .sidebar {
-            width: 250px;
-            background-color: var(--color-background-light);
-            padding: 20px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-            position: fixed;
-            height: 100%;
-            transition: transform 0.3s ease;
-        }
-        .sidebar.active {
-             transform: translateX(0);
-        }
-        .sidebar .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            margin-bottom: 30px;
-        }
-        .sidebar nav a {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            margin-bottom: 10px;
-            color: var(--color-text-light);
-            text-decoration: none;
-            border-radius: var(--border-radius);
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .sidebar nav a i {
-            margin-right: 10px;
-        }
-        .sidebar nav a.active, .sidebar nav a:hover {
-            background-color: var(--color-primary);
-            color: white;
-        }
-        .main-content {
-            flex-grow: 1;
-            margin-left: 250px; /* Offset for the sidebar */
-            padding: 20px;
-            transition: margin-left 0.3s ease;
-        }
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid var(--color-border);
-            margin-bottom: 20px;
-        }
-        .user-profile {
-            display: flex;
-            align-items: center;
-        }
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--color-primary);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: 600;
-            margin-left: 10px;
-            font-size: 0.9rem;
-        }
-        .page-content {
-            padding-top: 20px;
-        }
-        .hidden { display: none !important; }
-
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background-color: var(--color-background-light);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-        }
-        .stat-card h3 {
-            font-size: 2rem;
-            margin: 10px 0;
-            color: var(--color-text-dark);
-        }
-        .stat-card p {
-            color: var(--color-text-light);
-            margin: 0;
-        }
-        .stat-card .change {
-            font-size: 0.9rem;
-            color: #3b82f6;
-        }
-        .stat-card .growth { color: #10b981; }
-
-        /* TradingView Chart */
-        .performance-chart-area {
-            background-color: var(--color-background-light);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            padding: 20px;
-            margin-bottom: 30px;
-        }
-        .chart-placeholder {
-            height: 400px;
-            width: 100%;
-        }
-
-        /* Recent Activity */
-        .recent-activity {
-            background-color: var(--color-background-light);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            padding: 20px;
-        }
-        .activity-list {
-            margin-top: 20px;
-        }
-        .transaction-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px dashed var(--color-border);
-            font-size: 0.9rem;
-        }
-        .transaction-item .deposit { color: #10b981; font-weight: 600; }
-        .transaction-item .amount { font-weight: 600; }
-        
-        /* Investment/Car Grids */
-        .plans-grid, .car-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        .plan-card, .car-card {
-            background-color: var(--color-background-light);
-            padding: 25px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-light);
-            text-align: center;
-            border-top: 4px solid var(--color-border);
-        }
-        .plan-card h3 { margin-top: 0; }
-        .plan-card.featured {
-            border-color: var(--color-primary);
-        }
-        .car-card img {
-            width: 100%;
-            height: auto;
-            border-radius: var(--border-radius);
-            margin-bottom: 15px;
-        }
-        .car-price {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            margin: 10px 0 20px;
-        }
-
-        /* Responsive Sidebar */
-        @media (max-width: 992px) {
-            .main-content {
-                margin-left: 0;
-            }
-            .sidebar {
-                transform: translateX(-100%);
-                z-index: 101;
-            }
-            .sidebar.active {
-                transform: translateX(0);
-            }
-            .menu-toggle {
-                display: block !important;
-                font-size: 1.5rem;
-                cursor: pointer;
-            }
-            .welcome-message {
-                display: none;
-            }
-            .user-info-mobile {
-                display: flex;
-                align-items: center;
-            }
-            .top-bar {
-                padding-left: 0;
-            }
-        }
-    </style>
 </head>
 <body class="dashboard-body">
 
     <div class="dashboard-layout">
+        
         <div class="sidebar" id="sidebar">
             <div class="logo">TESLAAI</div>
             <nav>
@@ -219,68 +19,108 @@
                 <a href="#wallet" data-page="wallet"><i class="fas fa-wallet"></i> Wallet Balance</a>
                 <a href="#new-investment" data-page="new-investment"><i class="fas fa-chart-line"></i> New Investment</a>
                 <a href="#history" data-page="history"><i class="fas fa-clock-rotate-left"></i> History</a>
+                <a href="#chat" data-page="chat"><i class="fas fa-comment-dots"></i> Live Support</a>
                 <a href="#profile" data-page="profile"><i class="fas fa-user-circle"></i> Profile</a>
             </nav>
             <div class="sidebar-footer" style="margin-top: 50px;">
-                <p style="font-size: 0.8rem; color: var(--color-text-light);">Client ID: <span class="client-id-sidebar" id="client-id-display" style="font-weight: 600; color: var(--color-primary);">-- Loading --</span></p>
-                <a href="login.html" id="logout-link" style="color: var(--color-primary); font-size: 0.9rem; margin-top: 10px; display: block;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <p style="font-size: 0.8rem; color: var(--color-text-light);">Client ID: <span id="client-id-sidebar" style="font-weight: 600; color: var(--color-primary);">Loading...</span></p>
+                <a href="#" id="logout-button" style="color: var(--color-primary); font-size: 0.9rem; margin-top: 10px; display: block;"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
         <div class="main-content">
+            
             <div class="top-bar">
                 <div class="welcome-message">
-                    <h1>Welcome Back, <span id="welcome-user-name">Investor!</span></h1>
+                    <h1>Welcome Back, <span id="welcome-name">Investor</span>!</h1>
                 </div>
                 <div class="user-info-mobile">
+                    <span class="client-id-mobile" id="client-id-mobile">Loading...</span>
                     <div class="user-profile">
-                        <span id="user-name">Client Investor</span> 
-                        <div class="avatar" id="user-avatar">CI</div>
+                        <span id="user-name" style="display: none;"></span> 
+                        <div class="avatar" id="user-avatar">?</div>
                     </div>
                     <div class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></div>
                 </div>
             </div>
             
-            <div id="home" class="page-content">...</div>
-            <div id="wallet" class="page-content hidden">...</div>
-            <div id="new-investment" class="page-content hidden">...</div>
-            <div id="history" class="page-content hidden">...</div>
-            <div id="profile" class="page-content hidden">
-                <div class="content-panel">
-                    <h2>👤 Account Profile & Settings</h2>
-                    <div class="profile-container" style="max-width: 600px; margin: 30px auto; background-color: var(--color-background-light); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                        <h3 style="color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 10px; margin-bottom: 20px;">Personal Information</h3>
-                        <form class="profile-form">
-                            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
-                                <div class="avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin-right: 20px;">CI</div>
-                                <div>
-                                    <label for="profile-photo" style="display: block; color: var(--color-text-dark); margin-bottom: 5px;">Profile Photo</label>
-                                    <input type="file" id="profile-photo" name="profile-photo" style="border: none; padding: 0;">
-                                </div>
+            <!-- Dashboard Home Page -->
+            <div id="home" class="page-content">
+                <h2>📈 Investment Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <p>Total Balance</p>
+                        <h3 id="total-balance">$200.00</h3>
+                        <span class="change growth" id="bonus-note">+<span id="bonus-amount">200.00</span> Sign-Up Bonus</span>
+                    </div>
+                    <div class="stat-card growth">
+                        <p>Total Profit</p>
+                        <h3>$0.00</h3>
+                        <span class="change growth">0.0% All Time</span>
+                    </div>
+                    <div class="stat-card deposit">
+                        <p>Active Investment</p>
+                        <h3>$0.00</h3>
+                        <span class="change">No Active Plan</span>
+                    </div>
+                    <div class="stat-card">
+                        <p>Next Payout</p>
+                        <h3>N/A</h3>
+                        <span class="change">No Active Investment</span>
+                    </div>
+                </div>
+
+                <div class="performance-chart-area" style="height: 400px; margin-bottom: 40px;">
+                    <h2>Portfolio Performance (NASDAQ:TSLA)</h2>
+                    <div class="chart-placeholder" style="height: 100%; border-radius: var(--border-radius); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+                            <div id="tradingview_12345" style="height: 100%; width: 100%;"></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                            <script type="text/javascript">
+                            new TradingView.widget(
+                            {
+                            "width": "100%",
+                            "height": "100%",
+                            "symbol": "NASDAQ:TSLA", 
+                            "interval": "D",
+                            "timezone": "Etc/UTC",
+                            "theme": "light", 
+                            "style": "1",
+                            "locale": "en",
+                            "toolbar_bg": "#f1f3f6",
+                            "enable_publishing": false,
+                            "allow_symbol_change": true,
+                            "container_id": "tradingview_12345"
+                            }
+                            );
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div class="content-panel">
+                        <div class="activity-list" id="activity-list">
+                            <div class="transaction-item">
+                                <span>2025-11-28</span>
+                                <span class="type">Bonus</span>
+                                <span class="amount deposit">+$200.00</span>
                             </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label for="name">Full Name</label>
-                                <input type="text" id="name" value="" required>
+                            <div class="transaction-item" style="border-bottom: none;">
+                                <span>2025-11-28</span>
+                                <span class="type">System</span>
+                                <span class="amount" style="color: var(--color-text-light);">Account Activated</span>
                             </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label for="email">Email Address</label>
-                                <input type="email" id="email" value="" readonly style="background-color: #eee;"> </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label for="password">Change Password</label>
-                                <input type="password" id="password" placeholder="New Password (leave blank to keep current)">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 25px;">
-                                <label for="address">Address</label>
-                                <input type="text" id="address" value="Not Set" required>
-                            </div>
-                            <button type="submit" class="cta-button" style="width: 100%; padding: 12px;">Save Changes</button>
-                        </form>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Wallet Page -->
             <div id="wallet" class="page-content hidden">
                 <div class="content-panel">
                     <h2>💰 Wallet Balance & Funds</h2>
-                    <div class="investment-status-card" style="border-left: 5px solid var(--color-secondary);">
+                    <div class="investment-status-card" style="border-left: 5px solid var(--color-secondary); padding: 30px;">
                         <p>Current Available Balance</p>
                         <h1 style="font-size: 3rem; color: var(--color-primary);" id="wallet-balance">$200.00</h1>
                         <p style="margin-top: 20px;">Your balance includes a $200 Registration Bonus. Choose an investment plan to unlock withdrawals.</p>
@@ -291,125 +131,46 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Investment Page (Placeholder content) -->
             <div id="new-investment" class="page-content hidden">
                 <div class="content-panel">
                     <h2>✨ Start a New Investment</h2>
-                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using TelsaAi's predictive models. You can use funds from your Wallet balance or deposit new capital.</p>
+                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using TelsaAi's predictive models.</p>
                     
-                    <div class="plans-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                    <div class="plans-grid">
                         <div class="plan-card" data-plan="Bronze" data-min="2000">
                             <h3 style="color: var(--color-primary);">Bronze Tier</h3>
                             <p>$2,000 Minimum</p>
                             <a href="deposit.html?plan=Bronze" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Invest Now</a>
-                        </div>
-                        <div class="plan-card" data-plan="Silver" data-min="5000">
-                            <h3 style="color: #64748b;">Silver Tier</h3>
-                            <p>$5,000 Minimum</p>
-                            <a href="deposit.html?plan=Silver" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #64748b;">Invest Now</a>
                         </div>
                         <div class="plan-card featured" data-plan="Gold" data-min="10000">
                             <h3 style="color: var(--color-accent);">Gold Tier</h3>
                             <p>$10,000 Minimum</p>
                             <a href="deposit.html?plan=Gold" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: var(--color-accent);">Invest Now</a>
                         </div>
-                        <div class="plan-card" data-plan="Platinum" data-min="25000">
-                            <h3 style="color: #4f46e5;">Platinum Tier</h3>
-                            <p>$25,000 Minimum</p>
-                            <a href="deposit.html?plan=Platinum" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #4f46e5;">Invest Now</a>
-                        </div>
-                        <div class="plan-card" data-plan="Diamond" data-min="50000">
-                            <h3 style="color: #1e3a8a;">Diamond Tier</h3>
-                            <p>$50,000 Minimum</p>
-                            <a href="deposit.html?plan=Diamond" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #1e3a8a;">Invest Now</a>
-                        </div>
-                         <div class="plan-card" data-plan="Centurion" data-min="100000">
+                        <div class="plan-card" data-plan="Centurion" data-min="100000">
                             <h3 style="color: #0c0a09;">Centurion Tier</h3>
                             <p>$100,000+ Minimum</p>
                             <a href="deposit.html?plan=Centurion" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #0c0a09;">Invest Now</a>
                         </div>
                     </div>
-                    
-                    <h2 style="margin-top: 50px;">🚗 Buy a Luxury Telsa Vehicle</h2>
-                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select a vehicle below to view the full purchase details and proceed to crypto checkout.</p>
-                    
-                    <div class="car-grid">
-
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/model_s.jpg" alt="Tesla Model S Plaid">
-                                <h3>Model S Plaid</h3>
-                                <p class="car-description">0-60mph in 1.99s. Tri-Motor All-Wheel Drive.</p>
-                            <p class="car-price">$109,990</p>
-                                <a href="checkout.html?item=Model_S_Plaid&price=109990" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/model_x.jpg" alt="Tesla Model X">
-                                <h3>Model X</h3>
-                                <p class="car-description">Safest SUV on the road. Falcon Wing doors, up to seven seats.</p>
-                                <p class="car-price">$98,490</p>
-                            <a href="checkout.html?item=Model_X&price=98490" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/model_3.jpg" alt="Tesla Model 3 Long Range">
-                                <h3>Model 3 Long Range</h3>
-                                <p class="car-description">High-performance electric sedan. Premium interior.</p>
-                                <p class="car-price">$47,490</p>
-                                <a href="checkout.html?item=Model_3_Long_Range&price=47490" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/cybertruck_tri.jpg" alt="Tesla Cybertruck Tri-Motor">
-                                <h3>Cybertruck Tri-Motor</h3>
-                                <p class="car-description">Beast of a truck. All-wheel drive with Tri-Motor.</p>
-                                <p class="car-price">$99,990</p>
-                                <a href="checkout.html?item=Cybertruck_Tri-Motor&price=99990" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-                        
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/cybertruck_dual.jpg" alt="Tesla Cybertruck Dual-Motor">
-                                <h3>Cybertruck Dual-Motor</h3>
-                                <p class="car-description">Versatile and rugged. All-wheel drive, 300+ miles of range.</p>
-                                <p class="car-price">$79,990</p>
-                                <a href="checkout.html?item=Cybertruck_Dual-Motor&price=79990" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-                        
-                        <div class="car-card">
-                            <div class="car-info">
-                                <img src="images/cybertruck_rear.jpg" alt="Tesla Cybertruck Single-Motor">
-                                <h3>Cybertruck Rear-Wheel</h3>
-                                <p class="car-description">Single-motor rear-wheel drive, durable exoskeleton.</p>
-                                <p class="car-price">$60,990</p>
-                                <a href="checkout.html?item=Cybertruck_Rear-Wheel&price=60990" class="cta-button">Buy Now</a>
-                            </div>
-                        </div>
-                        
-                    </div>
                 </div>
             </div>
 
+            <!-- History Page (Placeholder content) -->
             <div id="history" class="page-content hidden">
                 <div class="content-panel">
                     <h2>⏳ Transaction & Investment History</h2>
+                    <p style="color: var(--color-text-light); margin-bottom: 20px;">All transactions are recorded here.</p>
                     <div class="recent-activity" style="padding: 20px;">
                         <div class="activity-list">
-                            <div class="transaction-item">
+                            <div class="transaction-item" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--color-border);">
                                 <span>2025-11-28</span>
                                 <span class="type">Registration Bonus</span>
-                                <span class="amount deposit">+$200.00</span>
+                                <span class="amount deposit" style="color: var(--color-success); font-weight: 600;">+$200.00</span>
                             </div>
-                            <div class="transaction-item" style="border-bottom: none;">
+                            <div class="transaction-item" style="display: flex; justify-content: space-between; padding: 10px 0;">
                                 <span>2025-11-28</span>
                                 <span class="type">Account Creation</span>
                                 <span class="amount" style="color: var(--color-text-light);">$0.00</span>
@@ -418,217 +179,315 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Live Chat Page (NEWLY ADDED) -->
+            <div id="chat" class="page-content hidden">
+                <h2>💬 Live Support Chat</h2>
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <i class="fas fa-headset"></i> TelsaAI Professional Support
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Messages will be injected here by JavaScript -->
+                        <div class="message admin">
+                            <div class="message-bubble">
+                                Welcome to TelsaAI Live Support. How may we assist you today?
+                            </div>
+                            <div class="message-info">TelsaAI Support • Just now</div>
+                        </div>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Type your message here..." />
+                        <button id="sendMessageButton"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Page -->
+            <div id="profile" class="page-content hidden">
+                <div class="content-panel">
+                    <h2>👤 Account Profile & Settings</h2>
+                    <div class="profile-container" style="max-width: 600px; margin: 30px auto; background-color: var(--color-background-light); padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        
+                        <h3 style="color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 10px; margin-bottom: 20px;">Personal Information</h3>
+
+                        <form class="profile-form" id="profileForm">
+                            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
+                                <div class="avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin-right: 20px;">?</div>
+                                <div>
+                                    <label for="name" style="display: block; color: var(--color-text-dark); margin-bottom: 5px; font-weight: 600;">Full Name</label>
+                                    <input type="text" id="name" required style="width: 100%;">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="email">Email Address (Read-Only)</label>
+                                <input type="email" id="email" readonly style="background-color: #eee;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="address">Address</label>
+                                <input type="text" id="address" placeholder="Set Address">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 15px; margin-top: 30px;">
+                                <label for="new-password">Change Password</label>
+                                <input type="password" id="new-password" placeholder="New Password (Min 8 characters)">
+                            </div>
+                            
+                            <button type="submit" class="cta-button" id="saveProfileBtn" style="width: 100%; padding: 12px;">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
 
         </div>
     </div>
     
-    <div id="chat-widget-container">
-        <button id="chat-toggle-btn">
-            <i class="fas fa-comment-dots"></i>
-        </button>
-        
-        <div id="chat-box" class="closed">
-            <div class="chat-header">
-                <h3>TelsaAi Support</h3>
-                <i class="fas fa-times" id="chat-close"></i>
-            </div>
-            <div class="chat-messages" id="chat-messages">
-                </div>
-            <div class="chat-input">
-                <input type="text" id="chat-input-text" placeholder="Type your message..." required>
-                <button id="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
-            </div>
+    <!-- Custom Message Box Structure -->
+    <div class="message-box" id="messageBox">
+        <div class="message-box-content" id="messageBoxContent">
+            <h3 id="msgTitle">Success!</h3>
+            <p id="msgText">Action successful!</p>
+            <button class="cta-button" id="msgConfirm">Close</button>
         </div>
     </div>
 
     <script>
-        // *** IMPORTANT: CONFIRM YOUR LIVE CHAT SERVER URL ***
-        const CHAT_SERVER_URL = "https://telsa-ai-chat-server.onrender.com"; 
+        // NOTE: The API_BASE_URL must match the port of the running Node server (server.js)
+        const API_BASE_URL = 'http://localhost:3000/api/v1'; 
+        
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = sidebar.querySelectorAll('nav a');
+        const pages = document.querySelectorAll('.page-content');
+        const logoutButton = document.getElementById('logout-button');
+        
+        // Profile Elements
+        const profileForm = document.getElementById('profileForm');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const addressInput = document.getElementById('address');
+        const newPasswordInput = document.getElementById('new-password');
+        const profileAvatar = document.getElementById('profile-avatar');
+        
+        // Chat Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
 
-        let globalClientId = null;
-        let globalUserName = "Client Investor";
+        // Message box elements
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const msgTitle = document.getElementById('msgTitle');
+        const msgText = document.getElementById('msgText');
+        const msgConfirm = document.getElementById('msgConfirm');
 
-        // =======================================================
-        // CORE AUTH AND INITIALIZATION
-        // =======================================================
+        // --- Auth & Profile Functions ---
 
-        // 1. Function to get initials from a full name
-        function getInitials(fullName) {
-            const parts = fullName.split(' ');
-            if (parts.length > 1) {
-                return parts[0].charAt(0) + parts[parts.length - 1].charAt(0);
-            } else if (parts.length === 1 && parts[0].length > 0) {
-                return parts[0].charAt(0);
+        /**
+         * Checks for a valid JWT. If missing, redirects to login.
+         */
+        function checkAuth() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                // Not authenticated, redirect to login
+                window.location.href = 'login.html'; 
             }
-            return 'CI';
+            return token;
         }
 
-        // 2. Function to apply profile data (Name, Initials, Client ID)
-        function applyProfileData(name, clientId) {
-            const initials = getInitials(name).toUpperCase();
-            
-            // Dashboard elements
-            const userNameElement = document.getElementById('user-name');
-            const welcomeUserNameElement = document.getElementById('welcome-user-name');
-            const userAvatarElement = document.getElementById('user-avatar');
-            const clientIdDisplay = document.getElementById('client-id-display');
-            
-            // Profile page elements
-            const profileAvatarElement = document.getElementById('profile-avatar');
-            const nameInputField = document.getElementById('name');
-            const emailInputField = document.getElementById('email');
-
-            if (nameInputField) nameInputField.value = name;
-            if (emailInputField) emailInputField.value = clientId; // Client ID is the email/username
-            if (userNameElement) userNameElement.textContent = name;
-            if (welcomeUserNameElement) welcomeUserNameElement.textContent = name;
-            if (userAvatarElement) userAvatarElement.textContent = initials;
-            if (profileAvatarElement) profileAvatarElement.textContent = initials;
-            if (clientIdDisplay) clientIdDisplay.textContent = clientId;
-
-            globalUserName = name;
-            globalClientId = clientId;
+        /**
+         * Function to set the Bearer token header.
+         * @param {string} token 
+         */
+        function getAuthHeaders(token) {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
         }
         
-        // 3. LOGOUT Function (Clear token and redirect)
-        document.getElementById('logout-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('clientId');
-            localStorage.removeItem('telsa_userName');
-            window.location.href = 'login.html';
-        });
-
-        // 4. Check Authentication on Load
-        function checkAuthAndInit() {
-            const userToken = localStorage.getItem('userToken');
-            const clientId = localStorage.getItem('clientId');
-            const userName = localStorage.getItem('telsa_userName');
-
-            // If no token or client ID, redirect to login page (security)
-            if (!userToken || !clientId) {
-                alert("Session expired or invalid. Please log in again.");
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Initialize UI with authenticated data
-            applyProfileData(userName || "Client Investor", clientId);
+        /**
+         * Function to display custom message box (Replaces alert()).
+         */
+        function showMessageBox(title, text, type) {
+            msgTitle.textContent = title;
+            msgText.textContent = text;
+            messageBoxContent.className = 'message-box-content'; 
+            messageBoxContent.classList.add(`message-box-${type}`);
+            messageBox.style.display = 'flex';
             
-            // Connect the chat socket
-            connectChatSocket(clientId);
+            msgConfirm.onclick = () => {
+                messageBox.style.display = 'none';
+            };
         }
 
-        // =======================================================
-        // LIVE CHAT LOGIC (Socket.IO)
-        // =======================================================
-        
-        let socket = null;
+        /**
+         * Function to update all profile display elements.
+         */
+        function updateUI(name, initials, clientId) {
+            const userNameElements = document.querySelectorAll('#user-name, #welcome-name');
+            const userAvatarElements = document.querySelectorAll('#user-avatar');
+            const clientIdSidebar = document.getElementById('client-id-sidebar');
+            const clientIdMobile = document.getElementById('client-id-mobile');
+            
+            userNameElements.forEach(el => el.textContent = name);
+            userAvatarElements.forEach(el => el.textContent = initials);
+            
+            if (clientIdSidebar) clientIdSidebar.textContent = clientId;
+            if (clientIdMobile) clientIdMobile.textContent = clientId;
 
-        function connectChatSocket(clientId) {
-            // Connect socket, passing the unique Client ID for message tagging
-            socket = io(CHAT_SERVER_URL, {
-                query: {
-                    clientId: clientId
+            if (nameInput) nameInput.value = name;
+            if (profileAvatar) profileAvatar.textContent = initials;
+        }
+
+        /**
+         * Fetches user profile data from the server using JWT.
+         */
+        async function loadProfile() {
+            const token = checkAuth();
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/profile/me`, {
+                    method: 'GET',
+                    headers: getAuthHeaders(token),
+                });
+                
+                if (response.status === 403) {
+                     // JWT expired or invalid
+                    localStorage.removeItem('userToken');
+                    showMessageBox('Session Expired', 'Your session has expired. Please log in again.', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return;
                 }
-            });
-
-            socket.on('connect', () => {
-                console.log(`Connected to chat server as: ${clientId}`);
-            });
-
-            // UI Elements
-            const chatBox = document.getElementById('chat-box');
-            const chatToggleBtn = document.getElementById('chat-toggle-btn');
-            const chatClose = document.getElementById('chat-close');
-            const chatMessages = document.getElementById('chat-messages');
-            const chatInputText = document.getElementById('chat-input-text');
-            const chatSendBtn = document.getElementById('chat-send-btn');
-            
-            // --- Toggle/Close Events ---
-            chatToggleBtn.addEventListener('click', () => {
-                chatBox.classList.toggle('open');
-            });
-            chatClose.addEventListener('click', () => {
-                chatBox.classList.remove('open');
-            });
-
-            // --- Message Renderer ---
-            function addMessageToChat(msg) {
-                const messageElement = document.createElement('div');
-                const isClient = msg.userId === clientId; // Message from this user
-                const isSystem = msg.userId !== 'Admin' && !isClient; // Other clients/System (optional)
-
-                messageElement.classList.add('message');
-                messageElement.classList.add(isClient ? 'client-message' : 'admin-message'); // All non-client msgs are treated as Admin/Support
                 
-                let sender = isClient ? 'You' : 'TelsaAi Support';
-                
-                messageElement.innerHTML = `
-                    <div class="message-bubble">
-                        <span class="message-sender">${sender}</span>
-                        <p class="message-text">${msg.message}</p>
-                        <span class="message-time">${msg.timestamp}</span>
-                    </div>
-                `;
-                
-                chatMessages.appendChild(messageElement);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
+                const data = await response.json();
 
-            // --- Socket Listeners ---
-            socket.on('history', (history) => {
-                chatMessages.innerHTML = ''; 
-                history.forEach(addMessageToChat);
-            });
+                if (response.ok) {
+                    // Update all stored and displayed data
+                    localStorage.setItem('clientName', data.name);
+                    localStorage.setItem('clientInitials', data.initials);
+                    localStorage.setItem('clientId', data.clientId); 
 
-            socket.on('newMessage', (msg) => {
-                addMessageToChat(msg);
-            });
-
-            // --- Send Message Logic ---
-            function sendMessage() {
-                const messageText = chatInputText.value.trim();
-                if (messageText && socket) {
-                    const messageData = {
-                        userId: clientId, // Use the authenticated client ID
-                        message: messageText
-                    };
+                    updateUI(data.name, data.initials, data.clientId);
                     
-                    socket.emit('clientMessage', messageData);
-                    chatInputText.value = '';
+                    // Fill profile inputs
+                    if (emailInput) emailInput.value = data.email;
+                    if (addressInput) addressInput.value = data.address;
+                } else {
+                    showMessageBox('Error', data.message || 'Failed to load profile data.', 'error');
                 }
-            }
 
-            // --- Send Event Listeners ---
-            chatSendBtn.addEventListener('click', sendMessage);
-            chatInputText.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    sendMessage();
-                }
-            });
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showMessageBox('Network Error', 'Could not connect to the TelsaAI server.', 'error');
+            }
         }
         
-        // =======================================================
-        // DASHBOARD UI & PROFILE LOGIC
-        // =======================================================
+        // --- Chat Functions ---
+
+        /**
+         * Renders a single message bubble into the chat window.
+         */
+        function renderMessage(message) {
+            const messageElement = document.createElement('div');
+            // Determine class based on sender role/ID
+            const messageClass = message.senderRole === 'admin' || message.senderId === 'admin@telsaai.com' ? 'admin' : 'client';
+            
+            // Format timestamp
+            const date = new Date(message.timestamp);
+            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageElement.classList.add('message', messageClass);
+            messageElement.innerHTML = `
+                <div class="message-bubble">${message.text}</div>
+                <div class="message-info">${message.senderName} • ${timeString}</div>
+            `;
+            chatMessages.appendChild(messageElement);
+        }
+
+        /**
+         * Fetches all current messages from the server and updates the chat.
+         */
+        async function fetchMessages() {
+            const token = checkAuth();
+            if (!token) return;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/messages`, {
+                    method: 'GET',
+                    headers: getAuthHeaders(token),
+                });
+                
+                if (!response.ok) throw new Error('Failed to fetch messages.');
+
+                const messages = await response.json();
+                
+                // Clear and re-render all messages (simple refresh model)
+                chatMessages.innerHTML = '';
+                messages.forEach(renderMessage);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        }
+
+        /**
+         * Sends a new message to the server.
+         */
+        async function sendMessage() {
+            const token = checkAuth();
+            const text = chatInput.value.trim();
+
+            if (!text) return; // Don't send empty messages
+
+            chatInput.value = ''; // Clear input immediately
+            sendMessageButton.disabled = true; // Disable button
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat/send`, {
+                    method: 'POST',
+                    headers: getAuthHeaders(token),
+                    body: JSON.stringify({ text })
+                });
+
+                if (response.ok) {
+                    // Message sent successfully, force refresh the list to show all new messages (including admin auto-reply)
+                    fetchMessages(); 
+                } else {
+                    showMessageBox('Chat Error', 'Could not send message. Please try again.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showMessageBox('Network Error', 'Chat server connection failed.', 'error');
+            } finally {
+                sendMessageButton.disabled = false; // Re-enable button
+            }
+        }
+
+
+        // --- Event Listeners and Initialization ---
 
         document.addEventListener('DOMContentLoaded', () => {
-            
-            checkAuthAndInit(); // Start the auth check and chat connection
+            // 1. Initial Authentication Check and Profile Load
+            loadProfile();
 
-            // --- Mobile Menu & Page Switching Logic (Unchanged but included for completeness) ---
-            const sidebar = document.getElementById('sidebar');
-            const menuToggle = document.getElementById('menuToggle');
-            const navLinks = sidebar.querySelectorAll('nav a');
-            const pages = document.querySelectorAll('.page-content');
-            
+            // 2. Mobile Menu Toggle
             if (menuToggle) {
                 menuToggle.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
                 });
             }
 
+            // 3. Navigation/Page Switching Logic
             navLinks.forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -642,51 +501,109 @@
                     const targetPage = document.getElementById(targetPageId);
                     if (targetPage) {
                         targetPage.classList.remove('hidden');
+                        
+                        // Special: If navigating to Chat, fetch messages
+                        if (targetPageId === 'chat') {
+                            fetchMessages();
+                            // Set up a refresh interval only when on the chat page
+                            if (!window.chatInterval) {
+                                window.chatInterval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+                            }
+                        } else {
+                            // Clear interval when navigating away from chat
+                            if (window.chatInterval) {
+                                clearInterval(window.chatInterval);
+                                window.chatInterval = null;
+                            }
+                        }
                     }
 
-                    if (window.innerWidth <= 992 && sidebar.classList.contains('active')) {
+                    // Mobile Closing Logic
+                    if (window.innerWidth <= 900 && sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
                     }
                 });
             });
+            
+            // 4. Logout Handler
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('userToken');
+                // Clear all other profile data too
+                localStorage.removeItem('clientName');
+                localStorage.removeItem('clientInitials');
+                localStorage.removeItem('clientId');
+                window.location.href = 'login.html';
+            });
 
-            const activeLink = document.querySelector('.sidebar nav a.active');
-            if (activeLink) {
-                const initialPageId = activeLink.getAttribute('data-page');
-                pages.forEach(page => {
-                    if (page.id !== initialPageId) {
-                        page.classList.add('hidden');
-                    }
-                });
-                const initialPage = document.getElementById(initialPageId);
-                if (initialPage) {
-                    initialPage.classList.remove('hidden');
-                }
-            }
-
-            // --- Profile Form Submission Handler (Saves name permanently) ---
-            const profileForm = document.querySelector('.profile-form');
+            // 5. Profile Form Submission Handler
             if (profileForm) {
-                profileForm.addEventListener('submit', (e) => {
+                profileForm.addEventListener('submit', async (e) => {
                     e.preventDefault(); 
+                    saveProfileBtn.disabled = true;
+                    saveProfileBtn.textContent = 'Saving...';
                     
-                    const newNameInput = document.getElementById('name');
-                    const newName = newNameInput.value.trim();
+                    const token = checkAuth();
+                    if (!token) return;
                     
-                    if (newName) {
-                        // 1. SAVE the new name to Local Storage (Ensures it persists across refreshes/logins)
-                        localStorage.setItem('telsa_userName', newName); 
+                    const newName = nameInput.value.trim();
+                    const newAddress = addressInput.value.trim();
+                    const newPassword = newPasswordInput.value.trim();
+                    
+                    if (newPassword && newPassword.length < 8) {
+                        showMessageBox('Error', 'New password must be at least 8 characters.', 'error');
+                        saveProfileBtn.disabled = false;
+                        saveProfileBtn.textContent = 'Save Changes';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/profile/update`, {
+                            method: 'POST',
+                            headers: getAuthHeaders(token),
+                            body: JSON.stringify({
+                                name: newName,
+                                address: newAddress,
+                                newPassword: newPassword || undefined
+                            }),
+                        });
+
+                        const data = await response.json();
                         
-                        // 2. Apply the changes immediately
-                        applyProfileData(newName, globalClientId);
+                        if (response.ok) {
+                            // Update UI immediately
+                            const newInitials = data.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+                            updateUI(data.name, newInitials, localStorage.getItem('clientId'));
+                            newPasswordInput.value = ''; // Clear password field after success
+                            showMessageBox('Success', 'Profile changes saved successfully.', 'success');
+                        } else {
+                             showMessageBox('Error', data.message || 'Failed to update profile.', 'error');
+                        }
                         
-                        alert("Profile name updated successfully!");
-                    } else {
-                         alert("Name field cannot be empty.");
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        showMessageBox('Network Error', 'Could not communicate with the server to save changes.', 'error');
+                    } finally {
+                        saveProfileBtn.disabled = false;
+                        saveProfileBtn.textContent = 'Save Changes';
                     }
                 });
             }
             
+            // 6. Chat Message Sending Handlers
+            if (sendMessageButton) {
+                sendMessageButton.addEventListener('click', sendMessage);
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+            }
+            
+            // Ensure the initial page is displayed correctly
+            const initialPageId = document.querySelector('.sidebar nav a.active').getAttribute('data-page');
+            document.getElementById(initialPageId).classList.remove('hidden');
+
         });
     </script>
 </body>

@@ -3,217 +3,407 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TESLAAI | Admin Live Chat Panel</title>
-    <link rel="stylesheet" href="style.css"> 
+    <title>TESLAAI | Admin Support Panel</title>
+    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        /* Admin-specific styles for a centralized, full-screen chat experience */
-        .login-body {
-            /* Using the class name from login.html for full body styling */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+        /* Admin Specific Layout */
+        body {
+            background-color: #f0f4f8; /* Lighter background for admin */
         }
-
-        .admin-chat-panel {
-            width: 90%;
-            max-width: 900px; /* Slightly wider admin panel */
-            height: 90vh;
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        .admin-sidebar {
+            width: 280px;
+            background-color: var(--color-background-light);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            padding: 20px;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .admin-main {
+            flex-grow: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--color-background-dark);
+        }
+        .admin-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 30px;
+        }
+        
+        /* Client List */
+        .client-list-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--color-text-dark);
+            border-bottom: 1px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+        #client-list button {
+            width: 100%;
+            text-align: left;
+            padding: 12px;
+            margin-bottom: 5px;
+            border: none;
+            background-color: transparent;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            color: var(--color-text-dark);
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #client-list button:hover {
+            background-color: var(--color-border);
+        }
+        #client-list button.active {
+            background-color: var(--color-primary);
+            color: white;
+        }
+        
+        /* Chat Area */
+        .chat-area {
             background-color: var(--color-background-light);
             border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-light);
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
-        .panel-header {
-            background-color: var(--color-primary); /* Use Primary Red */
+        .chat-header-admin {
+            padding: 15px 20px;
+            background-color: var(--color-primary);
             color: white;
-            padding: 20px;
-            text-align: center;
-            border-bottom: 4px solid var(--color-secondary); /* Secondary Blue accent */
+            font-weight: 600;
+            font-size: 1.2rem;
         }
-
-        .panel-header h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            color: white;
-        }
-        
-        /* Message area and input inherit styles from style.css but are adapted here */
-        .chat-messages {
+        .chat-messages-admin {
             flex-grow: 1;
             padding: 20px;
             overflow-y: auto;
-            background-color: #f8fafc;
-        }
-
-        /* Override client styles for clear distinction in Admin Panel */
-        .client-message {
-            justify-content: flex-start; /* Client messages appear on the left for the Admin */
-        }
-        
-        .client-message .message-bubble {
-            background-color: #fef2f2; /* Light red/pink for client messages */
-            color: var(--color-text-dark);
-            border: 1px solid #fecaca;
-            border-bottom-left-radius: 4px;
-        }
-        .client-message .message-sender {
-            color: var(--color-primary); /* Red sender name */
-        }
-
-        .admin-message {
-            justify-content: flex-end; /* Admin messages appear on the right */
-        }
-
-        .admin-message .message-bubble {
-            background-color: var(--color-secondary); /* Use Blue for Admin replies */
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-        .admin-message .message-sender {
-            color: #f5f5f5;
-        }
-
-        .chat-input {
-            padding: 15px 20px;
-            border-top: 1px solid var(--color-border);
+            background-color: var(--color-background-dark);
             display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .chat-input-admin {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid var(--color-border);
             background-color: var(--color-background-light);
         }
-
         #admin-input-text {
             flex-grow: 1;
             padding: 12px;
             border: 1px solid var(--color-border);
             border-radius: 6px;
             margin-right: 10px;
-            font-size: 1rem;
         }
-        
         #admin-send-btn {
-            /* Inherits cta-button styles, using secondary color for distinction */
-            background-color: var(--color-secondary);
-            font-size: 1rem;
-            height: auto;
-        }
-        #admin-send-btn:hover {
-            background-color: #0d5ddf;
+            padding: 10px 20px;
         }
 
-        @media (max-width: 600px) {
-            .admin-chat-panel {
-                width: 100%;
-                height: 100vh;
-                border-radius: 0;
-            }
+        /* Message Styles (Admin View) */
+        .admin-message-bubble {
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            position: relative;
+        }
+        .client-msg .admin-message-bubble {
+            background-color: var(--color-primary);
+            color: white;
+            align-self: flex-start;
+            border-top-left-radius: 0;
+            max-width: 80%;
+        }
+        .admin-msg .admin-message-bubble {
+            background-color: #e2e8f0;
+            color: var(--color-text-dark);
+            align-self: flex-end;
+            border-top-right-radius: 0;
+            max-width: 80%;
+        }
+        .message-time-admin {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.6;
+            color: inherit;
+        }
+        
+        /* Security Key Prompt */
+        .security-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .key-prompt-box {
+            background-color: white;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 400px;
+        }
+        .key-prompt-box h2 {
+            color: var(--color-primary);
+            margin-bottom: 20px;
+        }
+        .key-prompt-box input {
+            width: 100%;
+            padding: 15px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .key-prompt-box .cta-button {
+            width: 100%;
         }
     </style>
 </head>
-<body class="login-body">
+<body>
 
-    <div class="admin-chat-panel">
-        <div class="panel-header">
-            <h1><i class="fas fa-headset"></i> TelsaAi Admin Support Console</h1>
-            <p style="font-size: 0.9rem; margin-top: 5px; color: #fecaca;">Currently monitoring all active client sessions.</p>
+    <div class="security-overlay" id="security-overlay">
+        <div class="key-prompt-box">
+            <div class="admin-logo">TESLAAI</div>
+            <h2>Admin Key Required</h2>
+            <p style="color: var(--color-text-light); margin-bottom: 20px;">Enter the Admin Security Key to proceed.</p>
+            <input type="password" id="admin-key-input" placeholder="Enter Secure Key">
+            <button class="cta-button" id="key-submit-btn">Unlock Panel</button>
+            <p style="margin-top: 25px; font-size: 0.8rem; color: var(--color-text-light);"><a href="login.html">Return to Client Login</a></p>
         </div>
+    </div>
+    
+    <div class="admin-layout hidden" id="admin-panel">
         
-        <div class="chat-messages" id="admin-chat-messages">
+        <div class="admin-sidebar">
+            <div class="admin-logo">TESLAAI</div>
+            <p class="client-list-header">Active Client Chats</p>
+            <div id="client-list">
+                </div>
+        </div>
+
+        <div class="admin-main">
+            <div class="chat-area">
+                <div class="chat-header-admin" id="chat-title-bar">
+                    Select a Client to Chat
+                </div>
+                <div class="chat-messages-admin" id="chat-messages-admin">
+                    <p style="text-align: center; color: var(--color-text-light); margin-top: 50px;">Messages will load here after client selection.</p>
+                </div>
+                <div class="chat-input-admin">
+                    <input type="text" id="admin-input-text" placeholder="Reply to selected client..." disabled>
+                    <button class="cta-button" id="admin-send-btn" disabled><i class="fas fa-paper-plane"></i> Send</button>
+                </div>
             </div>
-        
-        <div class="chat-input">
-            <input type="text" id="admin-input-text" placeholder="Type your reply to all active clients..." required>
-            <button id="admin-send-btn" class="cta-button">Send Reply</button>
         </div>
+
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            
-            // *** IMPORTANT: CONFIRM YOUR LIVE CHAT SERVER URL ***
-            const CHAT_SERVER_URL = "https://telsa-ai-chat-server.onrender.com"; 
+        const CHAT_SERVER_URL = "https://telsa-ai-chat-server.onrender.com"; // <-- REMINDER: USE YOUR RENDER URL
+        const ADMIN_SECRET_KEY = "telsaadmin2025"; // <-- Your hardcoded secure key
 
-            const chatMessages = document.getElementById('admin-chat-messages');
-            const chatInputText = document.getElementById('admin-input-text');
-            const chatSendBtn = document.getElementById('admin-send-btn');
-            
-            const ADMIN_ID = 'Admin'; 
+        let socket = null;
+        let activeClientId = null;
+        const clientMessageHistory = {}; // Store history for quick switching
 
-            // Connect to the Socket.IO server
-            const socket = io(CHAT_SERVER_URL);
+        // --- Security and Initialization ---
+        document.getElementById('key-submit-btn').addEventListener('click', () => {
+            const inputKey = document.getElementById('admin-key-input').value.trim();
+            if (inputKey === ADMIN_SECRET_KEY) {
+                document.getElementById('security-overlay').style.display = 'none';
+                document.getElementById('admin-panel').classList.remove('hidden');
+                connectAdminSocket();
+            } else {
+                alert('Invalid Admin Key. Access Denied.');
+            }
+        });
+
+        // --- Socket Connection & Handlers ---
+        function connectAdminSocket() {
+            socket = io(CHAT_SERVER_URL, {
+                query: { isAdmin: true } // Identify as Admin
+            });
 
             socket.on('connect', () => {
                 console.log('Connected to chat server as Admin');
+                // Request the list of active clients and their last message
+                socket.emit('requestClientList');
+            });
+            
+            socket.on('clientList', (clients) => {
+                updateClientList(clients);
             });
 
-            // Function to add a message to the chat window
-            function addMessageToChat(msg) {
-                const messageElement = document.createElement('div');
-                // Use the userId in the message object to determine sender
-                const isAdmin = msg.userId === ADMIN_ID; 
-                
-                messageElement.classList.add('message');
-                messageElement.classList.add(isAdmin ? 'admin-message' : 'client-message');
-                
-                // Show the sender's ID (which is the Client ID)
-                let sender = isAdmin ? 'You (Admin)' : `Client ID: ${msg.userId}`; 
-                
-                messageElement.innerHTML = `
-                    <div class="message-bubble">
-                        <span class="message-sender">${sender}</span>
-                        <p class="message-text">${msg.message}</p>
-                        <span class="message-time">${msg.timestamp}</span>
-                    </div>
-                `;
-                
-                chatMessages.appendChild(messageElement);
-                // Scroll to the bottom
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-
-            // Handle message history from the server on connection
-            socket.on('history', (history) => {
-                chatMessages.innerHTML = ''; // Clear existing messages
-                history.forEach(addMessageToChat);
+            socket.on('chatHistory', (data) => {
+                // data = { clientId: '...', history: [...] }
+                clientMessageHistory[data.clientId] = data.history;
+                if (data.clientId === activeClientId) {
+                    renderMessages(data.history);
+                }
             });
 
-            // Handle new incoming messages (THIS IS THE FIX FOR CAPTURING LATEST MESSAGES)
             socket.on('newMessage', (msg) => {
-                addMessageToChat(msg);
+                // msg = { userId: '...', message: '...', timestamp: '...' }
+                
+                // 1. Update history cache
+                if (!clientMessageHistory[msg.userId]) {
+                    clientMessageHistory[msg.userId] = [];
+                }
+                clientMessageHistory[msg.userId].push(msg);
+
+                // 2. If it's the active chat, render the new message
+                if (msg.userId === activeClientId) {
+                    addMessageToChat(msg);
+                }
+                
+                // 3. Update the client list (to show latest message or notification)
+                socket.emit('requestClientList');
+            });
+        }
+        
+        // --- UI Rendering ---
+        
+        function updateClientList(clients) {
+            const clientListDiv = document.getElementById('client-list');
+            clientListDiv.innerHTML = '';
+
+            // Sort clients so the one with the latest message is at the top
+            clients.sort((a, b) => new Date(b.lastMessageTime) - new Date(a.lastMessageTime));
+            
+            clients.forEach(client => {
+                const clientBtn = document.createElement('button');
+                clientBtn.textContent = `Client: ${client.clientId}`;
+                clientBtn.setAttribute('data-client-id', client.clientId);
+                
+                // Add an indicator for unread messages (if needed)
+                if (client.hasUnread) {
+                    const badge = document.createElement('span');
+                    badge.textContent = '• NEW';
+                    badge.style.color = 'var(--color-primary)';
+                    badge.style.fontWeight = '700';
+                    clientBtn.appendChild(badge);
+                }
+
+                clientBtn.addEventListener('click', () => selectClient(client.clientId));
+                clientListDiv.appendChild(clientBtn);
             });
 
-            // Send reply logic
-            function sendReply() {
-                const messageText = chatInputText.value.trim();
-                if (messageText) {
-                    const messageData = {
-                        userId: ADMIN_ID,
-                        message: messageText
-                    };
-                    
-                    // Emit the adminReply event to the server
-                    socket.emit('adminReply', messageData);
-                    
-                    // Clear the input
-                    chatInputText.value = '';
-                }
+            // Re-select the active client to maintain state and styling
+            if (activeClientId) {
+                document.querySelector(`#client-list button[data-client-id="${activeClientId}"]`).classList.add('active');
             }
+        }
 
-            // Attach event listeners for sending
-            chatSendBtn.addEventListener('click', sendReply);
-            chatInputText.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    sendReply();
-                }
-            });
+        function selectClient(clientId) {
+            activeClientId = clientId;
+            
+            // 1. Update active button style
+            document.querySelectorAll('#client-list button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`#client-list button[data-client-id="${clientId}"]`).classList.add('active');
+            
+            // 2. Update chat header
+            document.getElementById('chat-title-bar').textContent = `Chatting with: ${clientId}`;
+            
+            // 3. Enable input
+            document.getElementById('admin-input-text').disabled = false;
+            document.getElementById('admin-send-btn').disabled = false;
+            document.getElementById('admin-input-text').focus();
 
+            // 4. Load/Request history
+            if (clientMessageHistory[clientId]) {
+                renderMessages(clientMessageHistory[clientId]);
+            } else {
+                // Request history from server if not cached
+                socket.emit('requestChatHistory', clientId);
+                document.getElementById('chat-messages-admin').innerHTML = `<p style="text-align: center; color: var(--color-text-light); margin-top: 50px;">Loading history for ${clientId}...</p>`;
+            }
+        }
+
+        function renderMessages(history) {
+            const chatMessagesDiv = document.getElementById('chat-messages-admin');
+            chatMessagesDiv.innerHTML = '';
+            history.forEach(addMessageToChat);
+            chatMessagesDiv.scrollTop = chatMessagesDiv.scrollHeight;
+        }
+
+        function addMessageToChat(msg) {
+            const chatMessagesDiv = document.getElementById('chat-messages-admin');
+            const messageElement = document.createElement('div');
+            const isAdmin = msg.userId === 'Admin';
+            
+            messageElement.classList.add(isAdmin ? 'admin-msg' : 'client-msg');
+            
+            messageElement.innerHTML = `
+                <div class="admin-message-bubble">
+                    <p>${msg.message}</p>
+                    <span class="message-time-admin">${isAdmin ? 'Admin' : activeClientId} - ${msg.timestamp}</span>
+                </div>
+            `;
+            
+            chatMessagesDiv.appendChild(messageElement);
+        }
+
+        // --- Send Reply Logic ---
+        const adminInputText = document.getElementById('admin-input-text');
+        const adminSendBtn = document.getElementById('admin-send-btn');
+
+        function sendAdminReply() {
+            const messageText = adminInputText.value.trim();
+            if (messageText && socket && activeClientId) {
+                const messageData = {
+                    clientId: activeClientId,
+                    message: messageText
+                };
+                
+                // Emit to the server to send to the client
+                socket.emit('adminReply', messageData);
+                
+                // Add the message locally to the admin's chat history view
+                const timestamp = new Date().toLocaleTimeString();
+                const localMsg = { userId: 'Admin', message: messageText, timestamp: timestamp };
+                
+                // Update local history cache
+                if (!clientMessageHistory[activeClientId]) clientMessageHistory[activeClientId] = [];
+                clientMessageHistory[activeClientId].push(localMsg);
+
+                addMessageToChat(localMsg);
+                adminInputText.value = '';
+                adminInputText.focus();
+            }
+        }
+
+        adminSendBtn.addEventListener('click', sendAdminReply);
+        adminInputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendAdminReply();
+            }
         });
+
     </script>
 </body>
 </html>

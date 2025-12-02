@@ -3,13 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TelsaAi - Register Account</title>
-    <link rel="stylesheet" href="style.css">
+    <title>TESLAAI | Client Sign Up</title>
+    <!-- Assuming style.css contains shared styles -->
+    <link rel="stylesheet" href="style.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Reusing login/auth layout styles */
-        .login-body {
+        /* Specific Styles for Sign Up Page (Dark Mode Theme) */
+        :root {
+            --color-primary: #0ea5e9; /* Sky blue */
+            --color-secondary: #06b6d4; /* Cyan */
+            --color-background-dark: #1e293b; /* Dark Slate */
+            --color-background-light: #334155; /* Slightly lighter Slate */
+            --color-border: #475569; /* Slate Gray */
+            --color-text-light: #e2e8f0;
+            --color-text-dark: #cbd5e1;
+            --color-success: #22c55e;
+            --border-radius: 8px;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .auth-container {
             display: flex;
             justify-content: center;
             align-items: center;
@@ -18,49 +37,94 @@
             padding: 20px;
         }
 
-        .auth-container {
+        .auth-card {
             background-color: var(--color-background-light);
             padding: 40px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             width: 100%;
-            max-width: 450px; 
+            max-width: 450px;
             text-align: center;
         }
 
-        .auth-container h2 {
-            font-size: 2rem;
-            color: var(--color-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .auth-container p {
-            color: #94a3b8;
-            margin-bottom: 2rem;
-        }
-
-        .auth-form input[type="text"],
-        .auth-form input[type="email"],
-        .auth-form input[type="password"] {
-            width: 100%;
-            padding: 15px;
+        .auth-card .logo {
             margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .auth-card h2 {
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: var(--color-text-dark);
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--color-text-light);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
             border: 1px solid var(--color-border);
-            border-radius: var(--border-radius);
+            border-radius: 6px;
+            font-size: 1rem;
             background-color: var(--color-background-dark);
             color: var(--color-text-light);
-            font-size: 1rem;
             transition: border-color 0.3s;
+            box-sizing: border-box;
         }
 
-        .auth-form input:focus {
-            border-color: var(--color-secondary);
+        .form-group input:focus {
+            border-color: var(--color-primary);
             outline: none;
         }
 
-        .auth-form button {
-            width: 100%;
-            padding: 15px;
+        .toggle-link {
+            display: block;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+        }
+
+        .toggle-link a {
+            font-weight: 600;
+            color: var(--color-secondary); /* Match your theme colors */
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .toggle-link a:hover {
+            color: var(--color-primary);
+        }
+
+        #message {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-weight: 500;
+        }
+        .message-success {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--color-success);
+        }
+        .message-error {
+            background-color: rgba(220, 38, 38, 0.1);
+            color: #ef4444; 
+        }
+
+        .cta-button.large {
+            padding: 15px 20px;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
@@ -70,80 +134,116 @@
             color: white;
             transition: background-color 0.3s;
         }
-
-        .auth-form button:hover {
-            background-color: #38bdf8; 
-        }
-
-        .back-to-login {
-            margin-top: 20px;
-            display: block;
-            color: #94a3b8;
-            font-size: 0.9rem;
+        .cta-button.large:hover {
+            background-color: #38bdf8;
         }
     </style>
 </head>
-<body class="login-body">
+<body>
 
     <div class="auth-container">
-        <a href="index.html" class="logo">TelsaAi</a>
-        <h2>Create Account</h2>
-        <p>Join TelsaAi and begin your intelligent investment journey.</p>
-        
-        <form class="auth-form" id="register-form">
-            <input type="text" placeholder="Full Name" id="reg-full-name" required>
-            <input type="email" placeholder="Email Address" id="reg-email" required>
-            <input type="password" placeholder="Password (Min 8 Characters)" id="reg-password" required>
-            <input type="password" placeholder="Confirm Password" id="reg-confirm-password" required>
+        <div class="auth-card">
+            <div class="logo">TESLAAI</div>
+            <h2 id="auth-title">Client Sign Up</h2>
 
-            <div style="text-align: left; margin-bottom: 20px;">
-                <label style="display: flex; align-items: center; font-size: 0.9rem; color: var(--color-text-light);">
-                    <input type="checkbox" required style="width: 20px; margin-right: 10px;">
-                    I agree to the <a href="#" style="color: var(--color-secondary); margin-left: 5px;">Terms and Conditions</a>
-                </label>
+            <div id="message"></div>
+
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="client@telsaai.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="cta-button large" id="auth-button" style="width: 100%;">Sign Up</button>
+            </form>
+
+            <div class="toggle-link">
+                <span id="toggle-text">Already have an account?</span> 
+                <a href="login.html" id="toggle-auth">Login</a>
             </div>
-            
-            <button type="submit">Register and Proceed</button>
-        </form>
-
-        <a href="login.html" class="back-to-login">Already have an account? Sign In</a>
+        </div>
     </div>
-<script>
-    document.getElementById('register-form').addEventListener('submit', function(e) {
-        e.preventDefault(); 
+
+    <script>
+        // CRITICAL: Update this URL to your deployed backend API URL when going live.
+        const API_BASE_URL = 'http://localhost:3000/api/v1/auth'; 
+        const API_SIGNUP_URL = ${API_BASE_URL}/signup; 
         
-        // --- 1. Get input values ---
-        const fullName = document.getElementById('reg-full-name').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        const confirmPassword = document.getElementById('reg-confirm-password').value;
+        document.addEventListener('DOMContentLoaded', () => {
+            const authForm = document.getElementById('auth-form');
+            const authButton = document.getElementById('auth-button');
+            const messageElement = document.getElementById('message');
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
 
-        // --- 2. Basic Validation ---
-        if (password !== confirmPassword) {
-            alert('Registration Failed: Passwords do not match.');
-            return;
-        }
-        if (password.length < 8) {
-            alert('Registration Failed: Password must be at least 8 characters.');
-            return;
-        }
+            // --- Function to Display Messages ---
+            function displayMessage(text, type) {
+                messageElement.textContent = text;
+                messageElement.className = '';
+                messageElement.classList.add('message', message-${type});
+                messageElement.style.display = 'block';
+            }
+            
+            // --- Form Submission Handler (Sign Up) ---
+            authForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
 
-        // --- 3. SAVE TO LOCAL STORAGE (CRITICAL STEP) ---
-        // Calculate Initials (e.g., John Doe -> JD)
-        const initials = fullName.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+                authButton.disabled = true;
+                authButton.textContent = 'Signing up...';
 
-        // Store the name, initials, and credentials for the dashboard/login to read
-        localStorage.setItem('telsa_userName', fullName);
-        localStorage.setItem('telsa_userInitials', initials);
-        // Store for simulated login
-        localStorage.setItem('registeredEmail', email); 
-        localStorage.setItem('registeredPassword', password); 
-        
-        alert('Registration Successful! Redirecting to dashboard.');
+                const name = nameInput.value;
+                const email = emailInput.value;
+                const password = passwordInput.value;
+                
+                const payload = { name, email, password };
 
-        // Redirect to the dashboard
-        window.location.href = 'dashboard.html'; 
-    });
-</script>
+                messageElement.style.display = 'none'; 
+
+                try {
+                    const response = await fetch(API_SIGNUP_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.token) {
+                        // 1. SUCCESSFUL SIGN UP
+                        displayMessage('Sign Up Successful! Redirecting to dashboard...', 'success');
+                        
+                        // 2. CRITICAL: Save the token and user data
+                        localStorage.setItem('userToken', data.token);
+                        localStorage.setItem('userData', JSON.stringify(data.user)); 
+                        
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 1000); 
+
+                    } else {
+                        // 3. SERVER ERROR
+                        const errorMessage = data.message || An error occurred during sign up.;
+                        displayMessage(errorMessage, 'error');
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    displayMessage('Network error or server unavailable. Try again later.', 'error');
+                } finally {
+                    authButton.disabled = false;
+                    authButton.textContent = 'Sign Up';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -1,131 +1,247 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken'); // Added JWT
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const jwt = require('jsonwebtoken');
 
+// --- Configuration ---
 const app = express();
-const server = http.createServer(app);
+const PORT = 3000;
+const JWT_SECRET = 'your_strong_and_long_jwt_secret_key_12345'; // IMPORTANT: Use a secure, non-guessable key
 
-// CRUCIAL: Read the secret key from the environment variable set on Render.
-const JWT_SECRET = process.env.JWT_SECRET || 'YOUR_FALLBACK_DEV_KEY_CHANGE_ME'; 
+// --- Middleware ---
+app.use(cors()); // Allow all origins for development
+app.use(bodyParser.json());
+app.use(express.static('public')); // Serve static HTML/CSS/JS files
 
-// Initialize Socket.IO with CORS enabled
-const io = new Server(server, {
-    cors: {
-        origin: "*", 
-        methods: ["GET", "POST"]
+// --- Mock Database (In-Memory for demonstration) ---
+let users = [
+    // Pre-registered Admin/Support account
+    { 
+        id: 'admin@telsaai.com', 
+        name: 'TelsaAI Support', 
+        email: 'admin@telsaai.com', 
+        password: 'secureadminpassword', // In a real app, this would be hashed!
+        role: 'admin' 
     }
-});
-
-// Simple in-memory storage for chat history
-const chatHistory = [];
+];
+let messages = []; // Live chat messages
 
 // --- Utility Functions ---
 
-function getTimestamp() {
-    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+/**
+ * Creates a unique Client ID based on the user's email.
+ * @param {string} email 
+ * @returns {string} Unique Client ID string
+ */
+function createClientId(email) {
+    const hash = email.split('').reduce((acc, char) => (acc + char.charCodeAt(0)), 0);
+    const uniqueNum = String(hash).padStart(6, '0').slice(-6); // Take last 6 digits of hash
+    return TAI-${uniqueNum};
 }
 
-// --- NEW LOGIN/AUTH ROUTE ---
-app.use(express.json()); // Middleware to parse JSON body requests
+/**
+ * Middleware to verify the JWT from the Authorization header.
+ */
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer TOKEN
 
-app.post('/api/login', (req, res) => {
+    if (token == null) return res.sendStatus(401); // If no token
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403); // Token invalid or expired
+        req.user = user;
+        next();
+    });
+}
+
+// =========================================================
+// --- AUTH ROUTES (Login & Sign Up) ---
+// =========================================================
+const authRouter = express.Router();
+
+// Register New User
+authRouter.post('/signup', (req, res) => {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: 'All fields are required for registration.' });
+    }
+    
+    // Check if user already exists
+    if (users.find(u => u.email === email)) {
+        return res.status(409).json({ message: 'Registration failed: Email already exists.' });
+    }
+
+    // Create a new user object
+    const newUser = {
+        id: email, // Using email as ID for simplicity
+        name,
+        email,
+        password, // Insecure: Real apps MUST hash passwords
+        clientId: createClientId(email),
+        role: 'client',
+        initials: name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2),
+    };
+
+    users.push(newUser);
+
+    // Generate JWT
+    const token = jwt.sign({ id: newUser.id, role: newUser.role }, JWT_SECRET, { expiresIn: '1h' });
+
+    console.log(New user registered: ${newUser.email});
+    res.status(201).json({ 
+        message: 'Registration successful!', 
+        token, 
+        user: { 
+            name: newUser.name, 
+            email: newUser.email,
+            clientId: newUser.clientId,
+            initials: newUser.initials
+        }
+    });
+});
+
+// User Login
+authRouter.post('/login', (req, res) => {
     const { email, password } = req.body;
 
-    // --- DUMMY AUTH CHECK: Replace this with your actual database/user verification! ---
-    // The username (email) will serve as the unique Client ID.
-    const SIMULATED_EMAIL = 'test@teslaai.com'; 
-    const SIMULATED_PASSWORD = 'password123';
+    const user = users.find(u => u.email === email && u.password === password);
     
-    // Check for SIMULATED successful login OR the user registered via the simple localStorage method
-    const registeredEmail = process.env.REG_EMAIL || SIMULATED_EMAIL;
-    const registeredPassword = process.env.REG_PASS || SIMULATED_PASSWORD;
-
-    let isAuthenticated = false;
-    let clientId = null;
-
-    if ((email.toLowerCase() === SIMULATED_EMAIL && password === SIMULATED_PASSWORD) || 
-        (email.toLowerCase() === registeredEmail && password === registeredPassword)) {
-        isAuthenticated = true;
-        clientId = email.toLowerCase(); // Use email as unique identifier
+    if (!user) {
+        return res.status(401).json({ message: 'Login failed: Invalid credentials.' });
     }
-    // -----------------------------------------------------------------------------------
-
-    if (isAuthenticated) { 
-        // AUTH SUCCESS: Generate a JWT with the unique Client ID
-        const token = jwt.sign({ clientId: clientId }, JWT_SECRET, { expiresIn: '7d' });
-
-        return res.json({ 
-            success: true, 
-            message: 'Login successful.',
-            token: token,
-            clientId: clientId,
-            userName: "TelsaAi Client" // Or fetch actual name from database
-        });
-    }
-
-    // AUTH FAILURE
-    res.status(401).json({ success: false, message: 'Invalid credentials.' });
-});
-// ------------------------------------
-
-// --- Socket.IO Connection Logic ---
-
-io.on('connection', (socket) => {
     
-    // 1. Initial Connection & ID Assignment
-    // The server doesn't assign ID; the client script passes the authenticated ID
-    const isClient = socket.handshake.query.isAdmin !== 'true';
-    const userId = socket.handshake.query.clientId || (isClient ? 'ANON-' + socket.id.substring(0, 4) : 'Admin'); 
-
-    console.log(`[${getTimestamp()}] A user connected: ${userId} (${socket.id})`);
-
-    // ... (rest of the socket logic remains the same)
-    // ... (rest of the socket logic remains the same)
+    // Generate JWT
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
     
-    // 2. Send History
-    socket.emit('history', chatHistory);
+    console.log(User logged in: ${user.email});
 
-    // 3. Handle incoming client messages (from dashboard.html)
-    socket.on('clientMessage', (msg) => {
-        const messageData = {
-            userId: msg.userId || userId, 
-            message: msg.message,
-            timestamp: getTimestamp()
-        };
-
-        chatHistory.push(messageData);
-        io.emit('newMessage', messageData);
-        
-        console.log(`[${getTimestamp()}] Client Message [${messageData.userId}]: ${messageData.message}`);
-    });
-
-    // 4. Handle incoming admin replies (from admin.html)
-    socket.on('adminReply', (msg) => {
-        const messageData = {
-            userId: 'Admin', 
-            message: msg.message,
-            timestamp: getTimestamp()
-        };
-        
-        chatHistory.push(messageData);
-        io.emit('newMessage', messageData);
-
-        console.log(`[${getTimestamp()}] Admin Reply: ${messageData.message}`);
-    });
-
-    // 5. Handle disconnection
-    socket.on('disconnect', () => {
-        console.log(`[${getTimestamp()}] User disconnected: ${userId} (${socket.id})`);
+    res.json({ 
+        message: 'Login successful!', 
+        token, 
+        user: { 
+            name: user.name, 
+            email: user.email,
+            clientId: user.clientId || createClientId(user.email),
+            initials: user.initials || user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2)
+        }
     });
 });
 
-// --- Server Startup ---
+app.use('/api/v1/auth', authRouter);
 
-const PORT = process.env.PORT || 3000;
+// =========================================================
+// --- USER PROFILE ROUTES (Requires Authentication) ---
+// =========================================================
+const profileRouter = express.Router();
 
-server.listen(PORT, () => {
-    console.log(`Chat server listening on port ${PORT}`);
-    console.log(`--------------------------------------------------`);
-    console.log(`Deployment successful. JWT Auth Route Ready.`);
+// Get User Profile Data
+profileRouter.get('/me', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const user = users.find(u => u.id === userId);
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found.' });
+    }
+
+    // Return sensitive, protected profile data
+    res.json({
+        name: user.name,
+        email: user.email,
+        clientId: user.clientId || createClientId(user.email),
+        initials: user.initials || user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2),
+        address: user.address || 'Not Set',
+    });
+});
+
+// Update User Profile Data
+profileRouter.post('/update', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const { name, address, newPassword } = req.body;
+
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+        return res.status(404).json({ message: 'User not found.' });
+    }
+    
+    // Update fields
+    if (name) users[userIndex].name = name;
+    if (address) users[userIndex].address = address;
+    if (newPassword && newPassword.length >= 8) users[userIndex].password = newPassword; // Insecure mock update
+    
+    // Recalculate initials if name changed
+    if (name) {
+        users[userIndex].initials = name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+    }
+
+    res.json({ 
+        message: 'Profile updated successfully.', 
+        name: users[userIndex].name,
+        initials: users[userIndex].initials
+    });
+});
+
+app.use('/api/v1/profile', profileRouter);
+
+// =========================================================
+// --- CHAT ROUTES (Requires Authentication) ---
+// =========================================================
+const chatRouter = express.Router();
+
+// Get All Messages
+chatRouter.get('/messages', authenticateToken, (req, res) => {
+    // Only return the last 100 messages for simplicity
+    res.json(messages.slice(-100)); 
+});
+
+// Post a New Message
+chatRouter.post('/send', authenticateToken, (req, res) => {
+    const userId = req.user.id;
+    const user = users.find(u => u.id === userId);
+    const { text } = req.body;
+    
+    if (!text || text.trim() === '') {
+        return res.status(400).json({ message: 'Message content is required.' });
+    }
+
+    const newMessage = {
+        id: Date.now(),
+        senderId: userId,
+        senderName: user.name,
+        senderRole: user.role,
+        text: text.trim(),
+        timestamp: new Date().toISOString()
+    };
+    
+    messages.push(newMessage);
+    
+    // Simulate Admin response if client sends a message
+    if (user.role === 'client') {
+        setTimeout(() => {
+            const adminMessage = {
+                id: Date.now() + 1,
+                senderId: 'admin@telsaai.com',
+                senderName: 'TelsaAI Support',
+                senderRole: 'admin',
+                text: 'Thank you for your message. An advisor will respond shortly.',
+                timestamp: new Date().toISOString()
+            };
+            messages.push(adminMessage);
+            console.log('Admin auto-response sent.');
+        }, 3000);
+    }
+
+    res.status(201).json(newMessage);
+});
+
+app.use('/api/v1/chat', chatRouter);
+
+// =========================================================
+// --- START SERVER ---
+// =========================================================
+app.listen(PORT, () => {
+    console.log(TelsaAI Server running at http://localhost:${PORT});
+    console.log(Admin account: admin@telsaai.com / secureadminpassword);
+    console.log(Total current users: ${users.length});
 });
