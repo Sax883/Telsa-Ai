@@ -73,7 +73,7 @@ io.use((socket, next) => {
             socket.userData = decoded;
             return next();
         } catch (err) {
-            // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
+            // SYNTAX FIXED
             console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token. Error: ${err.message}`);
             // Only reject connection if authentication token is invalid
             return next(new Error('Authentication error: Invalid token'));
@@ -180,7 +180,7 @@ io.on('connection', (socket) => {
     socket.userId = userId;
     socket.isAdmin = isAdmin;
 
-    // CRITICALLY FIXED SYNTAX HERE: The entire string needs to be inside the console.log() call.
+    // SYNTAX FIXED
     console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}) | Socket: ${socket.id}`);
     activeConnections[userId] = socket.id;
 
@@ -273,7 +273,7 @@ io.on('connection', (socket) => {
                 // Find the socket ID and send the message
                 io.to(clientSocketId).emit('message', messageData);
             } else {
-                // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
+                // SYNTAX FIXED
                 console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
             
@@ -289,7 +289,7 @@ io.on('connection', (socket) => {
         if (activeConnections[socket.userId] === socket.id) {
             delete activeConnections[socket.userId];
         }
-        // FIXED SYNTAX: Ensure backticks and parenthesis are correct here
+        // SYNTAX FIXED
         console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
     });
 });

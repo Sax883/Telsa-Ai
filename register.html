@@ -9,20 +9,14 @@
     <style>
         :root {
             --color-primary: #ef4444; /* Bright Red */
-            --color-secondary: #dc2626; /* Darker Red */
-            --color-background-dark: #1f2937; /* Dark Gray */
-            --color-background-light: #374151; /* Slightly lighter Dark Gray */
-            --color-border: #4b5563; /* Gray Border */
-            --color-text-light: #f3f4f6; /* Off-white */
-            --color-text-dark: #d1d5db; /* Light gray text */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-background-dark);
+            background-color: #1f2937; /* Dark Gray */
         }
         .text-primary { color: var(--color-primary); }
         .bg-primary { background-color: var(--color-primary); }
-        .bg-primary:hover { background-color: var(--color-secondary); }
+        .bg-primary:hover { background-color: #dc2626; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -86,7 +80,6 @@
     </div>
 
     <script>
-        // CRITICAL: Update this URL to your deployed Render service URL
         const API_BASE_URL = window.location.origin; 
         const form = document.getElementById('signup-form');
         const messageBox = document.getElementById('message-box');
@@ -126,13 +119,12 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // For signup, we redirect to login page after success
                     showMessage('Registration successful! Redirecting to login...', 'success');
                     
-                    // Small delay to let the user read the success message
+                    // CRITICAL: Force redirect to login.html after successful registration
                     setTimeout(() => {
                         window.location.href = 'login.html';
-                    }, 2000); 
+                    }, 500); 
 
                 } else {
                     showMessage(data.message || 'Registration failed. User may already exist.');

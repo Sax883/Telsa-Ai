@@ -9,20 +9,14 @@
     <style>
         :root {
             --color-primary: #ef4444; /* Bright Red */
-            --color-secondary: #dc2626; /* Darker Red */
-            --color-background-dark: #1f2937; /* Dark Gray */
-            --color-background-light: #374151; /* Slightly lighter Dark Gray */
-            --color-border: #4b5563; /* Gray Border */
-            --color-text-light: #f3f4f6; /* Off-white */
-            --color-text-dark: #d1d5db; /* Light gray text */
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-background-dark);
+            background-color: #1f2937; /* Dark Gray */
         }
         .text-primary { color: var(--color-primary); }
         .bg-primary { background-color: var(--color-primary); }
-        .bg-primary:hover { background-color: var(--color-secondary); }
+        .bg-primary:hover { background-color: #dc2626; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -35,7 +29,7 @@
 
         <form id="login-form">
             <div class="mb-5">
-                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address (or Admin: tesla_ai)</label>
+                <label for="email" class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
                 <input 
                     type="email" 
                     id="email" 
@@ -70,14 +64,10 @@
             <p class="text-gray-400">Don't have an account? 
                 <a href="register.html" class="text-primary hover:text-red-400 font-medium">Sign Up</a>
             </p>
-            <p class="text-gray-400 mt-2">Access Admin Panel 
-                <a href="admin.html" class="text-primary hover:text-red-400 font-medium">Here</a>
-            </p>
         </div>
     </div>
 
     <script>
-        // CRITICAL: Update this URL to your deployed Render service URL
         const API_BASE_URL = window.location.origin; 
         const form = document.getElementById('login-form');
         const messageBox = document.getElementById('message-box');
@@ -125,15 +115,12 @@
                     localStorage.setItem('userToken', data.token);
                     localStorage.setItem('userData', JSON.stringify(data.user));
                     
-                    showMessage('Login successful! Redirecting...', 'success');
+                    showMessage('Login successful! Redirecting to dashboard...', 'success');
                     
-                    // Redirect based on admin status
-                    if (data.user.isAdmin) {
-                         // Admin doesn't use the client dashboard, they use admin.html
-                         window.location.href = 'admin.html';
-                    } else {
-                         window.location.href = 'dashboard.html';
-                    }
+                    // CRITICAL: Force redirect to dashboard.html after success
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 500); 
 
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.');
