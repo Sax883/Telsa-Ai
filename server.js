@@ -18,6 +18,16 @@ const server = http.createServer(app);
 //     }
 // });
 
+const io = socketIo(server, {
+    cors: {
+        origin: [
+            "https://telsa-ai.org",
+            "https://www.telsa-ai.org"
+        ],
+        methods: ["GET", "POST"]
+    }
+});
+
 app.use(cors({
     origin: [
         "https://telsa-ai.org",
