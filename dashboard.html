@@ -522,7 +522,7 @@
             
             <div class="top-bar">
                 <div class="welcome-message">
-                    <h1>Welcome Back, <span id="welcome-name">Investor</span>!</h1>
+                    <h1>Welcome Back, <span id="welcome-name"></span>!</h1>
                 </div>
                 <div class="user-info-mobile">
                     <span class="client-id-mobile" id="client-id-mobile">Loading...</span>
@@ -986,24 +986,28 @@
         /**
          * Function to update all profile display elements.
          */
-        function updateUI(name, initials, clientId) {
-            const userNameElements = document.querySelectorAll('#user-name, #welcome-name');
-            const userAvatarElements = document.querySelectorAll('#user-avatar');
-            const clientIdSidebar = document.getElementById('client-id-sidebar');
-            const clientIdMobile = document.getElementById('client-id-mobile');
-            
-            userNameElements.forEach(el => el.textContent = name);
-            // Hide the name in the mobile view if space is tight, though usually welcome-name handles it.
-            document.getElementById('welcome-name').textContent = name;
-            
-            userAvatarElements.forEach(el => el.textContent = initials);
-            
-            if (clientIdSidebar) clientIdSidebar.textContent = clientId;
-            if (clientIdMobile) clientIdMobile.textContent = clientId;
+         function updateUI(name, initials, clientId) {
+    if (!name || !initials || !clientId) return; // Safety: exit if any value is missing
 
-            if (nameInput) nameInput.value = name;
-            if (profileAvatar) profileAvatar.textContent = initials;
-        }
+    // Update all elements that display the user's name
+    const userNameElements = document.querySelectorAll('#user-name, #welcome-name');
+    userNameElements.forEach(el => el.textContent = name);
+
+    // Update all avatar elements with initials
+    const userAvatarElements = document.querySelectorAll('#user-avatar');
+    userAvatarElements.forEach(el => el.textContent = initials);
+
+    // Update client ID in sidebar and mobile view if they exist
+    const clientIdSidebar = document.getElementById('client-id-sidebar');
+    const clientIdMobile = document.getElementById('client-id-mobile');
+    if (clientIdSidebar) clientIdSidebar.textContent = clientId;
+    if (clientIdMobile) clientIdMobile.textContent = clientId;
+
+    // Optional: if you have input fields or profile avatars
+    if (typeof nameInput !== 'undefined' && nameInput) nameInput.value = name;
+    if (typeof profileAvatar !== 'undefined' && profileAvatar) profileAvatar.textContent = initials;
+}
+
 
         /**
          * Fetches user profile data from the server using JWT.
