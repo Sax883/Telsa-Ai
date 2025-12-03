@@ -279,7 +279,7 @@
 
             clients.forEach(client => {
                 const item = document.createElement('div');
-                item.className = client-item ${client.clientId === selectedClientId ? 'active' : ''};
+                item.className = client-item `${client.clientId === selectedClientId ? 'active' : ''}`;
                 item.dataset.clientId = client.clientId;
                 
                 const statusClass = client.isActive ? 'online' : 'offline';
@@ -316,7 +316,7 @@
 
         function displayChat(clientId, history) {
             chatMessagesContainer.innerHTML = '';
-            chatHeader.textContent = Chatting with: ${clientId};
+            chatHeader.textContent = `Chatting with: ${clientId}`;
             chatInputArea.classList.remove('hidden');
             
             history.forEach(renderMessage);
