@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESLAAI | Admin Support Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        :root {
+            --color-primary: #ef4444; 
+            --color-background-dark: #1f2937; 
+            --color-background-light: #2c3541; 
+            --color-border: #4b5563;
+            --color-success: #10b981; 
+            --color-accent: #3b82f6;
+            --color-online: #10b981;
+            --color-offline: #6b7280;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background-dark);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .client-list {
+            width: 300px;
+            background-color: var(--color-background-light);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+        }
+        .chat-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #111827;
+        }
+        .client-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+        .client-item:hover, .client-item.active {
+            background-color: #374151;
+        }
+        .client-item h4 {
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        .client-item p {
+            font-size: 0.8rem;
+            color: #9ca3af;
+        }
+        .chat-header {
+            padding: 1rem;
+            background-color: var(--color-background-light);
+            border-bottom: 1px solid var(--color-border);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+        .message.admin {
+            align-self: flex-end;
+        }
+        .message.client {
+            align-self: flex-start;
+        }
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            max-width: 100%;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message.admin .message-bubble {
+            background-color: var(--color-primary); /* Admin Red */
+            border-bottom-right-radius: 0.25rem;
+        }
+        .message.client .message-bubble {
+            background-color: #374151; /* Client Gray */
+            border-bottom-left-radius: 0.25rem;
+        }
+        .message-info {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            color: #9ca3af;
+            align-self: flex-start;
+            padding-left: 5px;
+        }
+        .message.admin .message-info {
+             align-self: flex-end;
+             padding-right: 5px;
+        }
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--color-border);
+            background-color: var(--color-background-light);
+        }
+        #adminReplyInput {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem 0 0 0.5rem;
+            background-color: #111827;
+            color: white;
+            margin-right: -1px;
+        }
+        #sendReplyBtn {
+            background-color: var(--color-accent);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #sendReplyBtn:hover {
+            background-color: #2563eb;
+        }
+
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--color-background-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .login-card {
+            width: 90%;
+            max-width: 400px;
+            background-color: var(--color-background-light);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--color-border);
+        }
+        .status-dot {
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 5px;
+        }
+        .online { background-color: var(--color-online); }
+        .offline { background-color: var(--color-offline); }
+    </style>
+</head>
+<body>
+
+    <!-- Admin Key Login Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <h2 class="text-3xl font-bold text-center text-primary mb-4">Admin Access</h2>
+            <p class="text-gray-400 text-center mb-6">Enter the administrator key to access the support panel.</p>
+            <form id="adminKeyForm">
+                <div class="mb-4">
+                    <label for="adminKey" class="block text-sm font-medium text-gray-300 mb-2">Admin Key</label>
+                    <input 
+                        type="password" 
+                        id="adminKey" 
+                        required 
+                        class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Enter secret key"
+                    >
+                </div>
+                <div id="messageBox" class="mb-4 p-3 rounded-lg text-sm text-center hidden" role="alert"></div>
+                <button type="submit" id="accessBtn" class="w-full py-3 bg-accent text-white font-semibold rounded-lg transition duration-200">
+                    Access Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel Layout -->
+    <div id="adminPanel" class="container hidden">
+        
+        <div class="client-list">
+            <div class="p-4 border-b border-border text-center">
+                <h3 class="text-xl font-bold text-accent">TESLAAI Support</h3>
+                <button id="refreshBtn" class="mt-2 text-sm bg-gray-700 hover:bg-gray-600 py-1 px-3 rounded-md transition duration-200">
+                    <i class="fas fa-sync-alt"></i> Refresh List
+                </button>
+            </div>
+            <div id="clientList" class="overflow-y-auto">
+                <!-- Client items injected here -->
+            </div>
+        </div>
+
+        <div class="chat-panel">
+            <div id="chatHeader" class="chat-header">
+                Select a client to start chatting...
+            </div>
+            <div id="chatMessages" class="chat-messages">
+                <!-- Messages injected here -->
+            </div>
+            <div id="chatInputArea" class="chat-input hidden">
+                <input type="text" id="adminReplyInput" placeholder="Type your reply...">
+                <button id="sendReplyBtn">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        // The Admin Key MUST match the hardcoded SECRET_KEY in server.js for security (even in memory)
+        const ADMIN_SECRET_KEY = 'a-very-secret-key-that-must-be-long-and-secure'; 
+        
+        // DOM Elements
+        const loginOverlay = document.getElementById('loginOverlay');
+        const adminPanel = document.getElementById('adminPanel');
+        const adminKeyForm = document.getElementById('adminKeyForm');
+        const adminKeyInput = document.getElementById('adminKey');
+        const messageBox = document.getElementById('messageBox');
+        const clientListContainer = document.getElementById('clientList');
+        const chatHeader = document.getElementById('chatHeader');
+        const chatMessagesContainer = document.getElementById('chatMessages');
+        const chatInputArea = document.getElementById('chatInputArea');
+        const adminReplyInput = document.getElementById('adminReplyInput');
+        const sendReplyBtn = document.getElementById('sendReplyBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+
+        let chatSocket;
+        let selectedClientId = null;
+        let chatHistory = {}; // Store history locally for quick switching
+
+        // --- Helper Functions ---
+
+        function showMessage(text, type = 'error') {
+            messageBox.textContent = text;
+            messageBox.classList.remove('hidden', 'bg-red-900', 'bg-green-900', 'text-red-300', 'text-green-300');
+            
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-900', 'text-green-300');
+            } else {
+                messageBox.classList.add('bg-red-900', 'text-red-300');
+            }
+        }
+        
+        function getAuthToken() {
+            return localStorage.getItem('adminToken');
+        }
+
+        // --- Chat UI Rendering ---
+
+        function renderClientList(clients) {
+            clientListContainer.innerHTML = '';
+            clients.sort((a, b) => (a.isActive === b.isActive) ? 0 : a.isActive ? -1 : 1);
+
+            clients.forEach(client => {
+                const item = document.createElement('div');
+                item.className = client-item ${client.clientId === selectedClientId ? 'active' : ''};
+                item.dataset.clientId = client.clientId;
+                
+                const statusClass = client.isActive ? 'online' : 'offline';
+                const statusText = client.isActive ? 'Online' : 'Offline';
+
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-lg">${client.clientId}</h4>
+                        <span class="text-xs font-medium text-gray-400">
+                           <span class="status-dot ${statusClass}"></span> ${statusText}
+                        </span>
+                    </div>
+                    <p>${client.lastMessageSummary}</p>
+                    <p class="text-xs text-gray-500 mt-1">${client.lastMessageTime}</p>
+                `;
+
+                item.addEventListener('click', () => selectClient(client.clientId));
+                clientListContainer.appendChild(item);
+            });
+        }
+        
+        function renderMessage(message) {
+            const messageElement = document.createElement('div');
+            // Determine class: message.isAdmin is true for admin replies/system messages
+            const messageClass = message.isAdmin ? 'admin' : 'client';
+            
+            messageElement.classList.add('message', messageClass);
+            messageElement.innerHTML = `
+                <div class="message-bubble">${message.message}</div>
+                <div class="message-info">${message.isAdmin ? 'You' : message.userId} • ${message.timestamp}</div>
+            `;
+            chatMessagesContainer.appendChild(messageElement);
+        }
+
+        function displayChat(clientId, history) {
+            chatMessagesContainer.innerHTML = '';
+            chatHeader.textContent = Chatting with: ${clientId};
+            chatInputArea.classList.remove('hidden');
+            
+            history.forEach(renderMessage);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }
+
+        // --- Core Admin Logic ---
+
+        function selectClient(clientId) {
+            if (selectedClientId === clientId) return;
+
+            selectedClientId = clientId;
+
+            // Update UI to show active client
+            document.querySelectorAll('.client-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.clientId === clientId) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Request history for the selected client
+            if (chatSocket && chatSocket.connected) {
+                chatSocket.emit('requestChatHistory', clientId);
+            }
+        }
+
+        function connectAdminSocket(token) {
+            if (chatSocket) {
+                chatSocket.disconnect();
+            }
+
+            // Connect as Admin, passing the token and the isAdmin flag in query
+            chatSocket = io(API_BASE_URL, {
+                query: { 
+                    token: token, 
+                    isAdmin: 'true' 
+                }
+            });
+
+            chatSocket.on('connect', () => {
+                console.log('Admin Socket.IO connected.');
+                requestClientList();
+            });
+
+            chatSocket.on('clientList', (clients) => {
+                renderClientList(clients);
+            });
+            
+            chatSocket.on('chatHistory', (data) => {
+                // This is the response to 'requestChatHistory'
+                if (data.clientId === selectedClientId) {
+                    displayChat(data.clientId, data.history);
+                }
+            });
+
+            chatSocket.on('newMessage', (messageData) => {
+                console.log('New message received:', messageData);
+                // 1. Refresh client list to update last message/time
+                requestClientList(); 
+
+                // 2. If the message is for the currently selected chat, display it
+                if (messageData.userId === selectedClientId || (messageData.isAdmin && messageData.userId === 'tesla_ai' && selectedClientId)) {
+                    // Only display admin's own replies if they're in the currently selected chat
+                    displayChat(selectedClientId, [...chatMessagesContainer.children].map(e => ({message: e.querySelector('.message-bubble').textContent, isAdmin: e.classList.contains('admin'), timestamp: e.querySelector('.message-info').textContent.split(' • ')[1] })));
+                    
+                    // The server is designed to send the new message back to all admins 
+                    // and to the client. The 'chatHistory' response above might be delayed.
+                    // Instead of trying to update the existing history, let's just trigger a re-fetch of the specific client history.
+                    if (chatSocket && chatSocket.connected && selectedClientId) {
+                        chatSocket.emit('requestChatHistory', selectedClientId);
+                    }
+                }
+            });
+
+            chatSocket.on('disconnect', () => {
+                console.log('Admin Socket.IO disconnected.');
+            });
+            
+            chatSocket.on('error', (err) => {
+                console.error('Socket Error:', err);
+                showMessage('Connection Error: Invalid token or server issue.', 'error');
+            });
+        }
+        
+        function requestClientList() {
+             if (chatSocket && chatSocket.connected) {
+                chatSocket.emit('requestClientList');
+            } else {
+                 showMessage('Socket not connected. Check admin key/server.', 'error');
+            }
+        }
+
+        function sendAdminReply() {
+            const message = adminReplyInput.value.trim();
+            if (!message || !selectedClientId || !chatSocket || !chatSocket.connected) {
+                return;
+            }
+            
+            chatSocket.emit('adminReply', {
+                clientId: selectedClientId,
+                message: message
+            });
+            
+            adminReplyInput.value = '';
+            adminReplyInput.disabled = true;
+            sendReplyBtn.disabled = true;
+
+            setTimeout(() => {
+                adminReplyInput.disabled = false;
+                sendReplyBtn.disabled = false;
+            }, 500); // Debounce
+        }
+
+        // --- Event Handlers & Initialization ---
+
+        adminKeyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = adminKeyInput.value.trim();
+            
+            if (key === ADMIN_SECRET_KEY) {
+                showMessage('Access granted! Connecting...', 'success');
+                // Use a fake token for demonstration purposes, as the actual admin login isn't implemented via JWT routes
+                // The server uses the admin key query for connection validation.
+                localStorage.setItem('adminToken', 'admin_validated_token_for_chat');
+                
+                loginOverlay.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                
+                connectAdminSocket(localStorage.getItem('adminToken'));
+
+            } else {
+                showMessage('Invalid Admin Key.', 'error');
+            }
+        });
+        
+        refreshBtn.addEventListener('click', requestClientList);
+
+        sendReplyBtn.addEventListener('click', sendAdminReply);
+        adminReplyInput.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') {
+                e.preventDefault(); 
+                sendAdminReply();
+            }
+        });
+
+        // Check for existing token on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = getAuthToken();
+            if (token) {
+                loginOverlay.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                connectAdminSocket(token);
+            }
+        });
+
+    </script>
+</body>
+</html>

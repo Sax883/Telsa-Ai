@@ -1,0 +1,785 @@
+/* General Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Red and White Color Palette */
+    --color-primary: #dc2626; /* Strong Red */
+    --color-secondary: #ef4444; /* Slightly lighter Red accent */
+    --color-background-dark: #f8fafc; /* Near White Background */
+    --color-background-light: #ffffff; /* Pure White for cards/sections */
+    --color-text-dark: #1f2937; /* Dark Gray for main text */
+    --color-text-light: #4b5563; /* Medium Gray for secondary text */
+    --color-success: #22c55e; /* Green for success/growth (can be kept or changed) */
+    --color-accent: #f59e0b; /* Gold/Amber for featured items (kept for contrast) */
+    --color-border: #e2e8f0; /* Light Gray border */
+    --font-family: 'Poppins', sans-serif;
+    --border-radius: 8px;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--color-background-dark); /* Main light background */
+    color: var(--color-text-dark); /* Main dark text color */
+    line-height: 1.6;
+    scroll-behavior: smooth;
+}
+
+a {
+    color: var(--color-primary); /* Red links */
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+a:hover {
+    color: var(--color-text-dark); /* Darker on hover */
+}
+
+/* --- Navigation Bar (for index.html, privacy.html, etc.) --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 5%;
+    background-color: var(--color-background-light); /* White navbar */
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-primary); /* Red logo */
+    letter-spacing: 1px;
+}
+
+/* Hamburger Styles (for index.html/privacy.html) */
+.hamburger {
+    display: none; /* Hide by default on large screens */
+    cursor: pointer;
+    padding: 5px;
+    z-index: 1100;
+    position: relative; 
+}
+
+.hamburger .bar {
+    width: 25px;
+    height: 3px;
+    background-color: var(--color-primary);
+    margin: 5px 0;
+    transition: 0.4s;
+    border-radius: 2px;
+}
+
+.hamburger.active .bar:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active .bar:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.navbar nav.nav-links {
+    display: flex;
+}
+
+.navbar nav.nav-links a {
+    margin-left: 20px;
+    font-weight: 400;
+    color: var(--color-text-dark);
+}
+.navbar nav.nav-links a:hover {
+    color: var(--color-primary);
+}
+
+/* Call-to-Action Button Style */
+.cta-button {
+    background-color: var(--color-primary); 
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.cta-button:hover {
+    background-color: var(--color-secondary);
+    transform: translateY(-2px);
+}
+
+.cta-button.large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    margin-top: 20px;
+    display: inline-block;
+}
+
+/* --- Hero Section --- */
+.hero-section {
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 4rem 5%;
+    background: linear-gradient(rgba(220, 38, 38, 0.8), rgba(220, 38, 38, 0.8)), url('placeholder-background.jpg'); 
+    background-size: cover;
+    background-position: center;
+    color: white;
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: white;
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    color: #fcebeb;
+    margin-bottom: 2rem;
+}
+
+/* --- Content Sections (index.html) --- */
+.content-section {
+    padding: 4rem 5%;
+    text-align: center;
+    background-color: var(--color-background-light);
+    border-bottom: 1px solid var(--color-border);
+    clear: both;
+}
+
+.content-panel { /* Added for dashboard content blocks */
+    background-color: var(--color-background-light);
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.content-section:nth-of-type(even) {
+    background-color: var(--color-background-dark);
+}
+
+.content-section h2 {
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.professional-text {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    color: var(--color-text-dark);
+}
+
+/* --- Grids (Plans, Team, Cars) --- */
+.plans-grid, .team-grid, .car-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    max-width: 1400px;
+    margin: 0 auto;
+    align-items: stretch;
+}
+
+/* Card Styling (General) */
+.plan-card, .team-card, .car-card {
+    background-color: var(--color-background-light);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s, border-color 0.3s;
+}
+.plan-card:hover, .team-card:hover, .car-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-primary);
+}
+
+/* TEAM CARD FIX: Ensures images look good on mobile and text is separated */
+.team-card {
+    text-align: left; /* Align text within the card */
+    padding: 0; 
+}
+.team-card img {
+    width: 100%;
+    height: 200px; /* Consistent height */
+    object-fit: cover;
+    margin-bottom: 0;
+}
+.team-card h3 {
+    font-size: 1.2rem;
+    color: var(--color-primary);
+    margin: 15px 20px 5px 20px;
+}
+.team-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-dark);
+    padding: 0 20px 20px 20px; /* Padding for the text content */
+}
+/* END TEAM CARD FIX */
+
+.plan-card {
+    padding: 30px;
+    text-align: center;
+}
+.plan-card.featured {
+    border: 2px solid var(--color-accent);
+    box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+    background-color: #fffbeb;
+}
+
+.plan-card h2 {
+    font-size: 1.8rem;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+}
+
+.plan-card .investment-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 15px;
+}
+
+.plan-card.featured .investment-amount {
+    color: var(--color-accent);
+}
+
+.plan-card .return-period {
+    background-color: var(--color-secondary);
+    color: white;
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.plan-card ul {
+    list-style: none;
+    text-align: left;
+    margin-bottom: 30px;
+}
+
+.plan-card ul li {
+    padding: 10px 0;
+    border-bottom: 1px dashed var(--color-border);
+    color: var(--color-text-dark);
+    display: flex;
+    align-items: center;
+}
+
+.plan-card ul li i {
+    color: var(--color-success);
+    margin-right: 10px;
+}
+
+.plan-card .cta-button {
+    width: 100%;
+    padding: 15px 0;
+    font-size: 1rem;
+}
+
+.plan-card.featured .cta-button {
+    background-color: var(--color-accent);
+}
+
+.plan-card.featured .cta-button:hover {
+    background-color: #d97706;
+}
+
+.car-info {
+    padding: 0; 
+}
+
+.car-info img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    margin-bottom: 10px;
+}
+
+.car-info h3 {
+    padding: 0 20px; 
+    font-size: 1.5rem;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+}
+
+.car-description {
+    padding: 0 20px;
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    margin-bottom: 15px;
+    min-height: 40px; 
+}
+
+.car-price {
+    padding: 0 20px;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-accent); 
+    margin-bottom: 20px;
+}
+
+.car-card .cta-button {
+    width: 100%;
+    text-align: center;
+    padding: 12px 0;
+    font-size: 1rem;
+}
+
+/* --- Footer --- */
+footer {
+    padding: 1.5rem 5%;
+    text-align: center;
+    font-size: 0.9rem;
+    background-color: var(--color-background-light);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-light);
+}
+
+/* ================================================= */
+/* DASHBOARD STRUCTURE STYLES */
+/* ================================================= */
+
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--color-background-light);
+    color: var(--color-text-dark);
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+
+.sidebar .logo {
+    margin-bottom: 30px;
+    color: var(--color-primary);
+}
+
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    color: var(--color-text-light);
+    border-radius: 6px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar nav a i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.sidebar nav a:hover, .sidebar nav a.active {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.sidebar .client-info {
+    margin-top: 30px;
+    padding-top: 10px;
+    border-top: 1px solid var(--color-border);
+    font-size: 0.9rem;
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 40px;
+    background-color: var(--color-background-dark);
+}
+
+.top-bar {
+    display: none; /* Hidden by default on desktop */
+}
+
+/* Class to hide dashboard content pages */
+.page-content.hidden {
+    display: none;
+}
+
+/* Dashboard Content Grid and Cards */
+.stats-grid { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background-color: var(--color-background-light);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid var(--color-primary); /* Default accent */
+}
+
+.stat-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-bottom: 5px;
+}
+
+.stat-card h3 {
+    font-size: 2rem;
+    color: var(--color-text-dark);
+    font-weight: 700;
+}
+
+.stat-card .bonus, .stat-card .no-active-plan {
+    font-size: 0.9rem;
+    display: block;
+}
+
+.stat-card .bonus {
+    color: var(--color-success);
+}
+
+.stat-card .no-active-plan {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+/* Wallet Card Specific Styles */
+.wallet-action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+/* Avatar Styling for Profile */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.user-profile #user-name {
+    font-weight: 600;
+}
+
+/* --- CHAT STYLES --- */
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 60vh; /* Set a fixed height for the chat area */
+    max-height: 800px;
+    background-color: var(--color-background-light);
+    border-radius: var(--border-radius);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.chat-header {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 15px;
+    font-weight: 600;
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    display: flex;
+    max-width: 80%;
+}
+
+.message.client {
+    align-self: flex-end;
+    justify-content: flex-end;
+}
+
+.message.admin {
+    align-self: flex-start;
+    justify-content: flex-start;
+}
+
+.message-bubble {
+    padding: 10px 15px;
+    border-radius: 18px;
+    line-height: 1.4;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.message.client .message-bubble {
+    background-color: var(--color-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message.admin .message-bubble {
+    background-color: var(--color-background-dark);
+    color: var(--color-text-dark);
+    border: 1px solid var(--color-border);
+    border-bottom-left-radius: 4px;
+}
+
+.message-info {
+    font-size: 0.75rem;
+    color: var(--color-text-light);
+    margin-top: 5px;
+    text-align: right;
+}
+
+.message.admin .message-info {
+    text-align: left;
+}
+
+.chat-input {
+    padding: 15px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: 10px;
+}
+
+.chat-input input[type="text"] {
+    flex-grow: 1;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 1rem;
+}
+
+.chat-input button {
+    padding: 0 20px;
+    border-radius: 20px;
+    background-color: var(--color-primary);
+    color: white;
+    font-weight: 600;
+}
+
+/* --- Message Box for Auth/Error (Replaces alerts) --- */
+.message-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.message-box-content {
+    background: white;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.message-box-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.message-box-content p {
+    margin-bottom: 25px;
+    font-size: 1rem;
+    color: var(--color-text-dark);
+}
+
+.message-box-content .cta-button {
+    padding: 10px 20px;
+}
+
+.message-box-success h3 {
+    color: var(--color-success);
+}
+.message-box-error h3 {
+    color: var(--color-primary);
+}
+
+
+/* ================================================= */
+/* MOBILE RESPONSIVE STYLES (INDEX.HTML AND DASHBOARD.HTML) */
+/* ================================================= */
+
+@media (max-width: 900px) { /* Main breakpoint for all mobile optimizations */
+    
+    /* --- INDEX/PRIVACY PAGE Mobile Navigation (Hamburger) --- */
+    .navbar {
+        padding: 1rem 5%;
+        display: flex; 
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* 1. Show the hamburger icon */
+    .hamburger {
+        display: block; 
+    }
+    
+    /* 2. HIDE the navigation links (This is the critical fix) */
+    .navbar nav.nav-links {
+        flex-direction: column;
+        position: fixed;
+        top: 0;
+        right: -100%; /* Hidden off-screen */
+        width: 70%;
+        max-width: 300px;
+        height: 100vh;
+        background-color: var(--color-background-light);
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+        transition: right 0.3s ease-in-out;
+        z-index: 1050;
+        padding-top: 80px;
+        
+        /* FIX: Must explicitly override the default desktop 'display: flex' */
+        display: none; 
+    }
+    
+    /* 3. SHOW the navigation links when the 'active' class is added by JS (on hamburger click) */
+    .navbar nav.nav-links.active {
+        right: 0; /* Slide into view */
+        display: flex; /* SHOW the menu contents */
+    }
+    
+    .navbar nav.nav-links a {
+        margin: 0;
+        padding: 15px 20px;
+        width: 100%;
+        border-bottom: 1px solid var(--color-border);
+        text-align: left;
+    }
+    .team-grid, .plans-grid, .car-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    /* --- DASHBOARD Mobile Fixes --- */
+    
+    .dashboard-layout {
+        flex-direction: column; /* Stack sidebar and main content */
+    }
+
+    /* 1. HIDE/SHOW THE SIDEBAR */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -250px; /* Hide off-screen */
+        height: 100%;
+        z-index: 1001;
+        transition: left 0.3s ease-in-out;
+    }
+
+    .sidebar.active {
+        left: 0; /* Slide into view */
+    }
+
+    /* 2. SHOW AND STYLE THE TOP MOBILE NAV BAR */
+    .main-content {
+        padding: 20px; /* Reduced padding */
+        width: 100%;
+    }
+    
+    .top-bar {
+        display: flex; /* Show the mobile nav/menu bar */
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    /* Hide the H1 title in welcome message on mobile to save space */
+    .top-bar .welcome-message h1 {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    /* 3. STYLE THE MOBILE USER INFO BLOCK (ID + HAMBURGER) */
+    .user-info-mobile {
+        display: flex;
+        align-items: center;
+    }
+    
+    /* Display the client ID on mobile (Set by JS, not pure CSS now) */
+    .client-id-mobile {
+        color: var(--color-primary);
+        font-size: 0.9rem;
+        margin-right: 10px;
+    }
+
+    /* 4. STYLE THE MOBILE MENU ICON */
+    .menu-toggle {
+        display: block;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: var(--color-primary);
+        padding: 5px;
+    }
+
+    /* 5. WALLET CARD MOBILE ADJUSTMENT */
+    .wallet-action-buttons {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 15px;
+    }
+    .wallet-action-buttons .cta-button {
+        width: 100%;
+        margin-left: 0 !important; 
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .main-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    /* 6. CHAT MOBILE ADJUSTMENTS */
+    .chat-container {
+        height: 70vh;
+    }
+}

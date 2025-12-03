@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeslaAi - Investment Plans</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Plan Specific Styles */
+        .plans-page-container {
+            padding: 80px 5%;
+            text-align: center;
+        }
+
+        .plans-page-container h1 {
+            font-size: 2.5rem;
+            color: var(--color-secondary);
+            margin-bottom: 10px;
+        }
+
+        .plans-page-container p {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-bottom: 50px;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .plan-card {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            transition: transform 0.3s, border-color 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--color-secondary);
+        }
+
+        .plan-card.featured {
+            border: 2px solid #f59e0b;
+            box-shadow: 0 10px 35px rgba(245, 158, 11, 0.2);
+        }
+
+        .plan-card h2 {
+            font-size: 1.8rem;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .plan-card .investment-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-secondary);
+            margin-bottom: 15px;
+        }
+
+        .plan-card .return-period {
+            background-color: var(--color-primary);
+            color: white;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .plan-card ul {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .plan-card ul li {
+            padding: 10px 0;
+            border-bottom: 1px dashed #334155;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-card ul li i {
+            color: var(--color-success);
+            margin-right: 10px;
+        }
+
+        .plan-card .cta-button {
+            width: 100%;
+            padding: 15px 0;
+            font-size: 1rem;
+        }
+        
+        .plan-card.featured .cta-button {
+            background-color: #f59e0b;
+        }
+
+        .plan-card.featured .cta-button:hover {
+            background-color: #d97706;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="logo">TeslaAi</div>
+        <nav>
+            <a href="index.html#about">About</a>
+            <a href="investment_plans.html">Investment Plans</a>
+            <a href="index.html#contact">Contact</a>
+            <a href="login.html" class="cta-button">Sign In</a>
+        </nav>
+    </header>
+
+    <div class="plans-page-container">
+        <h1>Intelligent Investment Strategies</h1>
+        <p>Choose the plan that best fits your financial goals. All plans include daily AI management and profit distribution every 3 days.</p>
+
+        <div class="plans-grid">
+
+            <div class="plan-card">
+                <h2>Bronze Tier</h2>
+                <div class="investment-amount">$2,000</div>
+                <div class="return-period">Profit Payout: Every 3 Days</div>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $2,000</li>
+                    <li><i class="fas fa-check-circle"></i> AI Strategy: Low Volatility</li>
+                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 5% - 8%</li>
+                    <li><i class="fas fa-check-circle"></i> 24/7 Basic Support</li>
+                </ul>
+                <a href="login.html" class="cta-button">Select Plan</a>
+            </div>
+
+            <div class="plan-card">
+                <h2>Silver Tier</h2>
+                <div class="investment-amount">$5,000</div>
+                <div class="return-period">Profit Payout: Every 3 Days</div>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $5,000</li>
+                    <li><i class="fas fa-check-circle"></i> AI Strategy: Balanced Growth</li>
+                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 8% - 12%</li>
+                    <li><i class="fas fa-check-circle"></i> Dedicated Account Manager</li>
+                </ul>
+                <a href="login.html" class="cta-button">Select Plan</a>
+            </div>
+
+            <div class="plan-card featured">
+                <h2>Gold Tier (Recommended)</h2>
+                <div class="investment-amount">$10,000</div>
+                <div class="return-period">Profit Payout: Every 3 Days</div>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $10,000</li>
+                    <li><i class="fas fa-check-circle"></i> AI Strategy: Optimized Aggression</li>
+                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 12% - 18%</li>
+                    <li><i class="fas fa-check-circle"></i> Priority Support & Analytics</li>
+                </ul>
+                <a href="login.html" class="cta-button">Select Plan</a>
+            </div>
+
+            <div class="plan-card">
+                <h2>Platinum Tier</h2>
+                <div class="investment-amount">$25,000</div>
+                <div class="return-period">Profit Payout: Every 3 Days</div>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $25,000</li>
+                    <li><i class="fas fa-check-circle"></i> AI Strategy: Exclusive Access</li>
+                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 18% - 25%</li>
+                    <li><i class="fas fa-check-circle"></i> Quarterly Strategy Review</li>
+                </ul>
+                <a href="login.html" class="cta-button">Select Plan</a>
+            </div>
+
+            <div class="plan-card">
+                <h2>Diamond Tier</h2>
+                <div class="investment-amount">$50,000+</div>
+                <div class="return-period">Profit Payout: Every 3 Days</div>
+                <ul>
+                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $50,000</li>
+                    <li><i class="fas fa-check-circle"></i> AI Strategy: Fully Bespoke</li>
+                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 25%+</li>
+                    <li><i class="fas fa-check-circle"></i> Personal Senior Advisor</li>
+                </ul>
+                <a href="login.html" class="cta-button">Select Plan</a>
+            </div>
+            
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 TeslaAi. All rights reserved. | <a href="#">Privacy Policy</a></p>
+    </footer>
+
+</body>
+</html>

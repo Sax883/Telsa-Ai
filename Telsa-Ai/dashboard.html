@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TESLAAI | Client Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --color-primary: #ef4444; 
+            --color-accent: #3b82f6; /* Blue for featured plans */
+            --color-secondary: #fcd34d; 
+            --color-text-dark: #1f2937;
+            --color-text-light: #9ca3af;
+            --color-background-dark: #1f2937; 
+            --color-background-light: #2c3541; 
+            --color-success: #10b981; 
+            --color-error: #ef4444;
+            --color-border: #4b5563;
+            --border-radius: 0.75rem; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background-dark);
+            color: white;
+            margin: 0;
+        }
+        
+        /* Dashboard Layout */
+        .dashboard-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--color-background-light);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--color-border);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .sidebar .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: var(--border-radius);
+            color: #d1d5db;
+            transition: background-color 0.2s, color 0.2s;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .sidebar nav a i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar nav a:hover,
+        .sidebar nav a.active {
+            background-color: #374151;
+            color: white;
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            padding: 0; 
+            overflow-y: auto;
+        }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: #2c3541;
+            border-bottom: 1px solid var(--color-border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .welcome-message h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .welcome-message span {
+            color: var(--color-primary);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 9999px;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-left: 1rem;
+        }
+        
+        /* General Page Styling */
+        .page-content {
+            padding: 2rem;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .page-content h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+            border-left: 4px solid var(--color-primary);
+            padding-left: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background-color: var(--color-background-light);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: 1px solid var(--color-border);
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-card p {
+            font-size: 0.9rem;
+            color: var(--color-text-light);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+        .stat-card .change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .stat-card .growth {
+            color: var(--color-success);
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        
+        .stat-card .deposit {
+            color: var(--color-accent);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Recent Activity */
+        .recent-activity {
+            margin-top: 2rem;
+        }
+
+        .content-panel {
+            background-color: var(--color-background-light);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            border: 1px solid var(--color-border);
+        }
+
+        .activity-list .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .activity-list .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-item .type {
+            font-weight: 600;
+        }
+
+        .transaction-item .deposit {
+            color: var(--color-success);
+        }
+        
+        /* Buttons */
+        .cta-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--color-primary);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+
+        .cta-button:hover {
+            background-color: #dc2626;
+        }
+
+        /* Investment Plans */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .plan-card {
+            background-color: #374151;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 2px solid var(--color-border);
+            transition: all 0.3s;
+        }
+        
+        .plan-card:hover {
+            border-color: var(--color-primary);
+            transform: scale(1.02);
+        }
+
+        .plan-card.featured {
+            background-color: #1f2937;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .plan-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Profile Form */
+        .profile-container label {
+            color: white;
+            font-weight: 600;
+        }
+
+        .profile-container input[type="text"], 
+        .profile-container input[type="email"], 
+        .profile-container input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            margin-top: 0.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--color-border);
+            background-color: #111827;
+            color: white;
+            transition: border-color 0.2s;
+        }
+        
+        .profile-container input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+        
+        /* Chat Styling */
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--color-background-light);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 70vh; /* Set a fixed height for the chat window */
+            border: 1px solid var(--color-border);
+        }
+
+        .chat-header {
+            padding: 1rem;
+            background-color: #374151;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+            max-width: 80%;
+        }
+
+        .message.admin {
+            align-self: flex-start;
+        }
+
+        .message.client {
+            align-self: flex-end;
+        }
+
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 1.25rem;
+            max-width: 100%;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .message.admin .message-bubble {
+            background-color: #3b82f6; /* Blue for admin */
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .message.client .message-bubble {
+            background-color: var(--color-primary); /* Red for client */
+            border-bottom-right-radius: 0.25rem;
+        }
+        
+        .message-info {
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+            color: var(--color-text-light);
+            align-self: flex-end;
+            padding-right: 5px;
+        }
+        
+        .message.admin .message-info {
+             align-self: flex-start;
+             padding-left: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid var(--color-border);
+            background-color: #374151;
+        }
+
+        #chatInput {
+            flex-grow: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.5rem 0 0 0.5rem;
+            background-color: #111827;
+            color: white;
+            margin-right: -1px;
+        }
+
+        #sendMessageButton {
+            background-color: var(--color-primary);
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 0 0.5rem 0.5rem 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        #sendMessageButton:hover {
+            background-color: #dc2626;
+        }
+
+        /* Custom Modal (Message Box) */
+        .message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .message-box-content {
+            background-color: var(--color-background-light);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        
+        .message-box-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-box-content p {
+            margin-bottom: 1.5rem;
+            color: var(--color-text-light);
+        }
+        
+        .message-box-error h3 { color: var(--color-error); }
+        .message-box-success h3 { color: var(--color-success); }
+
+
+        /* Mobile Responsiveness */
+        .menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: white;
+        }
+        
+        .user-info-mobile {
+            display: flex;
+            align-items: center;
+        }
+        
+        .client-id-mobile {
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+            margin-right: 1rem;
+            display: block; /* Show always for mobile */
+        }
+        
+        @media (max-width: 900px) {
+            .sidebar {
+                position: fixed;
+                height: 100%;
+                z-index: 50;
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                width: 100%;
+            }
+            
+            .welcome-message {
+                display: none;
+            }
+            
+            .menu-toggle {
+                display: block;
+                margin-left: 1rem;
+            }
+
+            .user-profile .avatar {
+                margin-left: 0.5rem;
+            }
+        }
+
+    </style>
+</head>
+<body class="dashboard-body">
+
+    <div class="dashboard-layout">
+        
+        <div class="sidebar" id="sidebar">
+            <div class="logo">TESLAAI</div>
+            <nav>
+                <a href="#home" class="active" data-page="home"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="#wallet" data-page="wallet"><i class="fas fa-wallet"></i> Wallet Balance</a>
+                <a href="#new-investment" data-page="new-investment"><i class="fas fa-chart-line"></i> New Investment</a>
+                <a href="#history" data-page="history"><i class="fas fa-clock-rotate-left"></i> History</a>
+                <a href="#chat" data-page="chat"><i class="fas fa-comment-dots"></i> Live Support</a>
+                <a href="#profile" data-page="profile"><i class="fas fa-user-circle"></i> Profile</a>
+            </nav>
+            <div class="sidebar-footer" style="margin-top: 50px;">
+                <p style="font-size: 0.8rem; color: var(--color-text-light);">Client ID: <span id="client-id-sidebar" style="font-weight: 600; color: var(--color-primary);">Loading...</span></p>
+                <a href="#" id="logout-button" style="color: var(--color-primary); font-size: 0.9rem; margin-top: 10px; display: block;"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+        <div class="main-content">
+            
+            <div class="top-bar">
+                <div class="welcome-message">
+                    <h1>Welcome Back, <span id="welcome-name">Investor</span>!</h1>
+                </div>
+                <div class="user-info-mobile">
+                    <span class="client-id-mobile" id="client-id-mobile">Loading...</span>
+                    <div class="user-profile">
+                        <span id="user-name" style="display: none;"></span> 
+                        <div class="avatar" id="user-avatar">?</div>
+                    </div>
+                    <div class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></div>
+                </div>
+            </div>
+            
+            <div id="home" class="page-content">
+                <h2>📈 Investment Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <p>Total Balance</p>
+                        <h3 id="total-balance">$200.00</h3>
+                        <span class="change growth" id="bonus-note">+<span id="bonus-amount">200.00</span> Sign-Up Bonus</span>
+                    </div>
+                    <div class="stat-card growth">
+                        <p>Total Profit</p>
+                        <h3>$0.00</h3>
+                        <span class="change growth">0.0% All Time</span>
+                    </div>
+                    <div class="stat-card deposit">
+                        <p>Active Investment</p>
+                        <h3>$0.00</h3>
+                        <span class="change">No Active Plan</span>
+                    </div>
+                    <div class="stat-card">
+                        <p>Next Payout</p>
+                        <h3>N/A</h3>
+                        <span class="change">No Active Investment</span>
+                    </div>
+                </div>
+
+                <div class="performance-chart-area" style="height: 400px; margin-bottom: 40px;">
+                    <h2>Portfolio Performance (NASDAQ:TSLA)</h2>
+                    <div class="chart-placeholder" style="height: 100%; border-radius: var(--border-radius); overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+                            <div id="tradingview_12345" style="height: 100%; width: 100%;"></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                            <script type="text/javascript">
+                            new TradingView.widget(
+                            {
+                            "width": "100%",
+                            "height": "100%",
+                            "symbol": "NASDAQ:TSLA", 
+                            "interval": "D",
+                            "timezone": "Etc/UTC",
+                            "theme": "dark", // Using dark theme for better integration
+                            "style": "1",
+                            "locale": "en",
+                            "toolbar_bg": "#f1f3f6",
+                            "enable_publishing": false,
+                            "allow_symbol_change": true,
+                            "container_id": "tradingview_12345"
+                            }
+                            );
+                            </script>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div class="content-panel">
+                        <div class="activity-list" id="activity-list">
+                            <div class="transaction-item">
+                                <span>2025-11-28</span>
+                                <span class="type">Bonus</span>
+                                <span class="amount deposit">+$200.00</span>
+                            </div>
+                            <div class="transaction-item" style="border-bottom: none;">
+                                <span>2025-11-28</span>
+                                <span class="type">System</span>
+                                <span class="amount" style="color: var(--color-text-light);">Account Activated</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="wallet" class="page-content hidden">
+                <div class="content-panel">
+                    <h2>💰 Wallet Balance & Funds</h2>
+                    <div class="investment-status-card" style="border-left: 5px solid var(--color-secondary); padding: 30px;">
+                        <p>Current Available Balance</p>
+                        <h1 style="font-size: 3rem; color: var(--color-primary);" id="wallet-balance">$200.00</h1>
+                        <p style="margin-top: 20px;">Your balance includes a $200 Registration Bonus. Choose an investment plan to unlock withdrawals.</p>
+                        <div class="wallet-action-buttons" style="margin-top: 30px;">
+                            <a href="#" class="cta-button" onclick="showMessageBox('Info', 'Deposit functionality is simulated.', 'info');">Deposit Funds</a>
+                            <a href="#" class="cta-button" style="background-color: var(--color-text-light);" onclick="showMessageBox('Info', 'Withdrawal functionality is simulated.', 'info');">Withdraw Funds</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="new-investment" class="page-content hidden">
+                <div class="content-panel">
+                    <h2>✨ Start a New Investment</h2>
+                    <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using TelsaAi's predictive models.</p>
+                    
+                    <div class="plans-grid">
+                        <div class="plan-card" data-plan="Bronze" data-min="2000">
+                            <h3 style="color: var(--color-primary);">Bronze Tier</h3>
+                            <p>$2,000 Minimum</p>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem;" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
+                        </div>
+                        <div class="plan-card featured" data-plan="Gold" data-min="10000">
+                            <h3 style="color: var(--color-accent);">Gold Tier</h3>
+                            <p>$10,000 Minimum</p>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: var(--color-accent);" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
+                        </div>
+                        <div class="plan-card" data-plan="Centurion" data-min="100000">
+                            <h3 style="color: #0c0a09;">Centurion Tier</h3>
+                            <p>$100,000+ Minimum</p>
+                            <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #0c0a09;" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history" class="page-content hidden">
+                <div class="content-panel">
+                    <h2>⏳ Transaction & Investment History</h2>
+                    <p style="color: var(--color-text-light); margin-bottom: 20px;">All transactions are recorded here.</p>
+                    <div class="recent-activity" style="padding: 20px;">
+                        <div class="activity-list">
+                            <div class="transaction-item" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--color-border);">
+                                <span>2025-11-28</span>
+                                <span class="type">Registration Bonus</span>
+                                <span class="amount deposit" style="color: var(--color-success); font-weight: 600;">+$200.00</span>
+                            </div>
+                            <div class="transaction-item" style="display: flex; justify-content: space-between; padding: 10px 0;">
+                                <span>2025-11-28</span>
+                                <span class="type">Account Creation</span>
+                                <span class="amount" style="color: var(--color-text-light);">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="chat" class="page-content hidden">
+                <h2>💬 Live Support Chat</h2>
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <i class="fas fa-headset"></i> TelsaAI Professional Support
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Type your message here..." />
+                        <button id="sendMessageButton"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile" class="page-content hidden">
+                <div class="content-panel">
+                    <h2>👤 Account Profile & Settings</h2>
+                    <div class="profile-container" style="max-width: 600px; margin: 30px auto; background-color: #1f2937; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--color-border);">
+                        
+                        <h3 style="color: var(--color-primary); border-bottom: 1px solid var(--color-border); padding-bottom: 10px; margin-bottom: 20px;">Personal Information</h3>
+
+                        <form class="profile-form" id="profileForm">
+                            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
+                                <div class="avatar" id="profile-avatar" style="width: 80px; height: 80px; font-size: 2rem; margin-right: 20px;">?</div>
+                                <div style="flex-grow: 1;">
+                                    <label for="name" style="display: block; color: white; margin-bottom: 5px; font-weight: 600;">Full Name</label>
+                                    <input type="text" id="name" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="email">Email Address (Read-Only)</label>
+                                <input type="email" id="email" readonly style="background-color: #111827;">
+                            </div>
+                            
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label for="address">Address</label>
+                                <input type="text" id="address" placeholder="Set Address">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 15px; margin-top: 30px;">
+                                <label for="new-password">Change Password</label>
+                                <input type="password" id="new-password" placeholder="New Password (Min 8 characters)">
+                            </div>
+                            
+                            <button type="submit" class="cta-button" id="saveProfileBtn" style="width: 100%; padding: 12px;">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="message-box" id="messageBox">
+        <div class="message-box-content" id="messageBoxContent">
+            <h3 id="msgTitle">Success!</h3>
+            <p id="msgText">Action successful!</p>
+            <button class="cta-button" id="msgConfirm">Close</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+    <script>
+        // FIXED: Use window.location.origin for correct deployment API base URL and APPEND the base path
+        const API_BASE_URL = `${window.location.origin}/api/v1`; 
+        
+        // --- DOM Elements ---
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const navLinks = sidebar.querySelectorAll('nav a');
+        const pages = document.querySelectorAll('.page-content');
+        const logoutButton = document.getElementById('logout-button');
+        
+        // Profile Elements
+        const profileForm = document.getElementById('profileForm');
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const addressInput = document.getElementById('address');
+        const newPasswordInput = document.getElementById('new-password');
+        const profileAvatar = document.getElementById('profile-avatar');
+        
+        // Chat Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendMessageButton = document.getElementById('sendMessageButton');
+
+        // Message box elements
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxContent = document.getElementById('messageBoxContent');
+        const msgTitle = document.getElementById('msgTitle');
+        const msgText = document.getElementById('msgText');
+        const msgConfirm = document.getElementById('msgConfirm');
+        
+        // Socket connection variable
+        let chatSocket = null;
+
+
+        // --- Auth & Profile Functions ---
+
+        /**
+         * Checks for a valid JWT. If missing, redirects to login.
+         */
+        function checkAuth() {
+            const token = localStorage.getItem('userToken');
+            if (!token) {
+                // Not authenticated, redirect to login
+                window.location.href = 'login.html'; 
+            }
+            return token;
+        }
+
+        /**
+         * Function to set the Bearer token header.
+         * @param {string} token 
+         */
+        function getAuthHeaders(token) {
+            return {
+                'Content-Type': 'application/json',
+                // FIXED: Template literal backticks added here
+                'Authorization': `Bearer ${token}`
+            };
+        }
+        
+        /**
+         * Function to display custom message box (Replaces alert()).
+         */
+        function showMessageBox(title, text, type) {
+            msgTitle.textContent = title;
+            msgText.textContent = text;
+            messageBoxContent.className = 'message-box-content'; 
+            // FIXED: Template literal backticks added here
+            messageBoxContent.classList.add(`message-box-${type}`);
+            messageBox.style.display = 'flex';
+            
+            msgConfirm.onclick = () => {
+                messageBox.style.display = 'none';
+            };
+        }
+
+        /**
+         * Function to update all profile display elements.
+         */
+        function updateUI(name, initials, clientId) {
+            const userNameElements = document.querySelectorAll('#user-name, #welcome-name');
+            const userAvatarElements = document.querySelectorAll('#user-avatar');
+            const clientIdSidebar = document.getElementById('client-id-sidebar');
+            const clientIdMobile = document.getElementById('client-id-mobile');
+            
+            userNameElements.forEach(el => el.textContent = name);
+            // Hide the name in the mobile view if space is tight, though usually welcome-name handles it.
+            document.getElementById('welcome-name').textContent = name;
+            
+            userAvatarElements.forEach(el => el.textContent = initials);
+            
+            if (clientIdSidebar) clientIdSidebar.textContent = clientId;
+            if (clientIdMobile) clientIdMobile.textContent = clientId;
+
+            if (nameInput) nameInput.value = name;
+            if (profileAvatar) profileAvatar.textContent = initials;
+        }
+
+        /**
+         * Fetches user profile data from the server using JWT.
+         */
+        async function loadProfile() {
+            const token = checkAuth();
+            if (!token) return; // checkAuth will redirect if no token
+
+            // Fallback load from local storage immediately for faster UI rendering
+            const storedName = localStorage.getItem('clientName');
+            const storedInitials = localStorage.getItem('clientInitials');
+            const storedId = localStorage.getItem('clientId');
+            if (storedName && storedId) {
+                updateUI(storedName, storedInitials, storedId);
+            }
+
+
+            try {
+                // FIXED: Template literal backticks added here
+                const response = await fetch(`${API_BASE_URL}/profile/me`, {
+                    method: 'GET',
+                    headers: getAuthHeaders(token),
+                });
+                
+                if (response.status === 403 || response.status === 401) {
+                     // JWT expired or invalid
+                    localStorage.clear(); // Clear all auth data
+                    showMessageBox('Session Expired', 'Your session has expired. Please log in again.', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return;
+                }
+                
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Update all stored and displayed data with fresh server data
+                    const newInitials = data.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+
+                    localStorage.setItem('clientName', data.name);
+                    localStorage.setItem('clientInitials', newInitials);
+                    localStorage.setItem('clientId', data.id); 
+
+                    updateUI(data.name, newInitials, data.id);
+                    
+                    // Fill profile inputs
+                    if (emailInput) emailInput.value = data.email;
+                    if (addressInput) addressInput.value = data.address || '';
+                } else {
+                    showMessageBox('Error', data.message || 'Failed to load profile data.', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                // Only show network error if the initial fallback failed
+                if (!storedName) {
+                    showMessageBox('Network Error', 'Could not connect to the TelsaAI server.', 'error');
+                }
+            }
+        }
+        
+        // --- Chat Functions ---
+        
+        function connectChatSocket() {
+            const token = checkAuth();
+            if (!token) return;
+            
+            // Disconnect any existing socket before connecting
+            if (chatSocket) {
+                chatSocket.disconnect();
+            }
+
+            chatSocket = io(window.location.origin, {
+                query: { token: token }
+            });
+
+            chatSocket.on('connect', () => {
+                console.log('Socket.IO connected as client.');
+                // Request initial history upon connection
+                fetchMessages(); 
+            });
+
+            chatSocket.on('history', (messages) => {
+                chatMessages.innerHTML = '';
+                messages.forEach(renderMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+            
+            chatSocket.on('message', (message) => {
+                renderMessage(message);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            });
+
+            chatSocket.on('error', (err) => {
+                console.error('Socket Error:', err);
+                showMessageBox('Chat Error', 'Connection lost or unauthorized chat access.', 'error');
+            });
+
+            chatSocket.on('disconnect', () => {
+                console.log('Socket.IO disconnected.');
+            });
+        }
+
+
+        /**
+         * Renders a single message bubble into the chat window.
+         */
+        function renderMessage(message) {
+            const messageElement = document.createElement('div');
+            // Determine class: message.isAdmin is true if it comes from the admin user ID or the system
+            const messageClass = message.isAdmin ? 'admin' : 'client';
+            
+            // Format timestamp
+            const date = new Date(); // Use current time for simplicity, or message.timestamp if server sends full date
+            const timeString = message.timestamp || date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageElement.classList.add('message', messageClass);
+            messageElement.innerHTML = `
+                <div class="message-bubble">${message.message}</div>
+                <div class="message-info">${message.isAdmin ? 'Support' : 'You'} • ${timeString}</div>
+            `;
+            chatMessages.appendChild(messageElement);
+        }
+
+        /**
+         * Sends a new message to the server via socket.
+         */
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !chatSocket || !chatSocket.connected) {
+                showMessageBox('Chat Status', 'Cannot send: Chat is disconnected.', 'error');
+                return;
+            }
+
+            chatSocket.emit('clientMessage', { message: text });
+            chatInput.value = ''; 
+            sendMessageButton.disabled = true; 
+            
+            // Re-enable button after a short delay to simulate network latency
+            setTimeout(() => {
+                 sendMessageButton.disabled = false;
+            }, 500);
+        }
+
+        // Fetch messages is now just for initial load/manual refresh, history is managed by socket 'history' event
+        function fetchMessages() {
+             // If connected, the socket handles history automatically.
+        }
+
+
+        // --- Event Listeners and Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. Initial Authentication Check and Profile Load
+            loadProfile();
+
+            // 2. Mobile Menu Toggle
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    sidebar.classList.toggle('active');
+                });
+            }
+
+            // 3. Navigation/Page Switching Logic
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    const targetPageId = link.getAttribute('data-page');
+
+                    navLinks.forEach(nav => nav.classList.remove('active'));
+                    link.classList.add('active');
+
+                    pages.forEach(page => page.classList.add('hidden'));
+                    const targetPage = document.getElementById(targetPageId);
+                    if (targetPage) {
+                        targetPage.classList.remove('hidden');
+                        
+                        // Special: If navigating to Chat, connect the socket
+                        if (targetPageId === 'chat') {
+                            connectChatSocket();
+                        } else {
+                            // Disconnect when navigating away from chat
+                            if (chatSocket) {
+                                chatSocket.disconnect();
+                                chatSocket = null;
+                            }
+                        }
+                    }
+
+                    // Mobile Closing Logic
+                    if (window.innerWidth <= 900 && sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            });
+            
+            // 4. Logout Handler
+            logoutButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                // Clear all auth data
+                localStorage.clear();
+                if (chatSocket) {
+                    chatSocket.disconnect();
+                }
+                window.location.href = 'login.html';
+            });
+
+            // 5. Profile Form Submission Handler
+            if (profileForm) {
+                profileForm.addEventListener('submit', async (e) => {
+                    e.preventDefault(); 
+                    saveProfileBtn.disabled = true;
+                    saveProfileBtn.textContent = 'Saving...';
+                    
+                    const token = checkAuth();
+                    if (!token) return;
+                    
+                    const newName = nameInput.value.trim();
+                    const newAddress = addressInput.value.trim();
+                    const newPassword = newPasswordInput.value.trim();
+                    
+                    if (newPassword && newPassword.length < 8) {
+                        showMessageBox('Error', 'New password must be at least 8 characters.', 'error');
+                        saveProfileBtn.disabled = false;
+                        saveProfileBtn.textContent = 'Save Changes';
+                        return;
+                    }
+
+                    try {
+                        // FIXED: Template literal backticks added here
+                        const response = await fetch(`${API_BASE_URL}/profile/update`, {
+                            method: 'POST',
+                            headers: getAuthHeaders(token),
+                            body: JSON.stringify({
+                                name: newName,
+                                address: newAddress,
+                                newPassword: newPassword || undefined
+                            }),
+                        });
+
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            // Update UI immediately
+                            const newInitials = data.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+                            updateUI(data.name, newInitials, localStorage.getItem('clientId'));
+                            newPasswordInput.value = ''; // Clear password field after success
+                            showMessageBox('Success', 'Profile changes saved successfully.', 'success');
+                        } else {
+                             showMessageBox('Error', data.message || 'Failed to update profile.', 'error');
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error updating profile:', error);
+                        showMessageBox('Network Error', 'Could not communicate with the server to save changes.', 'error');
+                    } finally {
+                        saveProfileBtn.disabled = false;
+                        saveProfileBtn.textContent = 'Save Changes';
+                    }
+                });
+            }
+            
+            // 6. Chat Message Sending Handlers
+            if (sendMessageButton) {
+                sendMessageButton.addEventListener('click', sendMessage);
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault(); // Prevent form submission if input is wrapped in form
+                        sendMessage();
+                    }
+                });
+            }
+            
+            // Ensure the initial page is displayed correctly (Home)
+            const initialPageLink = document.querySelector('.sidebar nav a.active');
+            if (initialPageLink) {
+                 const initialPageId = initialPageLink.getAttribute('data-page');
+                 document.getElementById(initialPageId).classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
