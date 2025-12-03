@@ -120,9 +120,8 @@
 <body class="dashboard-body">
 
     <div class="dashboard-layout">
-        
         <div class="sidebar">
-            <div class="logo">TeslaAi</div>
+            <div class="logo">Tesla-Ai</div>
             <nav>
                 <a href="dashboard.html" class="active"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
             </nav>
@@ -144,7 +143,6 @@
             </div>
 
             <div class="content-panel" style="max-width: 800px; margin: 0 auto;">
-                
                 <div id="checkout-confirmation" class="active-interface">
                     <h2>🛒 Order Summary</h2>
                     <p style="color: var(--color-text-light); margin-bottom: 30px;">Please confirm the details of your selected Tesla vehicle purchase.</p>
@@ -196,6 +194,7 @@
 
                     <button class="cta-button" onclick="confirmPaymentSent()" style="margin-top: 30px;">I Have Sent Payment</button>
                 </div>
+
 
                 <div id="purchase-success" class="hidden-step checkout-box">
                     <h2>✅ Payment Confirmation Received!</h2>
@@ -257,11 +256,11 @@
             const rawItemName = getQueryParam('item');
             const price = getQueryParam('price');
             
-            if (!rawItemName || !price) {
-                alert('No item selected for purchase. Returning to dashboard.');
-                window.location.href = 'dashboard.html';
-                return;
-            }
+            // if (!rawItemName || !price) {
+            //     alert('No item selected for purchase. Returning to dashboard.');
+            //     window.location.href = 'dashboard.html';
+            //     return;
+            // }
 
             // Format item name and price for display
             purchasedItemName = rawItemName.replace(/_/g, ' '); // Replace underscores with spaces
@@ -275,7 +274,6 @@
             // Set up form submission (Step 1 to Step 2)
             document.getElementById('payment-selection-form').addEventListener('submit', function(e) {
                 e.preventDefault();
-                
                 const networkSelect = document.getElementById('method');
                 const selectedOption = networkSelect.options[networkSelect.selectedIndex];
                 
@@ -305,7 +303,6 @@
         function confirmPaymentSent() {
             // Update confirmation details for Step 3
             document.getElementById('confirmed-item').innerText = purchasedItemName;
-            
             // Move to Step 3
             updateSteps(3);
         }
