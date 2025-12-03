@@ -436,6 +436,7 @@
         adminKeyForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const key = adminKeyInput.value.trim();
+            console.log(`Log information ${key}`);
             
             if (key == ADMIN_SECRET_KEY) {
                 showMessage('Access granted! Connecting...', 'success');
@@ -453,7 +454,7 @@
             }
         });
         
-        // refreshBtn.addEventListener('click', requestClientList);
+        refreshBtn.addEventListener('click', requestClientList);
 
         sendReplyBtn.addEventListener('click', sendAdminReply);
         adminReplyInput.addEventListener('keypress', (e) => {
