@@ -437,7 +437,7 @@
             e.preventDefault();
             const key = adminKeyInput.value.trim();
             
-            if (key === ADMIN_SECRET_KEY) {
+            if (key == ADMIN_SECRET_KEY) {
                 showMessage('Access granted! Connecting...', 'success');
                 // Use a fake token for demonstration purposes, as the actual admin login isn't implemented via JWT routes
                 // The server uses the admin key query for connection validation.
