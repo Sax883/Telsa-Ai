@@ -11,32 +11,24 @@ const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-lon
 const app = express();
 const server = http.createServer(app);
 
-// const io = socketIo(server, {
-//     cors: {
-//         origin: "*", 
-//         methods: ["GET", "POST"]
-//     }
-// });
-
 const io = socketIo(server, {
     cors: {
-        origin: [
-            "https://telsa-ai.org",
-            "https://www.telsa-ai.org"
-        ],
+        origin: "*", 
         methods: ["GET", "POST"]
     }
 });
 
-app.use(cors({
-    origin: [
-        "https://telsa-ai.org",
-        "https://www.telsa-ai.org"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
-}));
+
+
+// app.use(cors({
+//     origin: [
+//         "https://telsa-ai.org",
+//         "https://www.telsa-ai.org"
+//     ],
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//     credentials: true
+// }));
 
 // --- Middleware ---
 app.use(bodyParser.json());
