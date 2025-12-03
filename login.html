@@ -7,18 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --color-primary: #ef4444; /* Bright Red */
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #1f2937; /* Dark Gray */
-        }
+        :root { --color-primary: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background-color: #1f2937; }
         .text-primary { color: var(--color-primary); }
         .bg-primary { background-color: var(--color-primary); }
         .bg-primary:hover { background-color: #dc2626; }
     </style>
 </head>
+
 <body class="flex items-center justify-center min-h-screen p-4">
 
     <div class="w-full max-w-md bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700">
@@ -37,7 +33,7 @@
                     required 
                     class="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Enter your email"
-                    autocomplete="off" 
+                    autocomplete="off"
                 >
             </div>
             <div class="mb-6">
@@ -68,106 +64,93 @@
     </div>
 
     <script>
-        // const API_BASE_URL = "https://telsa-ai-chat-server.onrender.com";
         const API_BASE_URL = window.location.origin; 
         const form = document.getElementById('login-form');
         const messageBox = document.getElementById('message-box');
         const loginBtn = document.getElementById('login-btn');
 
-        // Check if user is already logged in (has token) and redirect
-        if (localStorage.getItem('userToken')) {
+        // Redirect if already logged in
+        function getItemWithExpiry(key) {
+            const itemStr = localStorage.getItem(key);
+            if (!itemStr) return null;
+            try {
+                const item = JSON.parse(itemStr);
+                if (Date.now() > item.expiry) {
+                    localStorage.removeItem(key);
+                    return null;
+                }
+                return item.value;
+            } catch {
+                localStorage.removeItem(key);
+                return null;
+            }
+        }
+
+        if (getItemWithExpiry('userToken')) {
             window.location.href = 'dashboard.html';
+        }
+
+        function setItemWithExpiry(key, value, ttl) {
+            const now = Date.now();
+            const item = { value, expiry: now + ttl };
+            localStorage.setItem(key, JSON.stringify(item));
         }
 
         function showMessage(text, type = 'error') {
             messageBox.textContent = text;
             messageBox.classList.remove('hidden', 'bg-red-900', 'bg-green-900', 'text-red-300', 'text-green-300');
-            
             if (type === 'success') {
                 messageBox.classList.add('bg-green-900', 'text-green-300');
             } else {
                 messageBox.classList.add('bg-red-900', 'text-red-300');
             }
+            messageBox.classList.remove('hidden');
         }
+
         form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    loginBtn.textContent = 'Logging In...';
-    loginBtn.disabled = true;
-    messageBox.classList.add('hidden');
+            e.preventDefault();
+            loginBtn.textContent = 'Logging In...';
+            loginBtn.disabled = true;
+            messageBox.classList.add('hidden');
 
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
-    // Helper functions for localStorage with expiry
-    function setItemWithExpiry(key, value, ttl) {
-        const now = new Date();
-        const item = {
-            value: value,
-            expiry: now.getTime() + ttl, // ttl in ms
-        };
-        localStorage.setItem(key, JSON.stringify(item));
-    }
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                });
 
-    function getItemWithExpiry(key) {
-        const itemStr = localStorage.getItem(key);
-        if (!itemStr) return null;
+                const data = await response.json();
 
-        const item = JSON.parse(itemStr);
-        const now = new Date();
-        if (now.getTime() > item.expiry) {
-            localStorage.removeItem(key);
-            return null;
-        }
-        return item.value;
-    }
+                if (response.ok && data.success) {
+                    const ttl = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
+                    setItemWithExpiry('userToken', data.token, ttl);
+                    const user = data.user;
+                    const initials = user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
+
+                    setItemWithExpiry('clientName', user.name, ttl);
+                    setItemWithExpiry('clientInitials', initials, ttl);
+                    setItemWithExpiry('clientId', user.id, ttl);
+
+                    showMessage('Login successful! Redirecting to dashboard...', 'success');
+
+                    setTimeout(() => window.location.href = 'dashboard.html', 500);
+
+                } else {
+                    showMessage(data.message || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                console.error('Network or Server Error:', error);
+                showMessage('Connection error. Please try again later.');
+            } finally {
+                loginBtn.textContent = 'Log In';
+                loginBtn.disabled = false;
+            }
         });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            // Set TTL for 30 days
-            const ttl = 30 * 24 * 60 * 60 * 1000; // 30 days in ms
-
-            // Store token and user data with expiry
-            setItemWithExpiry('userToken', data.token, ttl);
-
-            const user = data.user;
-            const initials = user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
-            setItemWithExpiry('clientName', user.name, ttl);
-            setItemWithExpiry('clientInitials', initials, ttl);
-            setItemWithExpiry('clientId', user.id, ttl);
-            
-            showMessage('Login successful! Redirecting to dashboard...', 'success');
-            
-            // Redirect after 500ms
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 500); 
-
-        } else {
-            showMessage(data.message || 'Login failed. Please check your credentials.');
-        }
-    } catch (error) {
-        console.error('Network or Server Error:', error);
-        showMessage('Connection error. Please try again later.');
-    } finally {
-        loginBtn.textContent = 'Log In';
-        loginBtn.disabled = false;
-    }
-});
-
-   
-   
-   
-   </script>
+    </script>
 </body>
 </html>
