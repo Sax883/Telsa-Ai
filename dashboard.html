@@ -504,7 +504,7 @@
     <div class="dashboard-layout">
         
         <div class="sidebar" id="sidebar">
-            <div class="logo">TESLAAI - Dashboard</div>
+            <div class="logo">TESLAAI </div>
             <nav>
                 <a href="#home" class="active" data-page="home"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="#wallet" data-page="wallet"><i class="fas fa-wallet"></i> Wallet Balance</a>
@@ -522,7 +522,9 @@
             
             <div class="top-bar">
                 <div class="welcome-message">
-                    <h1>Welcome Back, <span id="welcome-name"></span>!</h1>
+                    <h1>Welcome Back.
+                         <!-- <span id="welcome-name"></span>! -->
+                    </h1>
                 </div>
                 <div class="user-info-mobile">
                     <span class="client-id-mobile" id="client-id-mobile">Loading...</span>
@@ -986,27 +988,28 @@
         /**
          * Function to update all profile display elements.
          */
-     // === Improved updateUI + loadProfile for development/learning ===
-function updateUI(name, initials, clientId) {
-    // Safely update all places that show name, avatar, client ID
-    document.querySelectorAll('#welcome-name, #user-name').forEach(el => {
-        el.textContent = name || 'Guest';
-    });
+     // === Improved updateUI + loadProfile for development/learning ===\
 
-    document.querySelectorAll('#user-avatar, #profile-avatar').forEach(el => {
-        el.textContent = initials || '?';
-    });
+        function updateUI(name, initials, clientId) {
+            // Safely update all places that show name, avatar, client ID
+            document.querySelectorAll('#welcome-name, #user-name').forEach(el => {
+                el.textContent = name || 'Guest';
+            });
 
-    document.querySelectorAll('#client-id-sidebar, #client-id-mobile').forEach(el => {
-        el.textContent = clientId || 'DEV-000';
-    });
+            document.querySelectorAll('#user-avatar, #profile-avatar').forEach(el => {
+                el.textContent = initials || '?';
+            });
 
-    // Fill profile form if on profile page
-    const nameInput = document.getElementById('name');
-    const emailInput = document.getElementById('email');
-    if (nameInput) nameInput.value = name || '';
-    if (emailInput) emailInput.value = localStorage.getItem('clientEmail') || '';
-}
+            document.querySelectorAll('#client-id-sidebar, #client-id-mobile').forEach(el => {
+                el.textContent = clientId || 'DEV-000';
+            });
+
+            // Fill profile form if on profile page
+            const nameInput = document.getElementById('name');
+            const emailInput = document.getElementById('email');
+            if (nameInput) nameInput.value = name || '';
+            if (emailInput) emailInput.value = localStorage.getItem('clientEmail') || '';
+        }
 
 async function loadProfile() {
     // 1. Try to get data saved by login page (works even without backend)
