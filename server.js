@@ -11,12 +11,22 @@ const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-lon
 const app = express();
 const server = http.createServer(app);
 
-const io = socketIo(server, {
-    cors: {
-        origin: "*", 
-        methods: ["GET", "POST"]
-    }
-});
+// const io = socketIo(server, {
+//     cors: {
+//         origin: "*", 
+//         methods: ["GET", "POST"]
+//     }
+// });
+
+app.use(cors({
+    origin: [
+        "https://telsa-ai.org",
+        "https://www.telsa-ai.org"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+}));
 
 // --- Middleware ---
 app.use(bodyParser.json());
@@ -338,7 +348,7 @@ io.on('connection', (socket) => {
                 // *** FIXED: Added backtick (`) to open the template literal ***
                 console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
-            
+
             // 2. Send back to all admins (including self) to keep views updated
             // We use io.emit('newMessage') which will be caught by the admin's 'newMessage' handler
             io.emit('newMessage', messageData); 

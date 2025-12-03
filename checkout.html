@@ -256,11 +256,11 @@
             const rawItemName = getQueryParam('item');
             const price = getQueryParam('price');
             
-            // if (!rawItemName || !price) {
-            //     alert('No item selected for purchase. Returning to dashboard.');
-            //     window.location.href = 'dashboard.html';
-            //     return;
-            // }
+            if (!rawItemName || !price) {
+                alert('No item selected for purchase. Returning to dashboard.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
 
             // Format item name and price for display
             purchasedItemName = rawItemName.replace(/_/g, ' '); // Replace underscores with spaces
