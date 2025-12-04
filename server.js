@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 // --- Configuration ---
 const PORT = process.env.PORT || 10000;
 // Note: This key is used for JWT token signing for client logins (login.html/register.html)
-const SECRET_KEY = process.env.JWT_SECRET || 'a-very-secret-key-that-must-be-long-and-secure'; 
+const SECRET_KEY = process.env.JWT_SECRET || '1efdcab9301a043c584584eba62c2add2be3174a06be5f56c271eb37423873dd'; 
 const app = express();
 const server = http.createServer(app);
 
@@ -73,7 +73,6 @@ io.use((socket, next) => {
             socket.userData = decoded;
             return next();
         } catch (err) {
-            // *** FIXED: Added backtick (`) to open the template literal ***
             console.error(`[${getTimestamp()}] Socket Auth Error: Invalid token. Error: ${err.message}`);
             // Only reject connection if authentication token is invalid
             return next(new Error('Authentication error: Invalid token'));
@@ -242,7 +241,6 @@ io.on('connection', (socket) => {
     socket.userId = userId;
     socket.isAdmin = isAdmin;
 
-    // *** FIXED: Added backtick (`) to open the template literal ***
     console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}) | Socket: ${socket.id}`);
     activeConnections[userId] = socket.id;
 
@@ -287,7 +285,7 @@ io.on('connection', (socket) => {
 
     // --- ADMIN (admin.html) Events ---
     if (isAdmin) {
-        // 1. Request List of Clients
+        // 1. Request List of Clients (for chat management)
         socket.on('requestClientList', () => {
             const clientList = Object.keys(chatHistoryByClient).map(clientId => {
                 const history = chatHistoryByClient[clientId];
@@ -335,14 +333,65 @@ io.on('connection', (socket) => {
                 // Find the socket ID and send the message
                 io.to(clientSocketId).emit('message', messageData);
             } else {
-                // *** FIXED: Added backtick (`) to open the template literal ***
                 console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
             }
             
             // 2. Send back to all admins (including self) to keep views updated
-            // We use io.emit('newMessage') which will be caught by the admin's 'newMessage' handler
             io.emit('newMessage', messageData); 
         });
+        
+        // --- NEW ADMIN FUNCTIONS FOR BALANCE MANAGEMENT ---
+
+        // 4. Handle Admin Request to Get All Client Data (for the dashboard table)
+        socket.on('requestAllClientData', () => {
+            const allClientData = currentUsers.map(u => {
+                const { password, ...safeData } = u;
+                return safeData;
+            });
+            socket.emit('allClientData', allClientData);
+        });
+        
+        // 5. Handle Admin Update for Client Balance
+        socket.on('updateClientAccount', (data) => {
+            // Note: We only expect clientId and newBalance from admin.html
+            const { clientId, newBalance } = data; 
+            
+            const userIndex = currentUsers.findIndex(u => u.id === clientId);
+
+            if (userIndex !== -1) {
+                const user = currentUsers[userIndex];
+                
+                // Convert to number
+                const balanceUpdate = parseFloat(newBalance);
+
+                // Update balance if a valid number is provided
+                if (!isNaN(balanceUpdate)) {
+                    user.balance = balanceUpdate;
+                }
+                
+                // Overwrite the user object in the array
+                currentUsers[userIndex] = user; 
+                
+                // 1. Send success message back to Admin
+                socket.emit('updateSuccess', { 
+                    clientId: clientId, 
+                    message: `Balance for ${clientId} updated successfully to $${balanceUpdate.toFixed(2)}`
+                });
+                
+                // 2. Notify the affected client if they are connected
+                const clientSocketId = activeConnections[clientId];
+                if (clientSocketId) {
+                    const { password, ...safeUserData } = user;
+                    // Sending a specific update event so the client can refresh their view
+                    io.to(clientSocketId).emit('accountUpdated', safeUserData);
+                }
+                
+            } else {
+                socket.emit('updateError', { clientId: clientId, message: `User ${clientId} not found.` });
+            }
+        });
+        
+        // --- END NEW ADMIN FUNCTIONS ---
     }
 
     // --- Disconnect Handler ---
@@ -351,7 +400,6 @@ io.on('connection', (socket) => {
         if (activeConnections[socket.userId] === socket.id) {
             delete activeConnections[socket.userId];
         }
-        // *** FIXED: Added backtick (`) to open the template literal ***
         console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
     });
 });
@@ -360,6 +408,5 @@ io.on('connection', (socket) => {
 // --- Start Server ---
 server.listen(PORT, () => {
     console.log(`Chat server listening on port ${PORT}`);
-    // *** FIXED: Added backtick (`) to open the template literal ***
     console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
 });
