@@ -110,21 +110,30 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Store the token and user data
+                    const user = data.user || {};
+
+                    if (user.isAdmin) {
+                        localStorage.setItem('adminToken', data.token);
+                        localStorage.removeItem('userToken');
+                        showMessage('Admin account detected. Redirecting to admin portal...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'admin_login.html';
+                        }, 500);
+                        return;
+                    }
+
+                    // Store the token and user data for client users
                     localStorage.setItem('userToken', data.token);
-                    // We only store the initial user name/initials here to display immediately on dashboard load
-                    const user = data.user;
                     const initials = user.name.match(/\b(\w)/g).join('').toUpperCase().substring(0, 2);
                     localStorage.setItem('clientName', user.name);
                     localStorage.setItem('clientInitials', initials);
                     localStorage.setItem('clientId', user.id);
-                    
+
                     showMessage('Login successful! Redirecting to dashboard...', 'success');
-                    
-                    // CRITICAL: Force redirect to dashboard.html after success
+
                     setTimeout(() => {
                         window.location.href = 'dashboard.html';
-                    }, 500); 
+                    }, 500);
 
                 } else {
                     showMessage(data.message || 'Login failed. Please check your credentials.');
