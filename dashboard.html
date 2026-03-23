@@ -544,17 +544,17 @@
                     </div>
                     <div class="stat-card growth">
                         <p>Total Profit</p>
-                        <h3>$0.00</h3>
+                        <h3 id="total-profit">$0.00</h3>
                         <span class="change growth">0.0% All Time</span>
                     </div>
                     <div class="stat-card deposit">
                         <p>Active Investment</p>
-                        <h3>$0.00</h3>
+                        <h3 id="active-investment">$0.00</h3>
                         <span class="change">No Active Plan</span>
                     </div>
                     <div class="stat-card">
                         <p>Next Payout</p>
-                        <h3>N/A</h3>
+                        <h3 id="next-payout">N/A</h3>
                         <span class="change">No Active Investment</span>
                     </div>
                 </div>
@@ -612,6 +612,7 @@
                     <div class="investment-status-card" style="border-left: 5px solid var(--color-secondary); padding: 30px;">
                         <p>Current Available Balance</p>
                         <h1 style="font-size: 3rem; color: var(--color-primary);" id="wallet-balance">$200.00</h1>
+                        <p style="margin-top: 12px; color: var(--color-text-light);">Current Investment Plan: <strong id="current-investment-plan">N/A</strong></p>
                         <p style="margin-top: 20px;">Your balance includes a $200 Registration Bonus. Choose an investment plan to unlock withdrawals.</p>
                         <div class="wallet-action-buttons" style="margin-top: 30px;">
                             <a href="deposit.html" class="cta-button" >Deposit Funds</a>
@@ -1081,10 +1082,39 @@
 
                     localStorage.setItem('clientName', data.name);
                     localStorage.setItem('clientInitials', newInitials);
-                    localStorage.setItem('clientId', data.id); 
+                    localStorage.setItem('clientId', data.id);
 
                     updateUI(data.name, newInitials, data.id);
-                    
+
+                    // Reflect admin-managed financial fields on the client dashboard
+                    const balanceValue = Number(data.balance || 0);
+                    const profitValue = Number(data.profit || 0);
+                    const activeInvestmentValue = Number(data.activeInvestment || 0);
+                    const nextPayoutValue = data.nextPayout || 'N/A';
+                    const investmentPlanValue = data.investmentPlan || 'N/A';
+
+                    const totalBalanceEl = document.getElementById('total-balance');
+                    const walletBalanceEl = document.getElementById('wallet-balance');
+                    const totalProfitEl = document.getElementById('total-profit');
+                    const activeInvestmentEl = document.getElementById('active-investment');
+                    const nextPayoutEl = document.getElementById('next-payout');
+                    const currentPlanEl = document.getElementById('current-investment-plan');
+
+                    if (totalBalanceEl) totalBalanceEl.textContent = `$${balanceValue.toFixed(2)}`;
+                    if (walletBalanceEl) walletBalanceEl.textContent = `$${balanceValue.toFixed(2)}`;
+                    if (totalProfitEl) totalProfitEl.textContent = `$${profitValue.toFixed(2)}`;
+                    if (activeInvestmentEl) activeInvestmentEl.textContent = `$${activeInvestmentValue.toFixed(2)}`;
+                    if (nextPayoutEl) nextPayoutEl.textContent = nextPayoutValue;
+                    if (currentPlanEl) currentPlanEl.textContent = investmentPlanValue;
+
+                    const bonusAmountEl = document.getElementById('bonus-amount');
+                    const bonusNoteEl = document.getElementById('bonus-note');
+                    if (bonusAmountEl && bonusNoteEl) {
+                        const inferredBonus = Math.max(0, balanceValue - activeInvestmentValue - profitValue);
+                        bonusAmountEl.textContent = inferredBonus.toFixed(2);
+                        bonusNoteEl.style.display = inferredBonus > 0 ? 'inline-block' : 'none';
+                    }
+
                     // Fill profile inputs
                     if (emailInput) emailInput.value = data.email;
                     if (addressInput) addressInput.value = data.address || '';
