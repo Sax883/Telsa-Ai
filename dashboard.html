@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TESLAAI | Client Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css"> 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -613,8 +614,8 @@
                         <h1 style="font-size: 3rem; color: var(--color-primary);" id="wallet-balance">$200.00</h1>
                         <p style="margin-top: 20px;">Your balance includes a $200 Registration Bonus. Choose an investment plan to unlock withdrawals.</p>
                         <div class="wallet-action-buttons" style="margin-top: 30px;">
-                            <a href="#" class="cta-button" onclick="showMessageBox('Info', 'Deposit functionality is simulated.', 'info');">Deposit Funds</a>
-                            <a href="#" class="cta-button" style="background-color: var(--color-text-light);" onclick="showMessageBox('Info', 'Withdrawal functionality is simulated.', 'info');">Withdraw Funds</a>
+                            <a href="deposit.html" class="cta-button" >Deposit Funds</a>
+                            <a href="withdraw.html" class="cta-button" style="background-color: var(--color-text-light);" >Withdraw Funds</a>
                         </div>
                     </div>
                 </div>
@@ -624,7 +625,7 @@
                 <div class="content-panel">
                     <h2>✨ Start a New Investment</h2>
                     <p style="color: var(--color-text-light); max-width: 800px; margin-bottom: 30px;">Select from our expertly managed tiers to deploy your capital using TelsaAi's predictive models.</p>
-                    
+<!--                     
                     <div class="plans-grid">
                         <div class="plan-card" data-plan="Bronze" data-min="2000">
                             <h3 style="color: var(--color-primary);">Bronze Tier</h3>
@@ -641,10 +642,207 @@
                             <p>$100,000+ Minimum</p>
                             <a href="#" class="cta-button" style="padding: 0.5rem 1rem; font-size: 0.9rem; background-color: #0c0a09;" onclick="showMessageBox('Info', 'Investment purchase is simulated.', 'info');">Invest Now</a>
                         </div>
-                    </div>
+                    </div> -->
+                    <section id="plans" class="content-section plans-section">
+                        <div class="plans-grid">
+                            
+                            <div class="plan-card">
+                                <h2>Bronze Tier</h2>
+                                <div class="investment-amount">$2,000</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $2,000</li>
+                                    <li><i class="fas fa-check-circle"></i> AI Strategy: Low Volatility</li>
+                                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 5% - 8%</li>
+                                    <li><i class="fas fa-check-circle"></i> Basic Support</li>
+                                </ul>
+                                <a href="checkout.html?item=Bronze_Tier&price=2000" class="cta-button">Select Plan</a>
+                            </div>
+                
+                            <div class="plan-card">
+                                <h2>Silver Tier</h2>
+                                <div class="investment-amount">$5,000</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $5,000</li>
+                                    <li><i class="fas fa-check-circle"></i> AI Strategy: Balanced Growth</li>
+                                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 8% - 12%</li>
+                                    <li><i class="fas fa-check-circle"></i> Dedicated Account Manager</li>
+                                </ul>
+                                <a href="checkout.html?item=Silver_Tier&price=5000" class="cta-button">Select Plan</a>
+                            </div>
+                
+                            <div class="plan-card featured">
+                                <h2>Gold Tier (Recommended)</h2>
+                                <div class="investment-amount">$10,000</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li class="text-white" style="color:#fff!important"><i class="fas fa-check-circle"></i> Minimum Capital: $10,000</li>
+                                    <li class="text-white" style="color:#fff!important"><i class="fas fa-check-circle"></i> AI Strategy: Optimized Aggression</li>
+                                    <li class="text-white" style="color:#fff!important"><i class="fas fa-check-circle"></i> Estimated Monthly Return: 12% - 18%</li>
+                                    <li class="text-white" style="color:#fff!important"><i class="fas fa-check-circle"></i> Priority Support & Analytics</li>
+                                </ul>
+                                <a href="checkout.html?item=Gold_Tier&price=10000" class="cta-button">Select Plan</a>
+                            </div>
+                
+                            <div class="plan-card">
+                                <h2>Platinum Tier</h2>
+                                <div class="investment-amount">$25,000</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $25,000</li>
+                                    <li><i class="fas fa-check-circle"></i> AI Strategy: Exclusive Access</li>
+                                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 18% - 25%</li>
+                                    <li><i class="fas fa-check-circle"></i> Quarterly Strategy Review</li>
+                                </ul>
+                                <a href="checkout.html?item=Platinum_Tier&price=25000" class="cta-button">Select Plan</a>
+                            </div>
+                
+                            <div class="plan-card">
+                                <h2>Diamond Tier</h2>
+                                <div class="investment-amount">$50,000</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $50,000</li>
+                                    <li><i class="fas fa-check-circle"></i> AI Strategy: Fully Bespoke</li>
+                                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 25% - 35%</li>
+                                    <li><i class="fas fa-check-circle"></i> Personal Senior Advisor</li>
+                                </ul>
+                                <a href="checkout.html?item=Diamond_Tier&price=50000" class="cta-button">Select Plan</a>
+                            </div>
+                
+                            <div class="plan-card">
+                                <h2>Centurion Tier</h2>
+                                <div class="investment-amount">$100,000+</div>
+                                <div class="return-period">Profit Payout: Every 3 Days</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $100,000</li>
+                                    <li><i class="fas fa-check-circle"></i> AI Strategy: Private Market Access</li>
+                                    <li><i class="fas fa-check-circle"></i> Estimated Monthly Return: 35%+</li>
+                                    <li><i class="fas fa-check-circle"></i> Direct Access to Portfolio Manager</li>
+                                </ul>
+                                <a href="checkout.html?item=Centurion_Tier&price=100000" class="cta-button">Select Plan</a>
+                            </div>
+                            
+                        </div>
+                    </section>
+
+                    <section id="space-opportunities" class="content-section plans-section">
+                        <h2>🛰️ Starlink & SpaceX Opportunities</h2>
+                        <p style="color: var(--color-text-light); margin-bottom: 35px;">Access direct Starlink purchase and premium aerospace-focused investment options.</p>
+                        <div class="plans-grid">
+                            <div class="plan-card">
+                                <img src="images/star%20link.jpeg" onerror="this.onerror=null;this.src='images/future-vision.jpg';" alt="Starlink equipment" style="width: 100%; height: 220px; object-fit: cover; border-radius: 8px; margin-bottom: 18px;">
+                                <h2>Starlink</h2>
+                                <div class="investment-amount">$350</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Hardware Purchase</li>
+                                    <li><i class="fas fa-check-circle"></i> Secure Checkout Flow</li>
+                                    <li><i class="fas fa-check-circle"></i> Order Processing Support</li>
+                                </ul>
+                                <a href="checkout.html?item=Starlink&price=350" class="cta-button">Buy</a>
+                            </div>
+
+                            <div class="plan-card featured">
+                                <h2>Starlink Investment</h2>
+                                <div class="investment-amount">$1,000</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Minimum Capital: $1,000</li>
+                                    <li><i class="fas fa-check-circle"></i> Managed Growth Strategy</li>
+                                    <li><i class="fas fa-check-circle"></i> Performance Monitoring</li>
+                                </ul>
+                                <a href="checkout.html?item=Starlink_Investment&price=1000" class="cta-button">Invest</a>
+                            </div>
+
+                            <div class="plan-card">
+                                <h2>Space X Investment</h2>
+                                <div class="investment-amount">$5,000+</div>
+                                <ul>
+                                    <li><i class="fas fa-check-circle"></i> Entry Capital: $5,000+</li>
+                                    <li><i class="fas fa-check-circle"></i> Long-Term Capital Allocation</li>
+                                    <li><i class="fas fa-check-circle"></i> Tiered Portfolio Access</li>
+                                </ul>
+                                <a href="checkout.html?item=SpaceX_Investment&price=5000" class="cta-button">Invest</a>
+                            </div>
+                        </div>
+                    </section>
+                
+                    <section id="luxury-cars" class="content-section car-section">
+                        <h2>🚗 Exclusive Telsa Luxury Vehicles</h2>
+                        <p style="color: var(--color-text-light); margin-bottom: 50px;">Use your investment profits or fresh capital to purchase a Telsa vehicle with cryptocurrency through our exclusive partnership.</p>
+                        
+                        <div class="car-grid">
+                
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/model_s.jpg" alt="Tesla Model S Plaid">
+                                    <h3>Tesla Model S Plaid</h3>
+                                    <p class="car-description">The ultimate combination of power, efficiency, and safety. 0-60mph in 1.99s, with Tri-Motor All-Wheel Drive.</p>
+                                    <p class="car-price">$109,990</p>
+                                    <a href="checkout.html" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/model_x.jpg" alt="Tesla Model X">
+                                    <h3>Tesla Model X</h3>
+                                    <p class="car-description">The safest SUV on the road. Falcon Wing doors, seating for up to seven, and an incredible 333 miles of range.</p>
+                                    <p class="car-price">$98,490</p>
+                                    <a href="checkout.html?item=Tesla_Model_X&price=98490" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/model_3.jpg" alt="Tesla Model 3 Long Range">
+                                    <h3>Tesla Model 3 Long Range</h3>
+                                    <p class="car-description">High-performance electric sedan. All-wheel drive, premium interior, and superior handling for daily driving.</p>
+                                    <p class="car-price">$47,490</p>
+                                    <a href="checkout.html?item=Tesla_Model_3&price=47490" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/cybertruck_tri.jpg" alt="Tesla Cybertruck Tri-Motor">
+                                    <h3>Cybertruck Tri-Motor</h3>
+                                    <p class="car-description">Beast of a truck. All-wheel drive with Tri-Motor, 0-60 in 2.9 seconds, over 500 miles of range.</p>
+                                    <p class="car-price">$99,990</p>
+                                    <a href="checkout.html?item=CyberTruck_Tri-Motor&price=99990" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                            
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/cybertruck_dual.jpg" alt="Tesla Cybertruck Dual-Motor">
+                                    <h3>Cybertruck Dual-Motor</h3>
+                                    <p class="car-description">Versatile and rugged. All-wheel drive, 300+ miles of range, perfect for work and adventure.</p>
+                                    <p class="car-price">$79,990</p>
+                                    <a href="checkout.html?item=Cybertruck_Dual_Motor&price=79990" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                            
+                            <div class="car-card">
+                                <div class="car-info">
+                                    <img src="images/cybertruck_rear.jpg" alt="Tesla Cybertruck Single-Motor">
+                                    <h3>Cybertruck Rear-Wheel</h3>
+                                    <p class="car-description">Single-motor rear-wheel drive, durable exoskeleton, and impressive towing capacity.</p>
+                                    <p class="car-price">$60,990</p>
+                                    <a href="checkout.html?item=CyberTruck_Rear_Wheeel&price=60990" class="cta-button">Add to Cart</a>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </section>
+
+
+                    
                 </div>
             </div>
 
+                
+  
             <div id="history" class="page-content hidden">
                 <div class="content-panel">
                     <h2>⏳ Transaction & Investment History</h2>
@@ -731,6 +929,19 @@
 
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 
+    <!-- Smartsupp Live Chat script -->
+        <script type="text/javascript">
+            var _smartsupp = _smartsupp || {};
+            _smartsupp.key = '2f93068f32544226b3307fd94292d88c98fd20f1';
+            window.smartsupp||(function(d) {
+            var s,c,o=smartsupp=function(){ o._.push(arguments)};o._=[];
+            s=d.getElementsByTagName('script')[0];c=d.createElement('script');
+            c.type='text/javascript';c.charset='utf-8';c.async=true;
+            c.src='https://www.smartsuppchat.com/loader.js?';s.parentNode.insertBefore(c,s);
+            })(document);
+            </script>
+            <noscript> Powered by <a href=“https://www.smartsupp.com” target=“_blank”>Smartsupp</a></noscript>
+            
     <script>
         // FIXED: Use window.location.origin for correct deployment API base URL and APPEND the base path
         const API_BASE_URL = `${window.location.origin}/api/v1`; 
@@ -889,7 +1100,6 @@
                 }
             }
         }
-        
         // --- Chat Functions ---
         
         function connectChatSocket() {

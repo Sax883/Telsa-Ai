@@ -80,7 +80,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = window.location.origin; 
+        const API_BASE_URL = window.location.origin;
+
         const form = document.getElementById('signup-form');
         const messageBox = document.getElementById('message-box');
         const signupBtn = document.getElementById('signup-btn');
@@ -108,7 +109,7 @@
             const password = document.getElementById('password').value;
 
             try {
-                // *** CRITICAL FIX: Added backtick (`) to open the template literal ***
+                // Endpoint fetch using the corrected API_BASE_URL
                 const response = await fetch(`${API_BASE_URL}/api/v1/auth/signup`, {
                     method: 'POST',
                     headers: {
@@ -121,8 +122,6 @@
 
                 if (response.ok && data.success) {
                     showMessage('Registration successful! Redirecting to login...', 'success');
-                    
-                    // We don't need to store the token here, as we require a separate login step
                     
                     setTimeout(() => {
                         window.location.href = 'login.html';
