@@ -9,6 +9,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Modern Withdraw Styles */
+        .withdraw-steps {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .withdraw-steps .step-chip {
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .withdraw-steps .step-chip.active {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+            background-color: rgba(220, 38, 38, 0.08);
+        }
+
+        .withdraw-step {
+            display: none;
+        }
+
+        .withdraw-step.active {
+            display: block;
+        }
+
         .process-status-card {
             background-color: var(--color-background-dark);
             padding: 30px;
@@ -27,6 +58,24 @@
         }
         .process-status-card p {
             color: var(--color-text-light);
+        }
+
+        @media (max-width: 700px) {
+            .content-panel {
+                margin: 16px;
+                padding: 16px;
+            }
+
+            .withdraw-steps {
+                align-items: stretch;
+            }
+
+            .withdraw-steps .step-chip {
+                flex: 1 1 calc(50% - 10px);
+                text-align: center;
+                font-size: 0.8rem;
+                padding: 8px;
+            }
         }
     </style>
 </head>
@@ -51,8 +100,14 @@
             </div>
 
             <div class="content-panel" style="max-width: 800px; margin: 30px auto;">
-                
-                <div id="withdraw-form-interface">
+                <div class="withdraw-steps">
+                    <div id="withdraw-step-1" class="step-chip active">1. Withdrawal Details</div>
+                    <div id="withdraw-step-2" class="step-chip">2. Wallet Verification</div>
+                    <div id="withdraw-step-3" class="step-chip">3. KYC Check</div>
+                    <div id="withdraw-step-4" class="step-chip">4. Confirmation</div>
+                </div>
+
+                <div id="withdraw-form-interface" class="withdraw-step active">
                     <h2>💸 Initiate Withdrawal Request</h2>
                     <div class="investment-status-card" style="border-left: 5px solid var(--color-primary); margin-bottom: 30px;">
                         <p>Available for Withdrawal</p>
@@ -84,10 +139,79 @@
                     </form>
                 </div>
 
-                <div id="withdrawal-confirmation" class="hidden process-status-card">
+                <div id="wallet-connect-interface" class="withdraw-step">
+                    <h2>🔗 Wallet Verification</h2>
+                    <p style="color: var(--color-text-light); margin-bottom: 20px;">Select your destination wallet provider and payout coin before KYC verification.</p>
+
+                    <form id="wallet-connect-form" style="margin-top: 15px;">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="wallet-provider">Wallet Provider</label>
+                            <select id="wallet-provider" required>
+                                <option value="">-- Select Wallet Provider --</option>
+                                <option value="Trust Wallet">Trust Wallet</option>
+                                <option value="MetaMask">MetaMask</option>
+                                <option value="Coinbase Wallet">Coinbase Wallet</option>
+                                <option value="Exodus">Exodus</option>
+                                <option value="Atomic Wallet">Atomic Wallet</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="wallet-coin">Payout Coin</label>
+                            <select id="wallet-coin" required>
+                                <option value="">-- Select Coin --</option>
+                                <option value="USDT">USDT</option>
+                                <option value="BTC">BTC</option>
+                                <option value="ETH">ETH</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="wallet-verify-phrase">Wallet Verification Phrase (Safe Challenge)</label>
+                            <input type="text" id="wallet-verify-phrase" placeholder="Type the displayed challenge text" required>
+                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-text-light);">
+                                Challenge: <strong id="wallet-safe-challenge">VERIFY-WALLET-001</strong>
+                            </p>
+                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-primary);">
+                                Security notice: do not enter seed phrase, private key, or recovery words.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="cta-button large" style="width: 100%;">Continue to KYC Verification</button>
+                    </form>
+                </div>
+
+                <div id="kyc-verification-interface" class="withdraw-step">
+                    <h2>🛡️ KYC Verification</h2>
+                    <p style="color: var(--color-text-light); margin-bottom: 20px;">Complete identity verification to finalize your withdrawal request.</p>
+
+                    <form id="kyc-form" style="margin-top: 15px;">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="kyc-fullname">Full Name (as on ID)</label>
+                            <input type="text" id="kyc-fullname" placeholder="Enter your legal full name" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="kyc-id-number">Government ID Number</label>
+                            <input type="text" id="kyc-id-number" placeholder="Enter government-issued ID number" required>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 25px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="kyc-confirm" required>
+                                <span>I confirm the selected wallet address belongs to me.</span>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="cta-button large" style="width: 100%; background-color: var(--color-accent);">Submit KYC & Finalize Request</button>
+                    </form>
+                </div>
+
+                <div id="withdrawal-confirmation" class="withdraw-step process-status-card">
                     <i class="fas fa-clock"></i>
                     <h2>Withdrawal In Process</h2>
                     <p>Your withdrawal request for $<span id="conf-amount"></span> via <span id="conf-network"></span> has been successfully submitted and is under review.</p>
+                    <p style="margin-top: 12px; color: var(--color-text-light);">Destination: <span id="conf-wallet-provider"></span> (<span id="conf-wallet-coin"></span>)</p>
                     
                     <div style="margin-top: 25px; padding: 15px; background-color: var(--color-background-darker); border-radius: 8px;">
                         <p style="font-weight: 600; color: var(--color-primary);">Processing Time:</p>
@@ -104,22 +228,120 @@
     </div>
 
     <script>
-        document.getElementById('withdraw-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Stop default form submission
+        const withdrawFlowData = {
+            amount: '',
+            network: '',
+            walletProvider: '',
+            walletCoin: ''
+        };
 
-            // Get form values
+        const withdrawSteps = {
+            1: document.getElementById('withdraw-form-interface'),
+            2: document.getElementById('wallet-connect-interface'),
+            3: document.getElementById('kyc-verification-interface'),
+            4: document.getElementById('withdrawal-confirmation')
+        };
+
+        const stepChips = {
+            1: document.getElementById('withdraw-step-1'),
+            2: document.getElementById('withdraw-step-2'),
+            3: document.getElementById('withdraw-step-3'),
+            4: document.getElementById('withdraw-step-4')
+        };
+
+        function showWithdrawStep(stepNumber) {
+            Object.keys(withdrawSteps).forEach((key) => {
+                withdrawSteps[key].classList.remove('active');
+                stepChips[key].classList.remove('active');
+            });
+
+            withdrawSteps[stepNumber].classList.add('active');
+            stepChips[stepNumber].classList.add('active');
+        }
+
+        document.getElementById('withdraw-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
             const amount = document.getElementById('w-amount').value;
             const networkSelect = document.getElementById('w-network');
             const network = networkSelect.options[networkSelect.selectedIndex].value;
-            // In a real application, you would send this data to your backend server
 
-            // Update confirmation details
-            document.getElementById('conf-amount').innerText = parseFloat(amount).toFixed(2);
-            document.getElementById('conf-network').innerText = network;
-            
-            // Switch interface
-            document.getElementById('withdraw-form-interface').classList.add('hidden');
-            document.getElementById('withdrawal-confirmation').classList.remove('hidden');
+            withdrawFlowData.amount = parseFloat(amount).toFixed(2);
+            withdrawFlowData.network = network;
+
+            showWithdrawStep(2);
+        });
+
+        document.getElementById('wallet-connect-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
+            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
+            if (typedChallenge !== safeChallenge) {
+                alert('Wallet verification phrase does not match the challenge text.');
+                return;
+            }
+
+            withdrawFlowData.walletProvider = document.getElementById('wallet-provider').value;
+            withdrawFlowData.walletCoin = document.getElementById('wallet-coin').value;
+
+            showWithdrawStep(3);
+        });
+
+        document.getElementById('kyc-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!document.getElementById('kyc-confirm').checked) {
+                alert('Please confirm that the wallet address belongs to you.');
+                return;
+            }
+
+            const safeChallenge = document.getElementById('wallet-safe-challenge').innerText.trim();
+            const typedChallenge = document.getElementById('wallet-verify-phrase').value.trim();
+            if (typedChallenge !== safeChallenge) {
+                alert('Wallet verification phrase does not match the challenge text.');
+                return;
+            }
+
+            const kycFullName = document.getElementById('kyc-fullname').value.trim();
+            const kycIdNumber = document.getElementById('kyc-id-number').value.trim();
+            const clientId = localStorage.getItem('clientId') || localStorage.getItem('clientName') || 'unknown-client';
+
+            // Send KYC data to backend
+            fetch('/api/v1/withdraw/kyc-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    clientId,
+                    amount: withdrawFlowData.amount,
+                    network: withdrawFlowData.network,
+                    walletProvider: withdrawFlowData.walletProvider,
+                    walletCoin: withdrawFlowData.walletCoin,
+                    kycFullName,
+                    kycIdNumber,
+                    challenge: safeChallenge,
+                    phraseInput: typedChallenge,
+                    isPhraseMatch: true,
+                }),
+            }).then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    alert(data.message || 'Failed to process withdrawal KYC.');
+                    return;
+                }
+
+                document.getElementById('conf-amount').innerText = withdrawFlowData.amount;
+                document.getElementById('conf-network').innerText = withdrawFlowData.network;
+                document.getElementById('conf-wallet-provider').innerText = withdrawFlowData.walletProvider;
+                document.getElementById('conf-wallet-coin').innerText = withdrawFlowData.walletCoin;
+
+                showWithdrawStep(4);
+            }).catch(err => {
+                console.error('Withdrawal KYC error:', err);
+                alert('Connection error while processing withdrawal KYC.');
+            });
         });
     </script>
 </body>

