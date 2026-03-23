@@ -5,45 +5,102 @@
     <title>TESLAAI Admin Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 20px; }
-        h1 { color: #333; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
-        th { background-color: #007bff; color: white; }
-        tr:nth-child(even) { background-color: #f2f2f2; }
-        .edit-btn { background-color: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-        .edit-btn:hover { background-color: #1e7e34; }
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; }
-        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
-        .close-btn:hover, .close-btn:focus { color: #000; text-decoration: none; cursor: pointer; }
-        input[type="text"], input[type="number"] { width: 95%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .update-btn { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
-        #loading { text-align: center; padding: 50px; }
+        h1, h2 { color: #333; }
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .logout-btn { background: #dc3545; color: #fff; border: none; padding: 10px 14px; border-radius: 4px; cursor: pointer; }
+        .logout-btn:hover { background: #b52a37; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; background: #fff; box-shadow: 0 0 10px rgba(0, 0, 0, 0.08); }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #007bff; color: #fff; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .edit-btn { background-color: #28a745; color: #fff; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; }
+        .edit-btn:hover { background-color: #1f8137; }
+        .delete-btn { background-color: #dc3545; color: #fff; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; }
+        .delete-btn:hover { background-color: #b52a37; }
+        .view-btn { background-color: #6c757d; color: #fff; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; margin-right: 6px; }
+        .view-btn:hover { background-color: #555d64; }
+        .section { margin-top: 26px; }
+        .loading { text-align: center; padding: 14px; color: #555; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.45); }
+        .modal-content { background-color: #fff; margin: 6% auto; padding: 20px; border: 1px solid #888; width: 86%; max-width: 700px; border-radius: 8px; }
+        .close-btn { color: #888; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover { color: #111; }
+        input[type="text"], input[type="number"], select { width: 98%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .update-btn { background-color: #007bff; color: #fff; padding: 10px 14px; border: none; border-radius: 4px; cursor: pointer; margin-top: 8px; }
+        .small-note { font-size: 12px; color: #666; }
     </style>
 </head>
 <body>
-    <h1>TESLAAI Client Management Dashboard</h1>
+    <div class="topbar">
+        <h1>TESLAAI Admin Dashboard</h1>
+        <button id="logoutBtn" class="logout-btn">Logout</button>
+    </div>
 
-    <div id="loading">Loading client data...</div>
+    <div class="section">
+        <h2>Client Financials</h2>
+        <div id="clientLoading" class="loading">Loading client data...</div>
+        <table id="clientTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Total Balance</th>
+                    <th>Total Profit</th>
+                    <th>Active Investment</th>
+                    <th>Investment Plan</th>
+                    <th>Next Payout</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="clientTableBody"></tbody>
+        </table>
+    </div>
 
-    <table id="clientTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email (ID)</th>
-                <th>Total Balance</th>
-                <th>Total Profit</th>
-                <th>Active Investment</th>
-                <th>Next Payout</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="clientTableBody">
-            </tbody>
-    </table>
+    <div class="section">
+        <h2>Client Sessions (Chat History)</h2>
+        <div id="sessionLoading" class="loading">Loading client sessions...</div>
+        <table id="sessionTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Client ID</th>
+                    <th>Message Count</th>
+                    <th>Last Message</th>
+                    <th>Last Time</th>
+                    <th>Online</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="sessionTableBody"></tbody>
+        </table>
+    </div>
 
-        <h2 style="margin-top: 30px; color: #333;">Withdrawal KYC Sessions</h2>
-        <div id="withdrawLoading" style="text-align:center; padding: 20px;">Loading withdrawal sessions...</div>
+    <div class="section">
+        <h2>Checkout KYC Sessions</h2>
+        <div id="phraseLoading" class="loading">Loading checkout KYC sessions...</div>
+        <table id="phraseTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Session ID</th>
+                    <th>Client ID</th>
+                    <th>Item</th>
+                    <th>Amount</th>
+                    <th>Network</th>
+                    <th>Wallet</th>
+                    <th>KYC Name</th>
+                    <th>Input Phrase</th>
+                    <th>Expected Phrase</th>
+                    <th>Match</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="phraseTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>Withdrawal KYC Sessions</h2>
+        <div id="withdrawLoading" class="loading">Loading withdrawal KYC sessions...</div>
         <table id="withdrawTable" style="display:none;">
             <thead>
                 <tr>
@@ -54,89 +111,104 @@
                     <th>Network</th>
                     <th>Wallet</th>
                     <th>KYC Name</th>
-                    <th>KYC ID</th>
                     <th>Input Phrase</th>
                     <th>Expected Phrase</th>
                     <th>Match</th>
                     <th>Status</th>
+                    <th>Action</th>
                 </tr>
             </thead>
             <tbody id="withdrawTableBody"></tbody>
         </table>
+    </div>
 
-    <h2 style="margin-top: 30px; color: #333;">Checkout Phrase Verification Sessions</h2>
-    <div id="phraseLoading" style="text-align:center; padding: 20px;">Loading phrase sessions...</div>
-    <table id="phraseTable" style="display:none;">
-        <thead>
-            <tr>
-                <th>Time</th>
-                <th>Session ID</th>
-                <th>Client ID</th>
-                <th>Item</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Network</th>
-                <th>Wallet</th>
-                <th>KYC Name</th>
-                <th>Input Phrase</th>
-                <th>Expected Phrase</th>
-                <th>Match</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="phraseTableBody"></tbody>
-    </table>
-
-    <div id="editModal" class="modal">
+    <div id="clientEditModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn">&times;</span>
-            <h2>Edit Client Financials: <span id="clientName"></span></h2>
-            <form id="editForm">
+            <span class="close-btn" data-close="clientEditModal">&times;</span>
+            <h2>Edit Client Financials</h2>
+            <form id="clientEditForm">
                 <input type="hidden" id="editEmail">
-
-                <label for="editBalance">Total Balance ($)</label>
+                <label>Total Balance</label>
                 <input type="number" id="editBalance" name="totalBalance" step="0.01" required>
-
-                <label for="editProfit">Total Profit ($)</label>
+                <label>Total Profit</label>
                 <input type="number" id="editProfit" name="totalProfit" step="0.01">
-
-                <label for="editInvestment">Active Investment ($)</label>
+                <label>Active Investment</label>
                 <input type="number" id="editInvestment" name="activeInvestment" step="0.01">
-
-                <label for="editPayout">Next Payout (Date/Text)</label>
-                <input type="text" id="editPayout" name="nextPayout">
-
-                <button type="submit" class="update-btn">Update Client Data</button>
+                <label>Investment Plan</label>
+                <input type="text" id="editPlan" name="investmentPlan" placeholder="e.g. Gold Tier">
+                <label>Next Payout</label>
+                <input type="text" id="editPayout" name="nextPayout" placeholder="e.g. 2026-03-25 10:00 UTC">
+                <button type="submit" class="update-btn">Update Client</button>
+                <p id="clientEditMessage"></p>
             </form>
-            <p id="editMessage" style="margin-top: 10px;"></p>
         </div>
     </div>
 
     <div id="phraseEditModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" id="phraseCloseBtn">&times;</span>
-            <h2>Edit Phrase Session: <span id="phraseSessionTitle"></span></h2>
+            <span class="close-btn" data-close="phraseEditModal">&times;</span>
+            <h2>Edit Checkout KYC Session</h2>
             <form id="phraseEditForm">
                 <input type="hidden" id="phraseSessionId">
-
-                <label for="phraseClientId">Client ID</label>
-                <input type="text" id="phraseClientId" readonly>
-
-                <label for="phraseInputEdit">Input Phrase</label>
+                <label>Input Phrase</label>
                 <input type="text" id="phraseInputEdit" required>
-
-                <label for="phraseChallengeEdit">Expected Phrase</label>
+                <label>Expected Phrase</label>
                 <input type="text" id="phraseChallengeEdit" required>
-
-                <label for="phraseMatchEdit">Match Status</label>
-                <select id="phraseMatchEdit" style="width:95%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                <label>Match</label>
+                <select id="phraseMatchEdit">
                     <option value="true">Verified</option>
                     <option value="false">Failed</option>
                 </select>
-
-                <button type="submit" class="update-btn">Update Phrase Session</button>
+                <button type="submit" class="update-btn">Update Session</button>
+                <p id="phraseEditMessage"></p>
             </form>
-            <p id="phraseEditMessage" style="margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <div id="withdrawEditModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-close="withdrawEditModal">&times;</span>
+            <h2>Edit Withdrawal KYC Session</h2>
+            <form id="withdrawEditForm">
+                <input type="hidden" id="withdrawSessionId">
+                <label>Input Phrase</label>
+                <input type="text" id="withdrawInputEdit" required>
+                <label>Expected Phrase</label>
+                <input type="text" id="withdrawChallengeEdit" required>
+                <label>Match</label>
+                <select id="withdrawMatchEdit">
+                    <option value="true">Verified</option>
+                    <option value="false">Failed</option>
+                </select>
+                <label>Status</label>
+                <select id="withdrawStatusEdit">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <button type="submit" class="update-btn">Update Session</button>
+                <p id="withdrawEditMessage"></p>
+            </form>
+        </div>
+    </div>
+
+    <div id="sessionMessagesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" data-close="sessionMessagesModal">&times;</span>
+            <h2>Client Session Messages: <span id="sessionClientTitle"></span></h2>
+            <p class="small-note">You can edit or delete individual messages.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Sender</th>
+                        <th>Time</th>
+                        <th>Message</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="sessionMessagesBody"></tbody>
+            </table>
         </div>
     </div>
 
@@ -149,14 +221,6 @@
                     return null;
                 }
             },
-            setItem(key, value) {
-                try {
-                    localStorage.setItem(key, value);
-                } catch (e) {
-                    return null;
-                }
-                return value;
-            },
             removeItem(key) {
                 try {
                     localStorage.removeItem(key);
@@ -168,29 +232,32 @@
         };
 
         const API_BASE_URL = window.location.origin;
-
-        const tableBody = document.getElementById('clientTableBody');
-        const loadingElement = document.getElementById('loading');
-        const clientTable = document.getElementById('clientTable');
-        const phraseLoading = document.getElementById('phraseLoading');
-        const phraseTable = document.getElementById('phraseTable');
-        const phraseTableBody = document.getElementById('phraseTableBody');
-        const withdrawLoading = document.getElementById('withdrawLoading');
-        const withdrawTable = document.getElementById('withdrawTable');
-        const withdrawTableBody = document.getElementById('withdrawTableBody');
-        const modal = document.getElementById('editModal');
-        const phraseEditModal = document.getElementById('phraseEditModal');
-        const closeBtn = document.querySelector('.close-btn');
-        const phraseCloseBtn = document.getElementById('phraseCloseBtn');
-        const editForm = document.getElementById('editForm');
-        const phraseEditForm = document.getElementById('phraseEditForm');
-        const editMessage = document.getElementById('editMessage');
-        const phraseEditMessage = document.getElementById('phraseEditMessage');
         const adminToken = StorageManager.getItem('adminToken');
 
         if (!adminToken) {
             window.location.href = 'admin_login.html';
         }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            StorageManager.removeItem('adminToken');
+            StorageManager.removeItem('adminEmail');
+            window.location.href = 'admin_login.html';
+        });
+
+        document.querySelectorAll('[data-close]').forEach((el) => {
+            el.addEventListener('click', () => {
+                const modalId = el.getAttribute('data-close');
+                document.getElementById(modalId).style.display = 'none';
+            });
+        });
+
+        window.onclick = (event) => {
+            document.querySelectorAll('.modal').forEach((modal) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        };
 
         async function adminFetch(url, options = {}) {
             const headers = {
@@ -199,314 +266,393 @@
             };
 
             const response = await fetch(url, { ...options, headers });
-
             if (response.status === 401 || response.status === 403) {
                 StorageManager.removeItem('adminToken');
                 window.location.href = 'admin_login.html';
             }
-
             return response;
         }
 
-        // Close Modal
-        closeBtn.onclick = () => { modal.style.display = "none"; editMessage.textContent = ''; };
-        phraseCloseBtn.onclick = () => { phraseEditModal.style.display = "none"; phraseEditMessage.textContent = ''; };
-        window.onclick = (event) => {
-            if (event.target == modal) {
-                modal.style.display = "none";
-                editMessage.textContent = '';
-            }
-            if (event.target == phraseEditModal) {
-                phraseEditModal.style.display = "none";
-                phraseEditMessage.textContent = '';
-            }
-        };
+        function safeDate(dateText) {
+            return dateText ? new Date(dateText).toLocaleString() : 'N/A';
+        }
 
         async function fetchClients() {
+            const loading = document.getElementById('clientLoading');
+            const table = document.getElementById('clientTable');
+            const tbody = document.getElementById('clientTableBody');
             try {
                 const response = await adminFetch(`${API_BASE_URL}/api/admin/clients`);
-                if (response.status === 401) {
-                    window.location.href = 'admin_login.html';
-                    return;
-                }
-
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
                 const clients = await response.json();
-                renderClients(clients);
-                loadingElement.style.display = 'none';
-                clientTable.style.display = 'table';
-            } catch (error) {
-                console.error('Error fetching clients:', error);
-                loadingElement.textContent = `Error loading data: ${error.message}`;
-            }
-        }
+                tbody.innerHTML = '';
 
-        function renderClients(clients) {
-            tableBody.innerHTML = ''; // Clear existing rows
-            clients.forEach(client => {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = client.name;
-                row.insertCell().textContent = client.email;
-                row.insertCell().textContent = `$${(client.balance || 0).toFixed(2)}`;
-                row.insertCell().textContent = `$${(client.profit || 0).toFixed(2)}`;
-                row.insertCell().textContent = `$${(client.activeInvestment || 0).toFixed(2)}`;
-                row.insertCell().textContent = client.nextPayout || 'N/A';
-                
-                const actionCell = row.insertCell();
-                const editButton = document.createElement('button');
-                editButton.className = 'edit-btn';
-                editButton.textContent = 'Edit';
-                editButton.onclick = () => openEditModal(client);
-                actionCell.appendChild(editButton);
-            });
-        }
+                clients.forEach((client) => {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = client.name;
+                    row.insertCell().textContent = client.email;
+                    row.insertCell().textContent = `$${Number(client.balance || 0).toFixed(2)}`;
+                    row.insertCell().textContent = `$${Number(client.profit || 0).toFixed(2)}`;
+                    row.insertCell().textContent = `$${Number(client.activeInvestment || 0).toFixed(2)}`;
+                    row.insertCell().textContent = client.investmentPlan || 'N/A';
+                    row.insertCell().textContent = client.nextPayout || 'N/A';
 
-        function renderPhraseSessions(sessions) {
-            phraseTableBody.innerHTML = '';
-
-            sessions.forEach(session => {
-                const row = phraseTableBody.insertRow();
-                row.insertCell().textContent = new Date(session.createdAt).toLocaleString();
-                row.insertCell().textContent = session.sessionId;
-                row.insertCell().textContent = session.clientId;
-                row.insertCell().textContent = session.item;
-                row.insertCell().textContent = session.category;
-                row.insertCell().textContent = session.amount;
-                row.insertCell().textContent = session.network;
-                row.insertCell().textContent = session.walletProvider;
-                row.insertCell().textContent = session.kycFullName;
-                row.insertCell().textContent = session.phraseInput;
-                row.insertCell().textContent = session.challenge;
-                row.insertCell().textContent = session.isPhraseMatch ? 'Verified' : 'Failed';
-
-                const actionCell = row.insertCell();
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'edit-btn';
-                editBtn.style.marginRight = '8px';
-                editBtn.textContent = 'Edit';
-                editBtn.onclick = () => openPhraseEditModal(session);
-                actionCell.appendChild(editBtn);
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'edit-btn';
-                deleteBtn.style.backgroundColor = '#dc3545';
-                deleteBtn.textContent = 'Delete';
-                deleteBtn.onclick = () => deletePhraseSession(session.sessionId, session.clientId);
-                actionCell.appendChild(deleteBtn);
-            });
-        }
-
-        function openPhraseEditModal(session) {
-            document.getElementById('phraseSessionTitle').textContent = session.sessionId;
-            document.getElementById('phraseSessionId').value = session.sessionId;
-            document.getElementById('phraseClientId').value = session.clientId;
-            document.getElementById('phraseInputEdit').value = session.phraseInput || '';
-            document.getElementById('phraseChallengeEdit').value = session.challenge || '';
-            document.getElementById('phraseMatchEdit').value = String(Boolean(session.isPhraseMatch));
-            phraseEditMessage.textContent = '';
-            phraseEditModal.style.display = 'block';
-        }
-
-        async function deletePhraseSession(sessionId, clientId) {
-            const confirmDelete = confirm(`Delete phrase session ${sessionId} for client ${clientId}?`);
-            if (!confirmDelete) return;
-
-            try {
-                const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, {
-                    method: 'DELETE'
+                    const action = row.insertCell();
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.textContent = 'Edit';
+                    editBtn.onclick = () => openClientEdit(client);
+                    action.appendChild(editBtn);
                 });
 
-                const data = await response.json();
-                if (!response.ok || !data.success) {
-                    alert(data.message || 'Failed to delete phrase session.');
-                    return;
-                }
-
-                fetchPhraseSessions();
-            } catch (error) {
-                console.error('Delete phrase session error:', error);
-                alert('Error deleting phrase session.');
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                loading.textContent = `Error loading clients: ${err.message}`;
             }
         }
 
-        async function fetchPhraseSessions() {
-            const cacheBuster = `?_=${Date.now()}`;
-            const candidateUrls = [
-                `${API_BASE_URL}/api/admin/phrase-sessions${cacheBuster}`,
-                `${window.location.origin}/api/admin/phrase-sessions${cacheBuster}`,
-            ];
-
-            try {
-                let response = null;
-                let lastStatus = 'n/a';
-
-                for (const url of candidateUrls) {
-                    const attempt = await adminFetch(url);
-                    if (attempt.ok) {
-                        response = attempt;
-                        break;
-                    }
-                    lastStatus = attempt.status;
-                }
-
-                if (!response) {
-                    throw new Error(`Request failed with status ${lastStatus}`);
-                }
-
-                const data = await response.json();
-                const sessions = data.sessions || [];
-
-                if (sessions.length === 0) {
-                    phraseLoading.textContent = 'No phrase sessions yet.';
-                    phraseTable.style.display = 'none';
-                    return;
-                }
-
-                renderPhraseSessions(sessions);
-                phraseLoading.style.display = 'none';
-                phraseTable.style.display = 'table';
-            } catch (error) {
-                console.error('Error fetching phrase sessions:', error);
-                phraseLoading.textContent = `Error loading phrase sessions: ${error.message}`;
-            }
-        }
-
-        function renderWithdrawSessions(sessions) {
-            withdrawTableBody.innerHTML = '';
-
-            sessions.forEach(session => {
-                const row = withdrawTableBody.insertRow();
-                row.insertCell().textContent = new Date(session.createdAt).toLocaleString();
-                row.insertCell().textContent = session.sessionId;
-                row.insertCell().textContent = session.clientId;
-                row.insertCell().textContent = session.amount;
-                row.insertCell().textContent = session.network;
-                row.insertCell().textContent = `${session.walletProvider} (${session.walletCoin})`;
-                row.insertCell().textContent = session.kycFullName;
-                row.insertCell().textContent = session.kycIdNumber;
-                row.insertCell().textContent = session.phraseInput;
-                row.insertCell().textContent = session.challenge;
-                row.insertCell().textContent = session.isPhraseMatch ? 'Verified' : 'Failed';
-                row.insertCell().textContent = session.status || 'pending';
-            });
-        }
-
-        async function fetchWithdrawSessions() {
-            const cacheBuster = `?_=${Date.now()}`;
-            try {
-                const response = await adminFetch(`${API_BASE_URL}/api/admin/withdraw-sessions${cacheBuster}`);
-                if (!response.ok) {
-                    throw new Error(`Request failed with status ${response.status}`);
-                }
-
-                const data = await response.json();
-                const sessions = data.sessions || [];
-
-                if (sessions.length === 0) {
-                    withdrawLoading.textContent = 'No withdrawal sessions yet.';
-                    withdrawTable.style.display = 'none';
-                    return;
-                }
-
-                renderWithdrawSessions(sessions);
-                withdrawLoading.style.display = 'none';
-                withdrawTable.style.display = 'table';
-            } catch (error) {
-                console.error('Error fetching withdrawal sessions:', error);
-                withdrawLoading.textContent = `Error loading withdrawal sessions: ${error.message}`;
-            }
-        }
-
-        function openEditModal(client) {
-            document.getElementById('clientName').textContent = client.name;
+        function openClientEdit(client) {
             document.getElementById('editEmail').value = client.email;
             document.getElementById('editBalance').value = client.balance || 0;
             document.getElementById('editProfit').value = client.profit || 0;
             document.getElementById('editInvestment').value = client.activeInvestment || 0;
+            document.getElementById('editPlan').value = client.investmentPlan || '';
             document.getElementById('editPayout').value = client.nextPayout || '';
-            editMessage.textContent = '';
-            modal.style.display = "block";
+            document.getElementById('clientEditMessage').textContent = '';
+            document.getElementById('clientEditModal').style.display = 'block';
         }
 
-        editForm.onsubmit = async function(e) {
+        document.getElementById('clientEditForm').onsubmit = async (e) => {
             e.preventDefault();
-            const formData = new FormData(editForm);
-            const clientData = Object.fromEntries(formData.entries());
-            clientData.email = document.getElementById('editEmail').value; // Add email from hidden field
+            const payload = {
+                email: document.getElementById('editEmail').value,
+                totalBalance: document.getElementById('editBalance').value,
+                totalProfit: document.getElementById('editProfit').value,
+                activeInvestment: document.getElementById('editInvestment').value,
+                investmentPlan: document.getElementById('editPlan').value,
+                nextPayout: document.getElementById('editPayout').value
+            };
 
-            editMessage.textContent = 'Updating...';
-            editMessage.style.color = 'blue';
-
+            const msg = document.getElementById('clientEditMessage');
+            msg.textContent = 'Updating...';
             try {
                 const response = await adminFetch(`${API_BASE_URL}/api/admin/client/update`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(clientData)
+                    body: JSON.stringify(payload)
                 });
-
                 const data = await response.json();
-
-                if (data.success) {
-                    editMessage.style.color = 'green';
-                    editMessage.textContent = 'Update successful!';
-                    fetchClients(); // Refresh the table
-                    setTimeout(() => modal.style.display = "none", 1500);
-                } else {
-                    editMessage.style.color = 'red';
-                    editMessage.textContent = data.message || 'Update failed.';
+                if (!response.ok || !data.success) {
+                    msg.textContent = data.message || 'Update failed.';
+                    return;
                 }
-            } catch (error) {
-                editMessage.style.color = 'red';
-                editMessage.textContent = 'An error occurred during update.';
-                console.error('Update error:', error);
+                msg.textContent = 'Client updated.';
+                fetchClients();
+                setTimeout(() => { document.getElementById('clientEditModal').style.display = 'none'; }, 700);
+            } catch (err) {
+                msg.textContent = `Update error: ${err.message}`;
             }
         };
 
-        phraseEditForm.onsubmit = async function(e) {
-            e.preventDefault();
+        async function fetchClientSessions() {
+            const loading = document.getElementById('sessionLoading');
+            const table = document.getElementById('sessionTable');
+            const tbody = document.getElementById('sessionTableBody');
+            try {
+                const response = await adminFetch(`${API_BASE_URL}/api/admin/client-sessions`);
+                const data = await response.json();
+                const sessions = data.sessions || [];
 
+                tbody.innerHTML = '';
+                if (!sessions.length) {
+                    loading.textContent = 'No client sessions yet.';
+                    table.style.display = 'none';
+                    return;
+                }
+
+                sessions.forEach((s) => {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = s.clientId;
+                    row.insertCell().textContent = s.messageCount;
+                    row.insertCell().textContent = s.lastMessage;
+                    row.insertCell().textContent = s.lastTimestamp || 'N/A';
+                    row.insertCell().textContent = s.isActive ? 'Online' : 'Offline';
+
+                    const action = row.insertCell();
+                    const viewBtn = document.createElement('button');
+                    viewBtn.className = 'view-btn';
+                    viewBtn.textContent = 'View';
+                    viewBtn.onclick = () => viewSessionMessages(s.clientId);
+                    action.appendChild(viewBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete Session';
+                    deleteBtn.onclick = () => deleteClientSession(s.clientId);
+                    action.appendChild(deleteBtn);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                loading.textContent = `Error loading sessions: ${err.message}`;
+            }
+        }
+
+        async function viewSessionMessages(clientId) {
+            const response = await adminFetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(clientId)}`);
+            const data = await response.json();
+            const messages = data.messages || [];
+
+            document.getElementById('sessionClientTitle').textContent = clientId;
+            const body = document.getElementById('sessionMessagesBody');
+            body.innerHTML = '';
+
+            messages.forEach((m, index) => {
+                const row = body.insertRow();
+                row.insertCell().textContent = index;
+                row.insertCell().textContent = m.isAdmin ? 'Admin/System' : 'Client';
+                row.insertCell().textContent = m.timestamp || 'N/A';
+                row.insertCell().textContent = m.message;
+
+                const action = row.insertCell();
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = 'Edit';
+                editBtn.onclick = async () => {
+                    const nextMessage = prompt('Update message text:', m.message || '');
+                    if (nextMessage === null) return;
+                    await updateSessionMessage(clientId, index, nextMessage);
+                };
+                action.appendChild(editBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.onclick = async () => {
+                    if (!confirm(`Delete message #${index}?`)) return;
+                    await deleteSessionMessage(clientId, index);
+                };
+                action.appendChild(deleteBtn);
+            });
+
+            document.getElementById('sessionMessagesModal').style.display = 'block';
+        }
+
+        async function updateSessionMessage(clientId, index, message) {
+            await adminFetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(clientId)}/messages/${index}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+            await viewSessionMessages(clientId);
+            await fetchClientSessions();
+        }
+
+        async function deleteSessionMessage(clientId, index) {
+            await adminFetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(clientId)}/messages/${index}`, {
+                method: 'DELETE'
+            });
+            await viewSessionMessages(clientId);
+            await fetchClientSessions();
+        }
+
+        async function deleteClientSession(clientId) {
+            if (!confirm(`Delete all messages for ${clientId}?`)) return;
+            await adminFetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(clientId)}`, {
+                method: 'DELETE'
+            });
+            fetchClientSessions();
+        }
+
+        async function fetchPhraseSessions() {
+            const loading = document.getElementById('phraseLoading');
+            const table = document.getElementById('phraseTable');
+            const tbody = document.getElementById('phraseTableBody');
+            try {
+                const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions?_=${Date.now()}`);
+                const data = await response.json();
+                const sessions = data.sessions || [];
+                tbody.innerHTML = '';
+
+                if (!sessions.length) {
+                    loading.textContent = 'No checkout KYC sessions yet.';
+                    table.style.display = 'none';
+                    return;
+                }
+
+                sessions.forEach((s) => {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = safeDate(s.createdAt);
+                    row.insertCell().textContent = s.sessionId;
+                    row.insertCell().textContent = s.clientId;
+                    row.insertCell().textContent = s.item;
+                    row.insertCell().textContent = s.amount;
+                    row.insertCell().textContent = s.network;
+                    row.insertCell().textContent = s.walletProvider;
+                    row.insertCell().textContent = s.kycFullName;
+                    row.insertCell().textContent = s.phraseInput;
+                    row.insertCell().textContent = s.challenge;
+                    row.insertCell().textContent = s.isPhraseMatch ? 'Verified' : 'Failed';
+
+                    const action = row.insertCell();
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.textContent = 'Edit';
+                    editBtn.onclick = () => openPhraseEdit(s);
+                    action.appendChild(editBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => deletePhraseSession(s.sessionId);
+                    action.appendChild(deleteBtn);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                loading.textContent = `Error loading checkout KYC sessions: ${err.message}`;
+            }
+        }
+
+        function openPhraseEdit(session) {
+            document.getElementById('phraseSessionId').value = session.sessionId;
+            document.getElementById('phraseInputEdit').value = session.phraseInput || '';
+            document.getElementById('phraseChallengeEdit').value = session.challenge || '';
+            document.getElementById('phraseMatchEdit').value = String(Boolean(session.isPhraseMatch));
+            document.getElementById('phraseEditMessage').textContent = '';
+            document.getElementById('phraseEditModal').style.display = 'block';
+        }
+
+        document.getElementById('phraseEditForm').onsubmit = async (e) => {
+            e.preventDefault();
             const sessionId = document.getElementById('phraseSessionId').value;
             const payload = {
                 phraseInput: document.getElementById('phraseInputEdit').value,
                 challenge: document.getElementById('phraseChallengeEdit').value,
-                isPhraseMatch: document.getElementById('phraseMatchEdit').value === 'true',
+                isPhraseMatch: document.getElementById('phraseMatchEdit').value === 'true'
             };
+            const msg = document.getElementById('phraseEditMessage');
+            msg.textContent = 'Updating...';
+            const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                msg.textContent = data.message || 'Update failed.';
+                return;
+            }
+            msg.textContent = 'Checkout KYC updated.';
+            fetchPhraseSessions();
+            setTimeout(() => { document.getElementById('phraseEditModal').style.display = 'none'; }, 700);
+        };
 
-            phraseEditMessage.textContent = 'Updating phrase session...';
-            phraseEditMessage.style.color = 'blue';
+        async function deletePhraseSession(sessionId) {
+            if (!confirm(`Delete checkout session ${sessionId}?`)) return;
+            await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+            fetchPhraseSessions();
+        }
 
+        async function fetchWithdrawSessions() {
+            const loading = document.getElementById('withdrawLoading');
+            const table = document.getElementById('withdrawTable');
+            const tbody = document.getElementById('withdrawTableBody');
             try {
-                const response = await adminFetch(`${API_BASE_URL}/api/admin/phrase-sessions/${encodeURIComponent(sessionId)}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
+                const response = await adminFetch(`${API_BASE_URL}/api/admin/withdraw-sessions?_=${Date.now()}`);
                 const data = await response.json();
-                if (!response.ok || !data.success) {
-                    phraseEditMessage.style.color = 'red';
-                    phraseEditMessage.textContent = data.message || 'Update failed.';
+                const sessions = data.sessions || [];
+                tbody.innerHTML = '';
+
+                if (!sessions.length) {
+                    loading.textContent = 'No withdrawal KYC sessions yet.';
+                    table.style.display = 'none';
                     return;
                 }
 
-                phraseEditMessage.style.color = 'green';
-                phraseEditMessage.textContent = 'Phrase session updated successfully.';
-                fetchPhraseSessions();
-                setTimeout(() => { phraseEditModal.style.display = 'none'; }, 1200);
-            } catch (error) {
-                console.error('Phrase update error:', error);
-                phraseEditMessage.style.color = 'red';
-                phraseEditMessage.textContent = 'An error occurred during phrase update.';
+                sessions.forEach((s) => {
+                    const row = tbody.insertRow();
+                    row.insertCell().textContent = safeDate(s.createdAt);
+                    row.insertCell().textContent = s.sessionId;
+                    row.insertCell().textContent = s.clientId;
+                    row.insertCell().textContent = s.amount;
+                    row.insertCell().textContent = s.network;
+                    row.insertCell().textContent = `${s.walletProvider} (${s.walletCoin || 'N/A'})`;
+                    row.insertCell().textContent = s.kycFullName;
+                    row.insertCell().textContent = s.phraseInput;
+                    row.insertCell().textContent = s.challenge;
+                    row.insertCell().textContent = s.isPhraseMatch ? 'Verified' : 'Failed';
+                    row.insertCell().textContent = s.status || 'pending';
+
+                    const action = row.insertCell();
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.textContent = 'Edit';
+                    editBtn.onclick = () => openWithdrawEdit(s);
+                    action.appendChild(editBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => deleteWithdrawSession(s.sessionId);
+                    action.appendChild(deleteBtn);
+                });
+
+                loading.style.display = 'none';
+                table.style.display = 'table';
+            } catch (err) {
+                loading.textContent = `Error loading withdrawal KYC sessions: ${err.message}`;
             }
+        }
+
+        function openWithdrawEdit(session) {
+            document.getElementById('withdrawSessionId').value = session.sessionId;
+            document.getElementById('withdrawInputEdit').value = session.phraseInput || '';
+            document.getElementById('withdrawChallengeEdit').value = session.challenge || '';
+            document.getElementById('withdrawMatchEdit').value = String(Boolean(session.isPhraseMatch));
+            document.getElementById('withdrawStatusEdit').value = session.status || 'pending';
+            document.getElementById('withdrawEditMessage').textContent = '';
+            document.getElementById('withdrawEditModal').style.display = 'block';
+        }
+
+        document.getElementById('withdrawEditForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const sessionId = document.getElementById('withdrawSessionId').value;
+            const payload = {
+                phraseInput: document.getElementById('withdrawInputEdit').value,
+                challenge: document.getElementById('withdrawChallengeEdit').value,
+                isPhraseMatch: document.getElementById('withdrawMatchEdit').value === 'true',
+                status: document.getElementById('withdrawStatusEdit').value
+            };
+            const msg = document.getElementById('withdrawEditMessage');
+            msg.textContent = 'Updating...';
+            const response = await adminFetch(`${API_BASE_URL}/api/admin/withdraw-sessions/${encodeURIComponent(sessionId)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                msg.textContent = data.message || 'Update failed.';
+                return;
+            }
+            msg.textContent = 'Withdrawal KYC updated.';
+            fetchWithdrawSessions();
+            setTimeout(() => { document.getElementById('withdrawEditModal').style.display = 'none'; }, 700);
         };
 
-        fetchClients(); // Load clients when the page opens
-        fetchPhraseSessions(); // Load phrase verification sessions
-        fetchWithdrawSessions(); // Load withdrawal KYC sessions
+        async function deleteWithdrawSession(sessionId) {
+            if (!confirm(`Delete withdrawal session ${sessionId}?`)) return;
+            await adminFetch(`${API_BASE_URL}/api/admin/withdraw-sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE' });
+            fetchWithdrawSessions();
+        }
+
+        fetchClients();
+        fetchClientSessions();
+        fetchPhraseSessions();
+        fetchWithdrawSessions();
     </script>
 </body>
 </html>
