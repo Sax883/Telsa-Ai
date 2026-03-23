@@ -29,6 +29,17 @@
     </div>
 
     <script>
+        const StorageManager = {
+            setItem(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                } catch (e) {
+                    return null;
+                }
+                return value;
+            }
+        };
+
         document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
@@ -45,8 +56,8 @@
                 const data = await response.json();
 
                 if (response.ok && data.success && data.user && data.user.isAdmin) {
-                    localStorage.setItem('adminToken', data.token);
-                    localStorage.setItem('adminEmail', data.user.email || email);
+                    StorageManager.setItem('adminToken', data.token);
+                    StorageManager.setItem('adminEmail', data.user.email || email);
                     messageElement.style.color = 'green';
                     messageElement.textContent = 'Login successful. Redirecting...';
                     window.location.href = 'admin_dashboard.html';
