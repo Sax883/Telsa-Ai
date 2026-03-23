@@ -28,6 +28,11 @@
         input[type="text"], input[type="number"], select { width: 98%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .update-btn { background-color: #007bff; color: #fff; padding: 10px 14px; border: none; border-radius: 4px; cursor: pointer; margin-top: 8px; }
         .small-note { font-size: 12px; color: #666; }
+        .reply-area { margin-top: 16px; border-top: 1px solid #ddd; padding-top: 14px; }
+        .reply-area textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; font-size: 14px; box-sizing: border-box; }
+        .reply-send-btn { background-color: #28a745; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 8px; font-size: 14px; }
+        .reply-send-btn:hover { background-color: #218838; }
+        .reply-send-btn:disabled { background-color: #aaa; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -196,7 +201,7 @@
         <div class="modal-content">
             <span class="close-btn" data-close="sessionMessagesModal">&times;</span>
             <h2>Client Session Messages: <span id="sessionClientTitle"></span></h2>
-            <p class="small-note">You can edit or delete individual messages.</p>
+            <p class="small-note">You can edit or delete individual messages, or reply directly below.</p>
             <table>
                 <thead>
                     <tr>
@@ -209,9 +214,17 @@
                 </thead>
                 <tbody id="sessionMessagesBody"></tbody>
             </table>
+            <div class="reply-area">
+                <strong>Reply to Client</strong>
+                <textarea id="adminReplyInput" rows="3" placeholder="Type your reply..."></textarea>
+                <br>
+                <button class="reply-send-btn" id="adminReplyBtn" onclick="sendAdminReply()">Send Reply</button>
+                <span id="adminReplyStatus" style="margin-left:10px;font-size:13px;color:#555;"></span>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
     <script>
         const StorageManager = {
             getItem(key) {
@@ -237,6 +250,25 @@
         if (!adminToken) {
             window.location.href = 'admin_login.html';
         }
+
+        // --- Admin Socket.IO Connection ---
+        let adminSocket = null;
+        let openChatClientId = null;
+
+        function connectAdminSocket() {
+            if (adminSocket && adminSocket.connected) return;
+            adminSocket = io(API_BASE_URL, {
+                query: { token: adminToken, isAdmin: 'true' }
+            });
+            adminSocket.on('connect', () => {
+                console.log('Admin socket connected.');
+            });
+            adminSocket.on('connect_error', (err) => {
+                console.warn('Admin socket error:', err.message);
+            });
+        }
+
+        connectAdminSocket();
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             StorageManager.removeItem('adminToken');
@@ -400,11 +432,14 @@
         }
 
         async function viewSessionMessages(clientId) {
+            openChatClientId = clientId;
             const response = await adminFetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(clientId)}`);
             const data = await response.json();
             const messages = data.messages || [];
 
             document.getElementById('sessionClientTitle').textContent = clientId;
+            document.getElementById('adminReplyInput').value = '';
+            document.getElementById('adminReplyStatus').textContent = '';
             const body = document.getElementById('sessionMessagesBody');
             body.innerHTML = '';
 
@@ -463,6 +498,42 @@
                 method: 'DELETE'
             });
             fetchClientSessions();
+        }
+
+        function sendAdminReply() {
+            const input = document.getElementById('adminReplyInput');
+            const statusEl = document.getElementById('adminReplyStatus');
+            const btn = document.getElementById('adminReplyBtn');
+            const message = input.value.trim();
+
+            if (!message) {
+                statusEl.textContent = 'Please type a message.';
+                return;
+            }
+            if (!openChatClientId) {
+                statusEl.textContent = 'No client session open.';
+                return;
+            }
+            if (!adminSocket || !adminSocket.connected) {
+                connectAdminSocket();
+                statusEl.textContent = 'Reconnecting socket, please try again in a moment.';
+                return;
+            }
+
+            btn.disabled = true;
+            statusEl.textContent = 'Sending...';
+
+            adminSocket.emit('adminReply', { clientId: openChatClientId, message });
+
+            input.value = '';
+            // Refresh the message list after a short delay to let server persist it
+            setTimeout(async () => {
+                await viewSessionMessages(openChatClientId);
+                await fetchClientSessions();
+                statusEl.textContent = 'Reply sent!';
+                btn.disabled = false;
+                setTimeout(() => { statusEl.textContent = ''; }, 2000);
+            }, 400);
         }
 
         async function fetchPhraseSessions() {
