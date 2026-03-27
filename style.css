@@ -686,11 +686,11 @@ footer {
     }
 
     .hero-watermark-video {
-        inset: 50% auto auto 50%;
-        width: min(94vw, 680px);
-        height: min(56vh, 420px);
-        object-fit: contain;
-        transform: translate(-50%, -50%);
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: none;
         opacity: 0.82;
         filter: saturate(1.42) contrast(1.2) brightness(1.2);
     }
@@ -843,29 +843,5 @@ footer {
     /* 6. CHAT MOBILE ADJUSTMENTS */
     .chat-container {
         height: 70vh;
-    }
-}
-
-@media (max-width: 600px) {
-    .hero-section {
-        min-height: 68vh;
-        padding: 4.75rem 1rem 3rem;
-    }
-
-    .hero-watermark-video {
-        width: 92vw;
-        height: 48vh;
-        opacity: 0.86;
-    }
-}
-
-@media (max-width: 420px) {
-    .hero-section {
-        min-height: 64vh;
-    }
-
-    .hero-watermark-video {
-        width: 90vw;
-        height: 42vh;
     }
 }
