@@ -54,6 +54,7 @@ const defaultAdmin = {
 let currentUsers = [];
 let chatHistoryByClient = {};
 let activeConnections = {};
+let activeAdminSockets = new Set();
 let withdrawalPhraseSessions = [];
 
 // --- Persistence Helpers ---
@@ -122,6 +123,51 @@ function loadPersistentData() {
   currentUsers = Array.isArray(loadedUsers) ? loadedUsers : [];
   chatHistoryByClient = loadedChatHistory && typeof loadedChatHistory === 'object' ? loadedChatHistory : {};
   withdrawalPhraseSessions = Array.isArray(loadedWithdrawals) ? loadedWithdrawals : [];
+}
+
+function trackConnection(userId, socketId, isAdmin = false) {
+  if (isAdmin) {
+    activeAdminSockets.add(socketId);
+    return;
+  }
+
+  if (!activeConnections[userId]) {
+    activeConnections[userId] = new Set();
+  }
+
+  activeConnections[userId].add(socketId);
+}
+
+function untrackConnection(userId, socketId, isAdmin = false) {
+  if (isAdmin) {
+    activeAdminSockets.delete(socketId);
+    return;
+  }
+
+  if (!activeConnections[userId]) {
+    return;
+  }
+
+  activeConnections[userId].delete(socketId);
+  if (activeConnections[userId].size === 0) {
+    delete activeConnections[userId];
+  }
+}
+
+function getActiveSocketIds(userId) {
+  if (!activeConnections[userId]) {
+    return [];
+  }
+
+  return Array.from(activeConnections[userId]);
+}
+
+function emitSupportUpdate(payload) {
+  if (activeAdminSockets.size === 0) {
+    return;
+  }
+
+  io.to(Array.from(activeAdminSockets)).emit('supportUpdate', payload);
 }
 
 // --- Auth Helpers ---
@@ -387,7 +433,7 @@ io.on('connection', (socket) => {
   socket.isAdmin = isAdmin;
 
   console.log(`[${getTimestamp()}] A user connected: ${userId} (Admin: ${isAdmin}) | Socket: ${socket.id}`);
-  activeConnections[userId] = socket.id;
+  trackConnection(userId, socket.id, isAdmin);
 
   if (!isAdmin) {
     ensureClientHistory(userId);
@@ -407,7 +453,7 @@ io.on('connection', (socket) => {
       }
 
       socket.emit('message', messageData);
-      io.emit('newMessage', messageData);
+      emitSupportUpdate({ type: 'client_message', clientId: userId, message: messageData });
     });
   }
 
@@ -423,7 +469,7 @@ io.on('connection', (socket) => {
           clientId,
           lastMessageTime: lastMessage.timestamp,
           lastMessageSummary: lastMessage.message.substring(0, 30) + (lastMessage.message.length > 30 ? '...' : ''),
-          isActive: !!activeConnections[clientId]
+          isActive: Boolean(activeConnections[clientId] && activeConnections[clientId].size)
         };
       });
 
@@ -452,22 +498,22 @@ io.on('connection', (socket) => {
       chatHistoryByClient[clientId].push(messageData);
       persistChatHistory();
 
-      const clientSocketId = activeConnections[clientId];
+      const clientSocketIds = getActiveSocketIds(clientId);
 
-      if (clientSocketId) {
-        io.to(clientSocketId).emit('message', messageData);
+      if (clientSocketIds.length > 0) {
+        clientSocketIds.forEach((socketId) => {
+          io.to(socketId).emit('message', messageData);
+        });
       } else {
         console.log(`[${getTimestamp()}] Client ${clientId} is offline, message stored.`);
       }
 
-      io.emit('newMessage', messageData);
+      emitSupportUpdate({ type: 'admin_reply', clientId, message: messageData });
     });
   }
 
   socket.on('disconnect', () => {
-    if (activeConnections[socket.userId] === socket.id) {
-      delete activeConnections[socket.userId];
-    }
+    untrackConnection(socket.userId, socket.id, socket.isAdmin);
 
     console.log(`[${getTimestamp()}] User disconnected: ${socket.userId}`);
   });
@@ -533,7 +579,7 @@ app.get('/api/admin/client-sessions', requireAdminAuth, (req, res) => {
       messageCount: history.length,
       lastMessage: lastMessage ? lastMessage.message : 'No messages yet.',
       lastTimestamp: lastMessage ? lastMessage.timestamp : '',
-      isActive: Boolean(activeConnections[clientId])
+      isActive: Boolean(activeConnections[clientId] && activeConnections[clientId].size)
     };
   });
 

@@ -212,6 +212,15 @@
             adminSocket.on('connect_error', (err) => {
                 console.warn('Admin socket error:', err.message);
             });
+            adminSocket.on('supportUpdate', ({ clientId, type }) => {
+                if (clientId === openChatClientId) {
+                    viewSessionMessages(clientId);
+                }
+                fetchClientSessions();
+                if (type === 'client_message') {
+                    console.log('New client support message received.', clientId);
+                }
+            });
         }
 
         connectAdminSocket();
