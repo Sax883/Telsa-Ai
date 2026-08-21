@@ -30,6 +30,14 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
+const supportMessageSchema = new mongoose.Schema({
+  clientId: { type: String, required: true, index: true },
+  userId: { type: String, required: true },
+  message: { type: String, required: true },
+  timestamp: { type: String, required: true },
+  isAdmin: { type: Boolean, default: false }
+});
+const SupportMessage = mongoose.models.SupportMessage || mongoose.model('SupportMessage', supportMessageSchema);
 let databasePromise;
 
 function connectDatabase() {
@@ -235,6 +243,26 @@ function requireAdminAuth(req, res, next) {
     return next();
   } catch (err) {
     return res.status(401).json({ success: false, message: 'Invalid or expired admin token.' });
+  }
+}
+
+function requireClientAuth(req, res, next) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: 'Client authorization required.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    if (!decoded || decoded.isAdmin === true || !decoded.id) {
+      return res.status(403).json({ success: false, message: 'Client access denied.' });
+    }
+    req.clientId = decoded.id;
+    return next();
+  } catch (error) {
+    return res.status(401).json({ success: false, message: 'Invalid or expired client token.' });
   }
 }
 
@@ -446,6 +474,42 @@ app.post('/api/v1/auth/signup', async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to save new account.' });
   }
 });
+
+app.get('/api/v1/support/messages', requireClientAuth, async (req, res) => {
+  try {
+    await connectDatabase();
+    const messages = await SupportMessage.find({ clientId: req.clientId }).sort({ _id: 1 }).lean();
+    return res.json({ success: true, messages });
+  } catch (error) {
+    return res.json({ success: true, messages: chatHistoryByClient[req.clientId] || [] });
+  }
+});
+
+app.post('/api/v1/support/messages', requireClientAuth, async (req, res) => {
+  const message = String(req.body.message || '').trim();
+  if (!message) {
+    return res.status(400).json({ success: false, message: 'Message text is required.' });
+  }
+
+  const messageData = {
+    clientId: req.clientId,
+    userId: req.clientId,
+    message,
+    timestamp: getTimestamp(),
+    isAdmin: false
+  };
+  try {
+    await connectDatabase();
+    await SupportMessage.create(messageData);
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database support message unavailable: ${error.message}`);
+  }
+  ensureClientHistory(req.clientId);
+  chatHistoryByClient[req.clientId].push(messageData);
+  persistChatHistory();
+  emitSupportUpdate({ type: 'client_message', clientId: req.clientId, message: messageData });
+  return res.status(201).json({ success: true, message: messageData });
+});
 // --- Withdrawal KYC Endpoint ---
 app.post('/api/v1/withdraw/kyc-session', (req, res) => {
   const {
@@ -610,10 +674,10 @@ io.on('connection', (socket) => {
 
 // --- Admin API Routes ---
 app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
-  let users = currentUsers.filter((user) => !user.isAdmin).slice(0, 2);
+  let users = currentUsers.filter((user) => !user.isAdmin).reverse();
   try {
     await connectDatabase();
-    users = await User.find({ isAdmin: false }).limit(2).lean();
+    users = await User.find({ isAdmin: false }).sort({ _id: -1 }).lean();
   } catch (error) {
     console.error(`[${getTimestamp()}] Falling back to local client data: ${error.message}`);
   }
@@ -729,9 +793,22 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
   return res.json({ success: true, message: 'Client data updated successfully.' });
 });
 
-app.get('/api/admin/client-sessions', requireAdminAuth, (req, res) => {
-  const sessions = Object.keys(chatHistoryByClient).map((clientId) => {
-    const history = Array.isArray(chatHistoryByClient[clientId]) ? chatHistoryByClient[clientId] : [];
+app.get('/api/admin/client-sessions', requireAdminAuth, async (req, res) => {
+  let histories = chatHistoryByClient;
+  try {
+    await connectDatabase();
+    const messages = await SupportMessage.find().sort({ _id: 1 }).lean();
+    histories = {};
+    messages.forEach((message) => {
+      if (!histories[message.clientId]) histories[message.clientId] = [];
+      histories[message.clientId].push(message);
+    });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database support history unavailable: ${error.message}`);
+  }
+
+  const sessions = Object.keys(histories).map((clientId) => {
+    const history = Array.isArray(histories[clientId]) ? histories[clientId] : [];
     const lastMessage = history.length > 0 ? history[history.length - 1] : null;
     return {
       clientId,
@@ -745,9 +822,43 @@ app.get('/api/admin/client-sessions', requireAdminAuth, (req, res) => {
   return res.json({ success: true, count: sessions.length, sessions });
 });
 
-app.get('/api/admin/client-sessions/:clientId', requireAdminAuth, (req, res) => {
+app.post('/api/admin/client-sessions/:clientId/reply', requireAdminAuth, async (req, res) => {
   const { clientId } = req.params;
-  const history = chatHistoryByClient[clientId];
+  const message = String(req.body.message || '').trim();
+  if (!message) {
+    return res.status(400).json({ success: false, message: 'Message text is required.' });
+  }
+
+  const messageData = {
+    clientId,
+    userId: defaultAdmin.id,
+    message,
+    timestamp: getTimestamp(),
+    isAdmin: true
+  };
+  try {
+    await connectDatabase();
+    await SupportMessage.create(messageData);
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database admin support reply unavailable: ${error.message}`);
+  }
+  ensureClientHistory(clientId);
+  chatHistoryByClient[clientId].push(messageData);
+  persistChatHistory();
+  getActiveSocketIds(clientId).forEach((socketId) => io.to(socketId).emit('message', messageData));
+  emitSupportUpdate({ type: 'admin_reply', clientId, message: messageData });
+  return res.status(201).json({ success: true, message: messageData });
+});
+
+app.get('/api/admin/client-sessions/:clientId', requireAdminAuth, async (req, res) => {
+  const { clientId } = req.params;
+  let history = chatHistoryByClient[clientId];
+  try {
+    await connectDatabase();
+    history = await SupportMessage.find({ clientId }).sort({ _id: 1 }).lean();
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database support messages unavailable: ${error.message}`);
+  }
 
   if (!Array.isArray(history)) {
     return res.status(404).json({ success: false, message: 'Client session not found.' });

@@ -212,6 +212,7 @@
             });
             adminSocket.on('connect_error', (err) => {
                 console.warn('Admin socket error:', err.message);
+                fetchClientSessions();
             });
             adminSocket.on('supportUpdate', ({ clientId, type }) => {
                 if (clientId === openChatClientId) {
@@ -496,16 +497,23 @@
                 statusEl.textContent = 'No client session open.';
                 return;
             }
-            if (!adminSocket || !adminSocket.connected) {
-                connectAdminSocket();
-                statusEl.textContent = 'Reconnecting socket, please try again in a moment.';
-                return;
-            }
-
             btn.disabled = true;
             statusEl.textContent = 'Sending...';
 
-            adminSocket.emit('adminReply', { clientId: openChatClientId, message });
+            if (adminSocket && adminSocket.connected) {
+                adminSocket.emit('adminReply', { clientId: openChatClientId, message });
+            } else {
+                fetch(`${API_BASE_URL}/api/admin/client-sessions/${encodeURIComponent(openChatClientId)}/reply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+                    body: JSON.stringify({ message })
+                }).then(async response => {
+                    if (!response.ok) throw new Error((await response.json()).message || 'Reply failed.');
+                }).catch(error => {
+                    statusEl.textContent = error.message;
+                    btn.disabled = false;
+                });
+            }
 
             input.value = '';
             // Refresh the message list after a short delay to let server persist it

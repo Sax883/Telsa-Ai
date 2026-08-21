@@ -977,6 +977,7 @@
         
         // Socket connection variable
         let chatSocket = null;
+        let chatHttpMode = false;
 
 
         // --- Auth & Profile Functions ---
@@ -1147,8 +1148,14 @@
 
             chatSocket.on('connect', () => {
                 console.log('Socket.IO connected as client.');
+                chatHttpMode = false;
                 // Request initial history upon connection
                 fetchMessages(); 
+            });
+
+            chatSocket.on('connect_error', () => {
+                chatHttpMode = true;
+                fetchMessages();
             });
 
             chatSocket.on('history', (messages) => {
@@ -1198,12 +1205,24 @@
          */
         function sendMessage() {
             const text = chatInput.value.trim();
-            if (!text || !chatSocket || !chatSocket.connected) {
+            if (!text) {
                 showMessageBox('Chat Status', 'Cannot send: Chat is disconnected.', 'error');
                 return;
             }
 
-            chatSocket.emit('clientMessage', { message: text });
+            if (chatSocket && chatSocket.connected && !chatHttpMode) {
+                chatSocket.emit('clientMessage', { message: text });
+            } else {
+                fetch('/api/v1/support/messages', {
+                    method: 'POST',
+                    headers: { ...getAuthHeaders(checkAuth()), 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text })
+                }).then(async response => {
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.message || 'Message failed.');
+                    renderMessage(data.message);
+                }).catch(error => showMessageBox('Chat Status', error.message, 'error'));
+            }
             chatInput.value = ''; 
             sendMessageButton.disabled = true; 
             
@@ -1214,8 +1233,19 @@
         }
 
         // Fetch messages is now just for initial load/manual refresh, history is managed by socket 'history' event
-        function fetchMessages() {
-             // If connected, the socket handles history automatically.
+        async function fetchMessages() {
+            if (!chatHttpMode) return;
+            try {
+                const response = await fetch('/api/v1/support/messages', {
+                    headers: getAuthHeaders(checkAuth())
+                });
+                const data = await response.json();
+                chatMessages.innerHTML = '';
+                (data.messages || []).forEach(renderMessage);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                showMessageBox('Chat Status', 'Unable to load support messages.', 'error');
+            }
         }
 
 
