@@ -261,25 +261,35 @@ io.use((socket, next) => {
 });
 
 // --- Express Authentication Routes ---
-app.get('/api/v1/profile/me', (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(401).json({ success: false, message: 'Authorization header required.' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
+app.get('/api/v1/profile/me', async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
+
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Authorization header required.' });
+    }
+
     const decoded = jwt.verify(token, SECRET_KEY);
-    const user = currentUsers.find((entry) => entry.id === decoded.id);
+    const user = await User.findById(decoded.id);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
-    const { password, ...safeUserData } = user;
-    return res.json(safeUserData);
+    return res.json({
+      success: true,
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      balance: user.balance,
+      isAdmin: user.isAdmin,
+      address: user.address
+    });
   } catch (err) {
     return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
   }
