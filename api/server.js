@@ -607,6 +607,7 @@ app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
   }
 
   const clients = users.map((user) => ({
+    id: user.id,
     name: user.name,
     email: user.email,
     balance: Number(user.balance || 0),
@@ -617,6 +618,33 @@ app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
   }));
 
   return res.json(clients);
+});
+
+app.delete('/api/admin/client/:clientId', requireAdminAuth, async (req, res) => {
+  const { clientId } = req.params;
+  const userIndex = currentUsers.findIndex((user) => user.id === clientId && !user.isAdmin);
+  let deletedFromDatabase = false;
+
+  try {
+    await connectDatabase();
+    const deletedUser = await User.findOneAndDelete({ id: clientId, isAdmin: false });
+    deletedFromDatabase = Boolean(deletedUser);
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database client delete unavailable: ${error.message}`);
+  }
+
+  if (userIndex !== -1) {
+    currentUsers.splice(userIndex, 1);
+    if (!persistUsers()) {
+      return res.status(500).json({ success: false, message: 'Failed to persist client deletion.' });
+    }
+  }
+
+  if (userIndex === -1 && !deletedFromDatabase) {
+    return res.status(404).json({ success: false, message: 'Client not found.' });
+  }
+
+  return res.json({ success: true, message: 'Client deleted successfully.' });
 });
 
 app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {

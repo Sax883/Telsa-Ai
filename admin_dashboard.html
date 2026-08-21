@@ -289,12 +289,36 @@
                     editBtn.textContent = 'Edit';
                     editBtn.onclick = () => openClientEdit(client);
                     action.appendChild(editBtn);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = 'Delete';
+                    deleteBtn.onclick = () => deleteClient(client.id, client.name);
+                    action.appendChild(deleteBtn);
                 });
 
                 loading.style.display = 'none';
                 table.style.display = 'table';
             } catch (err) {
                 loading.textContent = `Error loading clients: ${err.message}`;
+            }
+        }
+
+        async function deleteClient(clientId, clientName) {
+            if (!clientId || !confirm(`Delete client ${clientName || clientId}? This cannot be undone.`)) return;
+
+            try {
+                const response = await adminFetch(`${API_BASE_URL}/api/admin/client/${encodeURIComponent(clientId)}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    alert(data.message || 'Client deletion failed.');
+                    return;
+                }
+                await fetchClients();
+            } catch (err) {
+                alert(`Delete error: ${err.message}`);
             }
         }
 
