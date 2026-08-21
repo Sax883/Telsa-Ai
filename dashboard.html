@@ -849,7 +849,7 @@
                     <h2>⏳ Transaction & Investment History</h2>
                     <p style="color: var(--color-text-light); margin-bottom: 20px;">All transactions are recorded here.</p>
                     <div class="recent-activity" style="padding: 20px;">
-                        <div class="activity-list">
+                        <div class="activity-list" id="transactionHistoryList">
                             <div class="transaction-item" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--color-border);">
                                 <span>2025-11-28</span>
                                 <span class="type">Registration Bonus</span>
@@ -1131,6 +1131,31 @@
                 }
             }
         }
+
+        async function loadTransactionHistory() {
+            const token = checkAuth();
+            if (!token) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/transactions`, {
+                    headers: getAuthHeaders(token)
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                const historyList = document.getElementById('transactionHistoryList');
+                if (!historyList || !data.transactions) return;
+                historyList.innerHTML = data.transactions.map(transaction => {
+                    const sign = transaction.type === 'deposit' ? '+' : '-';
+                    const status = transaction.status || 'pending';
+                    return `<div class="transaction-item" style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--color-border);">
+                        <span>${new Date(transaction.createdAt).toLocaleString()}</span>
+                        <span class="type">${transaction.type} (${status})</span>
+                        <span class="amount ${transaction.type === 'deposit' ? 'deposit' : ''}" style="font-weight:600;">${sign}$${Number(transaction.amount || 0).toFixed(2)}</span>
+                    </div>`;
+                }).join('');
+            } catch (error) {
+                console.error('Transaction history error:', error);
+            }
+        }
         // --- Chat Functions ---
         
         function connectChatSocket() {
@@ -1259,6 +1284,8 @@
             // 1. Initial Authentication Check and Profile Load
             loadProfile();
             setInterval(loadProfile, 5000);
+            loadTransactionHistory();
+            setInterval(loadTransactionHistory, 5000);
 
             // 2. Mobile Menu Toggle
             if (menuToggle) {

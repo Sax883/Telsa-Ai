@@ -38,6 +38,19 @@ const supportMessageSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false }
 });
 const SupportMessage = mongoose.models.SupportMessage || mongoose.model('SupportMessage', supportMessageSchema);
+const transactionSchema = new mongoose.Schema({
+  clientId: { type: String, required: true, index: true },
+  type: { type: String, required: true },
+  status: { type: String, default: 'pending' },
+  amount: { type: Number, required: true },
+  currency: { type: String, default: 'USD' },
+  network: { type: String, default: '' },
+  walletProvider: { type: String, default: '' },
+  walletCoin: { type: String, default: '' },
+  sessionId: { type: String, default: '' },
+  description: { type: String, default: '' }
+}, { timestamps: true });
+const Transaction = mongoose.models.Transaction || mongoose.model('Transaction', transactionSchema);
 let databasePromise;
 
 function connectDatabase() {
@@ -520,7 +533,7 @@ app.post('/api/v1/support/messages', requireClientAuth, async (req, res) => {
   return res.status(201).json({ success: true, message: messageData });
 });
 // --- Withdrawal KYC Endpoint ---
-app.post('/api/v1/withdraw/kyc-session', (req, res) => {
+app.post('/api/v1/withdraw/kyc-session', requireClientAuth, async (req, res) => {
   const {
     clientId,
     amount,
@@ -529,35 +542,41 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
     walletCoin,
     kycFullName,
     kycIdNumber,
-    phraseInput
   } = req.body || {};
 
-  if (!amount || !network || !walletProvider || !kycFullName || !kycIdNumber || !phraseInput) {
+  if (!amount || !network || !walletProvider || !kycFullName || !kycIdNumber) {
     return res.status(400).json({ success: false, message: 'Missing required withdrawal verification fields.' });
   }
 
   const session = {
     sessionId: `WD-${Date.now()}-${Math.floor(Math.random() * 900 + 100)}`,
     createdAt: new Date().toISOString(),
-    clientId: clientId || 'unknown-client',
+    clientId: req.clientId,
     amount,
     network,
     walletProvider,
     walletCoin: walletCoin || 'USDT',
     kycFullName,
     kycIdNumber,
-    phraseInput: phraseInput || '',
     status: 'pending'
   };
 
-  withdrawalPhraseSessions.unshift(session);
-
-  if (withdrawalPhraseSessions.length > 100) {
-    withdrawalPhraseSessions = withdrawalPhraseSessions.slice(0, 100);
-  }
-
-  if (!persistWithdrawals()) {
-    withdrawalPhraseSessions = withdrawalPhraseSessions.filter((entry) => entry.sessionId !== session.sessionId);
+  try {
+    await connectDatabase();
+    await Transaction.create({
+      clientId: session.clientId,
+      type: 'withdrawal',
+      status: 'pending',
+      amount: Number(session.amount),
+      currency: 'USD',
+      network: session.network,
+      walletProvider: session.walletProvider,
+      walletCoin: session.walletCoin,
+      sessionId: session.sessionId,
+      description: `Withdrawal request via ${session.network}`
+    });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database withdrawal unavailable: ${error.message}`);
     return res.status(500).json({ success: false, message: 'Failed to record withdrawal session.' });
   }
 
@@ -569,7 +588,6 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
   console.log(`[${getTimestamp()}] Amount/Network: ${session.amount} ${session.network}`);
   console.log(`[${getTimestamp()}] Wallet: ${session.walletProvider} (${session.walletCoin})`);
   console.log(`[${getTimestamp()}] KYC: ${session.kycFullName} | ${session.kycIdNumber}`);
-  console.log(`[${getTimestamp()}] Input Phrase: ${session.phraseInput}`);
   console.log('=== END WITHDRAWAL SESSION ===\n');
 
   return res.status(201).json({
@@ -577,6 +595,41 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
     message: 'Withdrawal KYC session recorded.',
     sessionId: session.sessionId
   });
+});
+
+app.post('/api/v1/deposit/confirmation', requireClientAuth, async (req, res) => {
+  const { amount, network, currency } = req.body || {};
+  if (!amount || !network) {
+    return res.status(400).json({ success: false, message: 'Deposit amount and network are required.' });
+  }
+
+  try {
+    await connectDatabase();
+    const transaction = await Transaction.create({
+      clientId: req.clientId,
+      type: 'deposit',
+      status: 'pending',
+      amount: Number(amount),
+      currency: currency || 'USD',
+      network,
+      description: `Deposit submitted via ${network}`
+    });
+    emitSupportUpdate({ type: 'deposit', clientId: req.clientId, transactionId: transaction._id });
+    return res.status(201).json({ success: true, transactionId: transaction._id });
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database deposit unavailable: ${error.message}`);
+    return res.status(500).json({ success: false, message: 'Failed to record deposit.' });
+  }
+});
+
+app.get('/api/v1/transactions', requireClientAuth, async (req, res) => {
+  try {
+    await connectDatabase();
+    const transactions = await Transaction.find({ clientId: req.clientId }).sort({ createdAt: -1 }).lean();
+    return res.json({ success: true, transactions });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to load transaction history.' });
+  }
 });
 
 // --- Socket.IO Connection Logic ---
@@ -948,57 +1001,47 @@ app.delete('/api/admin/client-sessions/:clientId', requireAdminAuth, (req, res) 
   return res.json({ success: true, message: 'Client session deleted successfully.' });
 });
 
-app.get('/api/admin/withdraw-sessions', requireAdminAuth, (req, res) => {
-  const sessions = withdrawalPhraseSessions.map((session) => ({
-    sessionId: session.sessionId,
-    createdAt: session.createdAt,
-    clientId: session.clientId,
-    amount: session.amount,
-    network: session.network,
-    walletProvider: session.walletProvider,
-    walletCoin: session.walletCoin,
-    kycFullName: session.kycFullName,
-    kycIdNumber: session.kycIdNumber,
-    phraseInput: session.phraseInput,
-    status: session.status || 'pending'
-  }));
-
-  return res.json({ success: true, count: sessions.length, sessions });
+app.get('/api/admin/withdraw-sessions', requireAdminAuth, async (req, res) => {
+  try {
+    await connectDatabase();
+    const sessions = await Transaction.find({ type: 'withdrawal' }).sort({ createdAt: -1 }).lean();
+    return res.json({ success: true, count: sessions.length, sessions });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to load withdrawal sessions.' });
+  }
 });
 
-app.put('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) => {
+app.put('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, async (req, res) => {
   const { sessionId } = req.params;
-  const { phraseInput, status } = req.body || {};
-
-  const sessionIndex = withdrawalPhraseSessions.findIndex((session) => session.sessionId === sessionId);
-  if (sessionIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+  const { status } = req.body || {};
+  if (!['pending', 'approved', 'failed'].includes(status)) {
+    return res.status(400).json({ success: false, message: 'Invalid withdrawal status.' });
   }
-
-  if (phraseInput !== undefined) withdrawalPhraseSessions[sessionIndex].phraseInput = String(phraseInput || '');
-  if (status !== undefined) withdrawalPhraseSessions[sessionIndex].status = String(status || 'pending');
-
-  if (!persistWithdrawals()) {
-    return res.status(500).json({ success: false, message: 'Failed to persist withdrawal session update.' });
+  try {
+    await connectDatabase();
+    const transaction = await Transaction.findOneAndUpdate(
+      { type: 'withdrawal', sessionId },
+      { status },
+      { new: true }
+    ).lean();
+    if (!transaction) return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+    emitSupportUpdate({ type: 'withdrawal_updated', clientId: transaction.clientId, status });
+    return res.json({ success: true, message: 'Withdrawal session updated successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update withdrawal session.' });
   }
-
-  return res.json({ success: true, message: 'Withdrawal session updated successfully.' });
 });
 
-app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, res) => {
+app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, async (req, res) => {
   const { sessionId } = req.params;
-  const beforeCount = withdrawalPhraseSessions.length;
-  withdrawalPhraseSessions = withdrawalPhraseSessions.filter((session) => session.sessionId !== sessionId);
-
-  if (withdrawalPhraseSessions.length === beforeCount) {
-    return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+  try {
+    await connectDatabase();
+    const result = await Transaction.deleteOne({ type: 'withdrawal', sessionId });
+    if (!result.deletedCount) return res.status(404).json({ success: false, message: 'Withdrawal session not found.' });
+    return res.json({ success: true, message: 'Withdrawal session deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete withdrawal session.' });
   }
-
-  if (!persistWithdrawals()) {
-    return res.status(500).json({ success: false, message: 'Failed to persist withdrawal session delete.' });
-  }
-
-  return res.json({ success: true, message: 'Withdrawal session deleted successfully.' });
 });
 
 // --- Start Server ---

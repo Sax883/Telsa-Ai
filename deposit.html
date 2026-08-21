@@ -300,12 +300,26 @@
         function confirmPayment() {
             // Get the amount that was entered in step 1
             const amount = parseFloat(document.getElementById('amount').value).toFixed(2); 
+            const option = document.getElementById('method').options[document.getElementById('method').selectedIndex];
+            const token = localStorage.getItem('userToken');
+
+            fetch('/api/v1/deposit/confirmation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ amount, network: option.value, currency: option.dataset.currency })
+            }).then(response => response.json().then(data => ({ response, data })))
+              .then(({ response, data }) => {
+                  if (!response.ok || !data.success) {
+                      alert(data.message || 'Failed to record deposit.');
+                      return;
+                  }
             
-            // Update confirmation details for Step 3
-            document.getElementById('confirmed-amount').innerText = '$' + amount;
+                  // Update confirmation details for Step 3
+                  document.getElementById('confirmed-amount').innerText = '$' + amount;
             
-            // Move to Step 3
-            updateSteps(3);
+                  // Move to Step 3
+                  updateSteps(3);
+              }).catch(() => alert('Connection error while recording deposit.'));
         }
 
         function copyAddress() {

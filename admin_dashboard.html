@@ -92,7 +92,6 @@
                     <th>Network</th>
                     <th>Wallet</th>
                     <th>KYC Name</th>
-                    <th>Input Phrase</th>
                     <th>Status</th>
                     <th>Action</th>
                 </tr>
@@ -130,13 +129,11 @@
             <h2>Edit Withdrawal KYC Session</h2>
             <form id="withdrawEditForm">
                 <input type="hidden" id="withdrawSessionId">
-                <label>Input Phrase</label>
-                <input type="text" id="withdrawInputEdit" required>
                 <label>Status</label>
                 <select id="withdrawStatusEdit">
                     <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
+                    <option value="failed">Failed</option>
                 </select>
                 <button type="submit" class="update-btn">Update Session</button>
                 <p id="withdrawEditMessage"></p>
@@ -553,7 +550,6 @@
                     row.insertCell().textContent = s.network;
                     row.insertCell().textContent = `${s.walletProvider} (${s.walletCoin || 'N/A'})`;
                     row.insertCell().textContent = s.kycFullName;
-                    row.insertCell().textContent = s.phraseInput;
                     row.insertCell().textContent = s.status || 'pending';
 
                     const action = row.insertCell();
@@ -579,7 +575,6 @@
 
         function openWithdrawEdit(session) {
             document.getElementById('withdrawSessionId').value = session.sessionId;
-            document.getElementById('withdrawInputEdit').value = session.phraseInput || '';
             document.getElementById('withdrawStatusEdit').value = session.status || 'pending';
             document.getElementById('withdrawEditMessage').textContent = '';
             document.getElementById('withdrawEditModal').style.display = 'block';
@@ -589,7 +584,6 @@
             e.preventDefault();
             const sessionId = document.getElementById('withdrawSessionId').value;
             const payload = {
-                phraseInput: document.getElementById('withdrawInputEdit').value,
                 status: document.getElementById('withdrawStatusEdit').value
             };
             const msg = document.getElementById('withdrawEditMessage');
