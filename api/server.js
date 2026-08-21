@@ -1,3 +1,19 @@
+const mongoose = require('mongoose');
+
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB Atlas successfully'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// Define a simple User schema
+const userSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -327,34 +343,33 @@ app.post('/api/v1/auth/login', (req, res) => {
   return res.json({ success: true, message: 'Login successful.', token, user: safeUserData });
 });
 
-app.post('/api/v1/auth/signup', (req, res) => {
-  const { name, email, password } = req.body;
+app.post('/api/v1/auth/signup', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
 
-  if (userExists(email)) {
-    return res.status(400).json({ success: false, message: 'User already exists with this email address.' });
-  }
+    // 1. Check if user already exists in MongoDB
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User already exists with this email address.' });
+    }
 
-  const newUser = {
-    id: email,
-    name,
-    email,
-    password,
-    isAdmin: false,
-    balance: 200,
-    address: ''
-  };
+    // 2. Create and save the new user to MongoDB
+    const newUser = await User.create({
+      name,
+      email,
+      password // Note: If your app uses hashed passwords, make sure to hash this first!
+    });
 
-  currentUsers.push(newUser);
-
-  if (!persistUsers()) {
-    currentUsers.pop();
+    // 3. Return success
+    return res.status(201).json({
+      success: true,
+      message: 'Account created successfully!',
+      user: { id: newUser._id, name: newUser.name, email: newUser.email }
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
     return res.status(500).json({ success: false, message: 'Failed to save new account.' });
   }
-
-  ensureClientHistory(newUser.id);
-
-  const { password: _password, ...safeUserData } = newUser;
-  return res.status(201).json({ success: true, message: 'Sign up successful.', user: safeUserData });
 });
 
 // --- Withdrawal KYC Endpoint ---
