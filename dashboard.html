@@ -1169,6 +1169,10 @@
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             });
 
+            chatSocket.on('profileUpdated', () => {
+                loadProfile();
+            });
+
             chatSocket.on('error', (err) => {
                 console.error('Socket Error:', err);
                 showMessageBox('Chat Error', 'Connection lost or unauthorized chat access.', 'error');
@@ -1254,6 +1258,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 1. Initial Authentication Check and Profile Load
             loadProfile();
+            setInterval(loadProfile, 5000);
 
             // 2. Mobile Menu Toggle
             if (menuToggle) {

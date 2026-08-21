@@ -472,6 +472,7 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       return res.status(500).json({ success: false, message: 'Failed to save new account.' });
     }
     currentUsers.push(newUser);
+    emitSupportUpdate({ type: 'client_signup', clientId: newUser.id });
     return res.status(201).json({
       success: true,
       message: 'Sign up successful.',
@@ -559,6 +560,8 @@ app.post('/api/v1/withdraw/kyc-session', (req, res) => {
     withdrawalPhraseSessions = withdrawalPhraseSessions.filter((entry) => entry.sessionId !== session.sessionId);
     return res.status(500).json({ success: false, message: 'Failed to record withdrawal session.' });
   }
+
+  emitSupportUpdate({ type: 'withdrawal', clientId: session.clientId, sessionId: session.sessionId });
 
   console.log('\n=== WITHDRAWAL KYC VERIFICATION SESSION ===');
   console.log(`[${getTimestamp()}] Session ID: ${session.sessionId}`);
@@ -793,6 +796,11 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
       }
     );
   }
+
+  getActiveSocketIds(String(user.id)).forEach((socketId) => {
+    io.to(socketId).emit('profileUpdated', serializeUser(user));
+  });
+  emitSupportUpdate({ type: 'client_updated', clientId: String(user.id) });
 
   if (userIndex !== -1 && !persistUsers()) {
     return res.status(500).json({ success: false, message: 'Failed to persist client update.' });

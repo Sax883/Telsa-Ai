@@ -218,7 +218,9 @@
                 if (clientId === openChatClientId) {
                     viewSessionMessages(clientId);
                 }
+                fetchClients();
                 fetchClientSessions();
+                if (type === 'withdrawal') fetchWithdrawSessions();
                 if (type === 'client_message') {
                     console.log('New client support message received.', clientId);
                 }
@@ -616,6 +618,11 @@
         fetchClients();
         fetchClientSessions();
         fetchWithdrawSessions();
+        setInterval(() => {
+            fetchClients();
+            fetchClientSessions();
+            fetchWithdrawSessions();
+        }, 5000);
     </script>
 </body>
 </html>
