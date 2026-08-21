@@ -457,11 +457,19 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       balance: 200,
       address: ''
     };
+    let savedUser = null;
     try {
       await connectDatabase();
-      await User.create(newUser);
+      savedUser = await User.findOneAndUpdate(
+        { email },
+        { $setOnInsert: newUser },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      ).lean();
     } catch (error) {
       console.error(`[${getTimestamp()}] Database signup save unavailable: ${error.message}`);
+    }
+    if (!savedUser) {
+      return res.status(500).json({ success: false, message: 'Failed to save new account.' });
     }
     currentUsers.push(newUser);
     return res.status(201).json({
