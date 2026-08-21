@@ -598,10 +598,10 @@ io.on('connection', (socket) => {
 
 // --- Admin API Routes ---
 app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
-  let users = currentUsers;
+  let users = currentUsers.filter((user) => !user.isAdmin).slice(0, 2);
   try {
     await connectDatabase();
-    users = await User.find({ isAdmin: false }).lean();
+    users = await User.find({ isAdmin: false }).limit(2).lean();
   } catch (error) {
     console.error(`[${getTimestamp()}] Falling back to local client data: ${error.message}`);
   }
@@ -622,7 +622,7 @@ app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
 
 app.delete('/api/admin/client/:clientId', requireAdminAuth, async (req, res) => {
   const { clientId } = req.params;
-  const userIndex = currentUsers.findIndex((user) => user.id === clientId && !user.isAdmin);
+  const userIndex = currentUsers.findIndex((user) => String(user.id) === String(clientId) && !user.isAdmin);
   let deletedFromDatabase = false;
 
   try {
@@ -649,6 +649,7 @@ app.delete('/api/admin/client/:clientId', requireAdminAuth, async (req, res) => 
 
 app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
   const {
+    clientId,
     email,
     totalBalance,
     totalProfit,
@@ -657,16 +658,20 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
     nextPayout
   } = req.body || {};
 
-  if (!email) {
-    return res.status(400).json({ success: false, message: 'Client email is required.' });
+  if (!clientId && !email) {
+    return res.status(400).json({ success: false, message: 'Client ID is required.' });
   }
 
-  const userIndex = currentUsers.findIndex((user) => user.email === email);
+  const userIndex = currentUsers.findIndex((user) => (
+    !user.isAdmin && ((clientId && String(user.id) === String(clientId)) || (!clientId && user.email === email))
+  ));
   let user = userIndex === -1 ? null : currentUsers[userIndex];
   let databaseUser = null;
   try {
     await connectDatabase();
-    databaseUser = await User.findOne({ email });
+    databaseUser = clientId
+      ? await User.findOne({ id: clientId, isAdmin: false })
+      : await User.findOne({ email, isAdmin: false });
     if (!user && databaseUser) user = databaseUser;
   } catch (error) {
     console.error(`[${getTimestamp()}] Database client update unavailable: ${error.message}`);
@@ -684,7 +689,11 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
 
   if (userIndex !== -1) currentUsers[userIndex] = user;
   if (databaseUser) {
-    databaseUser.set(user);
+    databaseUser.balance = user.balance;
+    databaseUser.profit = user.profit;
+    databaseUser.activeInvestment = user.activeInvestment;
+    databaseUser.investmentPlan = user.investmentPlan;
+    databaseUser.nextPayout = user.nextPayout;
     await databaseUser.save();
   }
 

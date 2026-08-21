@@ -106,6 +106,7 @@
             <span class="close-btn" data-close="clientEditModal">&times;</span>
             <h2>Edit Client Financials</h2>
             <form id="clientEditForm">
+                <input type="hidden" id="editClientId">
                 <input type="hidden" id="editEmail">
                 <label>Total Balance</label>
                 <input type="number" id="editBalance" name="totalBalance" step="0.01" required>
@@ -323,6 +324,7 @@
         }
 
         function openClientEdit(client) {
+            document.getElementById('editClientId').value = client.id;
             document.getElementById('editEmail').value = client.email;
             document.getElementById('editBalance').value = client.balance || 0;
             document.getElementById('editProfit').value = client.profit || 0;
@@ -336,6 +338,7 @@
         document.getElementById('clientEditForm').onsubmit = async (e) => {
             e.preventDefault();
             const payload = {
+                clientId: document.getElementById('editClientId').value,
                 email: document.getElementById('editEmail').value,
                 totalBalance: document.getElementById('editBalance').value,
                 totalProfit: document.getElementById('editProfit').value,
