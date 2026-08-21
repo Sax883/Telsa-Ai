@@ -429,18 +429,13 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       balance: 200,
       address: ''
     };
-    let databaseSaved = false;
     try {
       await connectDatabase();
       await User.create(newUser);
-      databaseSaved = true;
     } catch (error) {
       console.error(`[${getTimestamp()}] Database signup save unavailable: ${error.message}`);
     }
     currentUsers.push(newUser);
-    if (!databaseSaved && !persistUsers()) {
-      console.error(`[${getTimestamp()}] Signup is using in-memory persistence because the database and filesystem are unavailable.`);
-    }
     return res.status(201).json({
       success: true,
       message: 'Sign up successful.',
