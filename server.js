@@ -716,7 +716,7 @@ app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, re
 });
 
 // --- Start Server ---
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
   console.log(`Chat server listening on port ${PORT}`);
   console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
 });
