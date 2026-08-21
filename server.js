@@ -15,6 +15,7 @@ const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
 const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 const app = express();
+app.use(express.static(__dirname));
 const server = http.createServer(app);
 
 const io = socketIo(server, {
