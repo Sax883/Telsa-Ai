@@ -1,15 +1,19 @@
 const mongoose = require('mongoose');
 
-// Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB Atlas successfully'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Connect to MongoDB Atlas (if not already connected)
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Connected to MongoDB Atlas successfully'))
+    .catch((err) => console.error('MongoDB connection error:', err));
+}
 
-// Define a simple User schema
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  isAdmin: { type: Boolean, default: false },
+  balance: { type: Number, default: 200 },
+  address: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -345,6 +349,11 @@ app.post('/api/v1/auth/login', (req, res) => {
 
 app.post('/api/v1/auth/signup', async (req, res) => {
   try {
+    // Ensure Mongoose is connected before querying
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
+
     const { name, email, password } = req.body;
 
     // 1. Check if user already exists in MongoDB
@@ -357,21 +366,23 @@ app.post('/api/v1/auth/signup', async (req, res) => {
     const newUser = await User.create({
       name,
       email,
-      password // Note: If your app uses hashed passwords, make sure to hash this first!
+      password,
+      isAdmin: false,
+      balance: 200,
+      address: ''
     });
 
-    // 3. Return success
+    // 3. Return success response
     return res.status(201).json({
       success: true,
-      message: 'Account created successfully!',
-      user: { id: newUser._id, name: newUser.name, email: newUser.email }
+      message: 'Sign up successful.',
+      user: { id: newUser._id, name: newUser.name, email: newUser.email, balance: newUser.balance, isAdmin: newUser.isAdmin }
     });
   } catch (error) {
     console.error('Signup error:', error);
     return res.status(500).json({ success: false, message: 'Failed to save new account.' });
   }
 });
-
 // --- Withdrawal KYC Endpoint ---
 app.post('/api/v1/withdraw/kyc-session', (req, res) => {
   const {
