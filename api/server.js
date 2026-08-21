@@ -622,7 +622,7 @@ app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
   }
 
   const clients = users.map((user) => ({
-    id: user.id || String(user._id || ''),
+    id: user.id || String(user._id || user.email || ''),
     name: user.name,
     email: user.email,
     balance: Number(user.balance || 0),
@@ -645,6 +645,9 @@ app.delete('/api/admin/client/:clientId', requireAdminAuth, async (req, res) => 
     let deletedUser = await User.findOneAndDelete({ id: clientId, isAdmin: false });
     if (!deletedUser && mongoose.isValidObjectId(clientId)) {
       deletedUser = await User.findOneAndDelete({ _id: clientId, isAdmin: false });
+    }
+    if (!deletedUser) {
+      deletedUser = await User.findOneAndDelete({ email: clientId, isAdmin: false });
     }
     deletedFromDatabase = Boolean(deletedUser);
   } catch (error) {
@@ -688,7 +691,7 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
   try {
     await connectDatabase();
     databaseUser = clientId
-      ? await User.findOne({ $or: [{ id: clientId }, ...(mongoose.isValidObjectId(clientId) ? [{ _id: clientId }] : [])], isAdmin: false })
+      ? await User.findOne({ $or: [{ id: clientId }, { email: clientId }, ...(mongoose.isValidObjectId(clientId) ? [{ _id: clientId }] : [])], isAdmin: false })
       : await User.findOne({ email, isAdmin: false });
     if (!user && databaseUser) user = databaseUser;
   } catch (error) {
