@@ -329,22 +329,54 @@ app.post('/api/v1/profile/update', (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/login', (req, res) => {
-  const { email, password } = req.body;
-  const user = findUser(email, password);
+app.post('/api/v1/auth/login', async (req, res) => {
+  try {
+    // Ensure Mongoose is connected
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
 
-  if (!user) {
-    return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    const { email, password } = req.body;
+
+    // 1. Check the built-in admin, then find regular users in MongoDB
+    const user = defaultAdmin.email === email && defaultAdmin.password === password
+      ? defaultAdmin
+      : await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    // 2. Check regular-user passwords stored in MongoDB
+    if (user !== defaultAdmin && user.password !== password) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
+    // 3. Generate your JWT token
+    const token = jwt.sign(
+      { id: user.id || user._id, email: user.email, isAdmin: user.isAdmin },
+      process.env.JWT_SECRET || SECRET_KEY,
+      { expiresIn: '24h' }
+    );
+
+    // 4. Return success along with the token and user data
+    const safeUserData = {
+      id: user.id || user._id,
+      name: user.name,
+      email: user.email,
+      balance: user.balance,
+      isAdmin: user.isAdmin
+    };
+
+    return res.json({
+      success: true,
+      message: 'Login successful.',
+      token,
+      user: safeUserData
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error during login.' });
   }
-
-  const token = jwt.sign(
-    { id: user.id, email: user.email, isAdmin: user.isAdmin },
-    SECRET_KEY,
-    { expiresIn: '24h' }
-  );
-
-  const { password: _password, ...safeUserData } = user;
-  return res.json({ success: true, message: 'Login successful.', token, user: safeUserData });
 });
 
 app.post('/api/v1/auth/signup', async (req, res) => {
