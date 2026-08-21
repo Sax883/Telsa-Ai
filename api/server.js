@@ -4,18 +4,18 @@ const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
 
 // --- Configuration ---
 const PORT = process.env.PORT || 10000;
 const SECRET_KEY = process.env.JWT_SECRET || '1efdcab9301a043c584584eba62c2add2be3174a06be5f56c271eb37423873dd';
-const DATA_DIR = path.join(__dirname, 'data');
+const PROJECT_DIR = path.join(__dirname, '..');
+const DATA_DIR = path.join(PROJECT_DIR, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
 const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
 
 const app = express();
-app.use(express.static(__dirname));
+app.use(express.static(PROJECT_DIR));
 const server = http.createServer(app);
 
 const io = socketIo(server, {
@@ -38,8 +38,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(bodyParser.json());
-app.use(express.static(__dirname));
+app.use(express.json());
 
 // --- Default Admin ---
 const defaultAdmin = {
@@ -717,7 +716,4 @@ app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, re
 });
 
 // --- Start Server ---
-server.listen(PORT, () => {
-  console.log(`Chat server listening on port ${PORT}`);
-  console.log(`Deployment successful. Admin ID: ${defaultAdmin.id} | JWT Auth Routes Ready.`);
-});
+module.exports = app;
