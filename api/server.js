@@ -710,13 +710,19 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
 
   if (userIndex !== -1) currentUsers[userIndex] = user;
   if (databaseUser) {
-    databaseUser.id = databaseUser.id || clientId;
-    databaseUser.balance = user.balance;
-    databaseUser.profit = user.profit;
-    databaseUser.activeInvestment = user.activeInvestment;
-    databaseUser.investmentPlan = user.investmentPlan;
-    databaseUser.nextPayout = user.nextPayout;
-    await databaseUser.save();
+    await User.updateOne(
+      { _id: databaseUser._id },
+      {
+        $set: {
+          id: databaseUser.id || clientId,
+          balance: user.balance,
+          profit: user.profit,
+          activeInvestment: user.activeInvestment,
+          investmentPlan: user.investmentPlan,
+          nextPayout: user.nextPayout
+        }
+      }
+    );
   }
 
   if (userIndex !== -1 && !persistUsers()) {
