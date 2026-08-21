@@ -710,6 +710,7 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
 
   if (userIndex !== -1) currentUsers[userIndex] = user;
   if (databaseUser) {
+    databaseUser.id = databaseUser.id || clientId;
     databaseUser.balance = user.balance;
     databaseUser.profit = user.profit;
     databaseUser.activeInvestment = user.activeInvestment;
