@@ -1,23 +1,3 @@
-const mongoose = require('mongoose');
-
-// Connect to MongoDB Atlas (if not already connected)
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB Atlas successfully'))
-    .catch((err) => console.error('MongoDB connection error:', err));
-}
-
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  isAdmin: { type: Boolean, default: false },
-  balance: { type: Number, default: 200 },
-  address: { type: String, default: '' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.models.User || mongoose.model('User', userSchema);
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -261,35 +241,38 @@ io.use((socket, next) => {
 });
 
 // --- Express Authentication Routes ---
-app.get('/api/v1/profile/me', async (req, res) => {
+function getUserFromToken(req) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) return null;
+
+  const decoded = jwt.verify(token, SECRET_KEY);
+  if (decoded.isAdmin) return defaultAdmin;
+  return currentUsers.find((user) => user.id === decoded.id) || null;
+}
+
+function serializeUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    balance: Number(user.balance || 0),
+    profit: Number(user.profit || 0),
+    activeInvestment: Number(user.activeInvestment || 0),
+    investmentPlan: user.investmentPlan || '',
+    nextPayout: user.nextPayout || '',
+    isAdmin: Boolean(user.isAdmin),
+    address: user.address || ''
+  };
+}
+
+app.get(['/api/v1/profile/me', '/profile/me'], (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
-
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Authorization header required.' });
-    }
-
-    const decoded = jwt.verify(token, SECRET_KEY);
-    const user = await User.findById(decoded.id);
-
+    const user = getUserFromToken(req);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
-
-    return res.json({
-      success: true,
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      balance: user.balance,
-      isAdmin: user.isAdmin,
-      address: user.address
-    });
+    return res.json({ success: true, ...serializeUser(user) });
   } catch (err) {
     return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
   }
@@ -339,83 +322,26 @@ app.post('/api/v1/profile/update', (req, res) => {
   }
 });
 
-app.get('/profile/me', async (req, res) => {
+app.post('/api/v1/auth/login', (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
-
-    const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!token) {
-      return res.status(401).json({ success: false, message: 'Authorization header required.' });
-    }
-
-    const decoded = jwt.verify(token, SECRET_KEY);
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    return res.json({
-      success: true,
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      balance: user.balance,
-      isAdmin: user.isAdmin,
-      address: user.address
-    });
-  } catch (err) {
-    return res.status(403).json({ success: false, message: 'Invalid or expired token.' });
-  }
-});
-
-app.post('/api/v1/auth/login', async (req, res) => {
-  try {
-    // Ensure Mongoose is connected
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
-
-    const { email, password } = req.body;
-
-    // 1. Check the built-in admin, then find regular users in MongoDB
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
     const user = defaultAdmin.email === email && defaultAdmin.password === password
       ? defaultAdmin
-      : await User.findOne({ email });
+      : currentUsers.find((candidate) => candidate.email === email && candidate.password === password);
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
-
-    // 2. Check regular-user passwords stored in MongoDB
-    if (user !== defaultAdmin && user.password !== password) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
-    }
-
-    // 3. Generate your JWT token
     const token = jwt.sign(
-      { id: user.id || user._id, email: user.email, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET || SECRET_KEY,
+      { id: user.id, email: user.email, isAdmin: Boolean(user.isAdmin) },
+      SECRET_KEY,
       { expiresIn: '24h' }
     );
-
-    // 4. Return success along with the token and user data
-    const safeUserData = {
-      id: user.id || user._id,
-      name: user.name,
-      email: user.email,
-      balance: user.balance,
-      isAdmin: user.isAdmin
-    };
-
     return res.json({
       success: true,
       message: 'Login successful.',
       token,
-      user: safeUserData
+      user: serializeUser(user)
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -423,111 +349,37 @@ app.post('/api/v1/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/signup', async (req, res) => {
+app.post('/api/v1/auth/signup', (req, res) => {
   try {
-    // Ensure Mongoose is connected before querying
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
+    const name = String(req.body.name || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '');
+
+    if (!name || !email || password.length < 8) {
+      return res.status(400).json({ success: false, message: 'Name, email, and a password of at least 8 characters are required.' });
     }
-
-    const { name, email, password } = req.body;
-
-    // 1. Check if user already exists in MongoDB
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (userExists(email)) {
       return res.status(400).json({ success: false, message: 'User already exists with this email address.' });
     }
 
-    // 2. Create and save the new user to MongoDB
-    const newUser = await User.create({
+    const newUser = {
+      id: `client_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       name,
       email,
       password,
       isAdmin: false,
       balance: 200,
       address: ''
-    });
-
-    // Handle profile fetch for both route patterns
-app.get(['/api/v1/profile/me', '/profile/me'], async (req, res) => {
-  try {
-    // Ensure Mongoose is connected
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
+    };
+    currentUsers.push(newUser);
+    if (!persistUsers()) {
+      currentUsers.pop();
+      return res.status(500).json({ success: false, message: 'Failed to save new account.' });
     }
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ success: false, message: 'No token provided.' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || SECRET_KEY);
-
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        balance: user.balance,
-        isAdmin: user.isAdmin,
-        address: user.address
-      }
-    });
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error.' });
-  }
-});
-
-// Catch-all matcher for profile requests
-app.get(['/api/v1/profile/me', '/profile/me', '/api/profile/me'], async (req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI);
-    }
-
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ success: false, message: 'No token provided.' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || SECRET_KEY);
-
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    return res.json({
-      success: true,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        balance: user.balance,
-        isAdmin: user.isAdmin,
-        address: user.address
-      }
-    });
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    return res.status(500).json({ success: false, message: 'Internal server error.' });
-  }
-});
-
-    // 3. Return success response
     return res.status(201).json({
       success: true,
       message: 'Sign up successful.',
-      user: { id: newUser._id, name: newUser.name, email: newUser.email, balance: newUser.balance, isAdmin: newUser.isAdmin }
+      user: serializeUser(newUser)
     });
   } catch (error) {
     console.error('Signup error:', error);
@@ -893,4 +745,10 @@ app.delete('/api/admin/withdraw-sessions/:sessionId', requireAdminAuth, (req, re
 });
 
 // --- Start Server ---
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`TESLAAI server listening on port ${PORT}`);
+  });
+}
+
 module.exports = app;
