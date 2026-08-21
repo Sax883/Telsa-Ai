@@ -373,7 +373,9 @@ app.post('/api/v1/auth/login', async (req, res) => {
     const password = String(req.body.password || '');
     let user = defaultAdmin.email === email && defaultAdmin.password === password
       ? defaultAdmin
-      : currentUsers.find((candidate) => candidate.email === email && candidate.password === password);
+      : currentUsers.find((candidate) => (
+        String(candidate.email || '').trim().toLowerCase() === email && candidate.password === password
+      ));
     if (!user) {
       await connectDatabase();
       user = await User.findOne({ email, password }).lean();
@@ -407,8 +409,13 @@ app.post('/api/v1/auth/signup', async (req, res) => {
     if (!name || !email || password.length < 8) {
       return res.status(400).json({ success: false, message: 'Name, email, and a password of at least 8 characters are required.' });
     }
-    await connectDatabase();
-    const existingUser = await User.findOne({ email }).lean();
+    let existingUser = null;
+    try {
+      await connectDatabase();
+      existingUser = await User.findOne({ email }).lean();
+    } catch (error) {
+      console.error(`[${getTimestamp()}] Database signup unavailable: ${error.message}`);
+    }
     if (existingUser || userExists(email)) {
       return res.status(400).json({ success: false, message: 'User already exists with this email address.' });
     }
@@ -422,8 +429,16 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       balance: 200,
       address: ''
     };
-    await User.create(newUser);
+    try {
+      await connectDatabase();
+      await User.create(newUser);
+    } catch (error) {
+      console.error(`[${getTimestamp()}] Database signup save unavailable: ${error.message}`);
+    }
     currentUsers.push(newUser);
+    if (!persistUsers()) {
+      return res.status(500).json({ success: false, message: 'Failed to save new account.' });
+    }
     return res.status(201).json({
       success: true,
       message: 'Sign up successful.',
@@ -607,7 +622,7 @@ app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
   }
 
   const clients = users.map((user) => ({
-    id: user.id,
+    id: user.id || String(user._id || ''),
     name: user.name,
     email: user.email,
     balance: Number(user.balance || 0),
@@ -627,7 +642,10 @@ app.delete('/api/admin/client/:clientId', requireAdminAuth, async (req, res) => 
 
   try {
     await connectDatabase();
-    const deletedUser = await User.findOneAndDelete({ id: clientId, isAdmin: false });
+    let deletedUser = await User.findOneAndDelete({ id: clientId, isAdmin: false });
+    if (!deletedUser && mongoose.isValidObjectId(clientId)) {
+      deletedUser = await User.findOneAndDelete({ _id: clientId, isAdmin: false });
+    }
     deletedFromDatabase = Boolean(deletedUser);
   } catch (error) {
     console.error(`[${getTimestamp()}] Database client delete unavailable: ${error.message}`);
@@ -670,7 +688,7 @@ app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
   try {
     await connectDatabase();
     databaseUser = clientId
-      ? await User.findOne({ id: clientId, isAdmin: false })
+      ? await User.findOne({ $or: [{ id: clientId }, ...(mongoose.isValidObjectId(clientId) ? [{ _id: clientId }] : [])], isAdmin: false })
       : await User.findOne({ email, isAdmin: false });
     if (!user && databaseUser) user = databaseUser;
   } catch (error) {
