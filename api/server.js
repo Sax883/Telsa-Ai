@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -13,6 +14,38 @@ const DATA_DIR = path.join(PROJECT_DIR, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CHAT_HISTORY_FILE = path.join(DATA_DIR, 'chat-history.json');
 const WITHDRAWALS_FILE = path.join(DATA_DIR, 'withdrawals.json');
+
+const userSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  isAdmin: { type: Boolean, default: false },
+  balance: { type: Number, default: 200 },
+  profit: { type: Number, default: 0 },
+  activeInvestment: { type: Number, default: 0 },
+  investmentPlan: { type: String, default: '' },
+  nextPayout: { type: String, default: '' },
+  address: { type: String, default: '' }
+});
+
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+let databasePromise;
+
+function connectDatabase() {
+  if (!process.env.MONGODB_URI) {
+    return Promise.reject(new Error('MONGODB_URI is not configured.'));
+  }
+
+  if (!databasePromise) {
+    databasePromise = mongoose.connect(process.env.MONGODB_URI).catch((error) => {
+      databasePromise = null;
+      throw error;
+    });
+  }
+
+  return databasePromise;
+}
 
 const app = express();
 app.use(express.static(PROJECT_DIR));
@@ -266,9 +299,21 @@ function serializeUser(user) {
   };
 }
 
-app.get(['/api/v1/profile/me', '/profile/me'], (req, res) => {
+app.get(['/api/v1/profile/me', '/profile/me'], async (req, res) => {
   try {
-    const user = getUserFromToken(req);
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Authorization header required.' });
+    }
+
+    const decoded = jwt.verify(token, SECRET_KEY);
+    let user = decoded.isAdmin ? defaultAdmin : currentUsers.find((candidate) => candidate.id === decoded.id);
+    if (!user) {
+      await connectDatabase();
+      user = await User.findOne({ id: decoded.id }).lean();
+    }
+
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found.' });
     }
@@ -322,13 +367,17 @@ app.post('/api/v1/profile/update', (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/login', (req, res) => {
+app.post('/api/v1/auth/login', async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const user = defaultAdmin.email === email && defaultAdmin.password === password
+    let user = defaultAdmin.email === email && defaultAdmin.password === password
       ? defaultAdmin
       : currentUsers.find((candidate) => candidate.email === email && candidate.password === password);
+    if (!user) {
+      await connectDatabase();
+      user = await User.findOne({ email, password }).lean();
+    }
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
@@ -349,7 +398,7 @@ app.post('/api/v1/auth/login', (req, res) => {
   }
 });
 
-app.post('/api/v1/auth/signup', (req, res) => {
+app.post('/api/v1/auth/signup', async (req, res) => {
   try {
     const name = String(req.body.name || '').trim();
     const email = String(req.body.email || '').trim().toLowerCase();
@@ -358,7 +407,9 @@ app.post('/api/v1/auth/signup', (req, res) => {
     if (!name || !email || password.length < 8) {
       return res.status(400).json({ success: false, message: 'Name, email, and a password of at least 8 characters are required.' });
     }
-    if (userExists(email)) {
+    await connectDatabase();
+    const existingUser = await User.findOne({ email }).lean();
+    if (existingUser || userExists(email)) {
       return res.status(400).json({ success: false, message: 'User already exists with this email address.' });
     }
 
@@ -371,11 +422,8 @@ app.post('/api/v1/auth/signup', (req, res) => {
       balance: 200,
       address: ''
     };
+    await User.create(newUser);
     currentUsers.push(newUser);
-    if (!persistUsers()) {
-      currentUsers.pop();
-      return res.status(500).json({ success: false, message: 'Failed to save new account.' });
-    }
     return res.status(201).json({
       success: true,
       message: 'Sign up successful.',
@@ -549,8 +597,16 @@ io.on('connection', (socket) => {
 });
 
 // --- Admin API Routes ---
-app.get('/api/admin/clients', requireAdminAuth, (req, res) => {
-  const clients = currentUsers.map((user) => ({
+app.get('/api/admin/clients', requireAdminAuth, async (req, res) => {
+  let users = currentUsers;
+  try {
+    await connectDatabase();
+    users = await User.find({ isAdmin: false }).lean();
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Falling back to local client data: ${error.message}`);
+  }
+
+  const clients = users.map((user) => ({
     name: user.name,
     email: user.email,
     balance: Number(user.balance || 0),
@@ -563,7 +619,7 @@ app.get('/api/admin/clients', requireAdminAuth, (req, res) => {
   return res.json(clients);
 });
 
-app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
+app.post('/api/admin/client/update', requireAdminAuth, async (req, res) => {
   const {
     email,
     totalBalance,
@@ -578,11 +634,19 @@ app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
   }
 
   const userIndex = currentUsers.findIndex((user) => user.email === email);
-  if (userIndex === -1) {
-    return res.status(404).json({ success: false, message: 'Client not found.' });
+  let user = userIndex === -1 ? null : currentUsers[userIndex];
+  let databaseUser = null;
+  try {
+    await connectDatabase();
+    databaseUser = await User.findOne({ email });
+    if (!user && databaseUser) user = databaseUser;
+  } catch (error) {
+    console.error(`[${getTimestamp()}] Database client update unavailable: ${error.message}`);
   }
 
-  const user = currentUsers[userIndex];
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'Client not found.' });
+  }
 
   if (totalBalance !== undefined) user.balance = Number(totalBalance) || 0;
   if (totalProfit !== undefined) user.profit = Number(totalProfit) || 0;
@@ -590,9 +654,13 @@ app.post('/api/admin/client/update', requireAdminAuth, (req, res) => {
   if (investmentPlan !== undefined) user.investmentPlan = String(investmentPlan || '');
   if (nextPayout !== undefined) user.nextPayout = String(nextPayout || '');
 
-  currentUsers[userIndex] = user;
+  if (userIndex !== -1) currentUsers[userIndex] = user;
+  if (databaseUser) {
+    databaseUser.set(user);
+    await databaseUser.save();
+  }
 
-  if (!persistUsers()) {
+  if (userIndex !== -1 && !persistUsers()) {
     return res.status(500).json({ success: false, message: 'Failed to persist client update.' });
   }
 
