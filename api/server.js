@@ -404,15 +404,14 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       address: ''
     });
 
-    app.get('/api/v1/profile/me', async (req, res) => {
+    // Handle profile fetch for both route patterns
+app.get(['/api/v1/profile/me', '/profile/me'], async (req, res) => {
   try {
     // Ensure Mongoose is connected
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGODB_URI);
     }
 
-    // Assuming you have auth middleware that attaches user ID to req.user or req.headers
-    // If you pass the user ID or use a token, adjust accordingly. Here is a secure lookup:
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       return res.status(401).json({ success: false, message: 'No token provided.' });
