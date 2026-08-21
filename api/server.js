@@ -404,6 +404,45 @@ app.post('/api/v1/auth/signup', async (req, res) => {
       address: ''
     });
 
+    app.get('/api/v1/profile/me', async (req, res) => {
+  try {
+    // Ensure Mongoose is connected
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI);
+    }
+
+    // Assuming you have auth middleware that attaches user ID to req.user or req.headers
+    // If you pass the user ID or use a token, adjust accordingly. Here is a secure lookup:
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ success: false, message: 'No token provided.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || SECRET_KEY);
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        isAdmin: user.isAdmin,
+        address: user.address
+      }
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+});
+
     // 3. Return success response
     return res.status(201).json({
       success: true,
